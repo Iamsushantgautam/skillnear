@@ -1,0 +1,83 @@
+# ===========================
+# Environment Variables
+# ===========================
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# ===========================
+# AI / ML Model Files
+# ===========================
+*.h5
+*.hdf5
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.onnx
+*.bin
+*.gguf
+*.model
+*.pb
+*.tflite
+*.caffemodel
+*.npy
+*.npz
+models/
+checkpoints/
+weights/
+
+# ===========================
+# Node
+# ===========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===========================
+# Build Outputs
+# ===========================
+dist/
+dist-ssr/
+build/
+.next/
+out/
+
+# ===========================
+# Logs & Temp
+# ===========================
+logs/
+*.log
+*.local
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===========================
+# OS Files
+# ===========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===========================
+# Editor
+# ===========================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# ===========================
+# Debug / Test artifacts
+# ===========================
+backend/server_log.txt
+backend/token.txt
+backend/test.js
+backend/test2.js
+backend/seed.js

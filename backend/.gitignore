@@ -1,0 +1,21 @@
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Logs & Debug
+*.log
+server_log.txt
+token.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test & Seed scripts (optional to exclude from production)
+test.js
+test2.js
+seed.js

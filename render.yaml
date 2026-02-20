@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: skillnear-api
+    runtime: node
+    region: oregon           # or "singapore" if your users are in Asia
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free               # upgrade to "starter" for always-on
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000          # Render uses port 10000 by default
+      # Set the following in the Render dashboard (sensitive values):
+      # - MONGODB_URI
+      # - JWT_SECRET
+      # - CLOUDINARY_CLOUD_NAME
+      # - CLOUDINARY_API_KEY
+      # - CLOUDINARY_API_SECRET
+      # - BREVO_API_KEY
+      # - ADMIN_EMAIL
+      # - FRONTEND_URL        (your client Vercel URL)
+      # - ADMIN_FRONTEND_URL  (your admin Vercel URL)

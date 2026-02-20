@@ -1,0 +1,15 @@
+{
+    "name": "skillnear",
+    "version": "1.0.0",
+    "description": "SkillNear MERN Application",
+    "main": "index.js",
+    "scripts": {
+        "dev": "concurrently \"cd backend && npm run dev\" \"cd client && npm run dev -- --port 5173\" \"cd admin && npm run dev -- --port 5174\""
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
