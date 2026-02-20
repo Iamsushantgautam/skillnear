@@ -28,6 +28,7 @@ export const registerUser = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
+                avatar: user.avatar,
                 role: user.role,
                 token
             });
@@ -54,6 +55,7 @@ export const loginUser = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
+                avatar: user.avatar,
                 role: user.role,
                 token
             });
@@ -121,6 +123,7 @@ export const applyToBeProvider = async (req, res) => {
                 _id: updatedUser._id,
                 name: updatedUser.name,
                 email: updatedUser.email,
+                avatar: updatedUser.avatar,
                 role: updatedUser.role,
                 providerDetails: updatedUser.providerDetails
             });

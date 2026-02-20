@@ -87,6 +87,8 @@ io.on('connection', (socket) => {
 
             // Emit to the specific room
             io.to(roomId).emit('receiveMessage', newMessage);
+            // Also emit to the receiver personally (to update their room list if they aren't in this room)
+            io.to(receiverId).emit('receiveMessage', newMessage);
 
             // Fetch the receiver to check if they are offline and a provider
             if (!activeUsers.has(receiverId)) {

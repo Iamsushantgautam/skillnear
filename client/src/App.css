@@ -9,7 +9,6 @@
   flex-grow: 1;
   padding-top: 2rem;
   padding-bottom: 4rem;
-  /* For mobile nav spacing if needed */
 }
 
 /* Mobile responsive generic adjustments */
@@ -69,4 +68,50 @@
 
 .mobile-nav-item.active svg {
   transform: scale(1.1);
+}
+
+/* Animations */
+@keyframes dot-typing {
+  0% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+}
+
+.dot-typing {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  display: inline-block;
+  animation: dot-typing 1.4s infinite ease-in-out;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.hover-primary:hover {
+  color: var(--primary) !important;
+  transition: color 0.15s;
 }

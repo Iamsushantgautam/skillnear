@@ -60,6 +60,10 @@ export const updateUserProfile = async (req, res) => {
             user.name = req.body.name || user.name;
             user.email = req.body.email || user.email;
             user.phone = req.body.phone || user.phone;
+            // Update avatar if provided
+            if (req.body.avatar) {
+                user.avatar = req.body.avatar;
+            }
 
             if (req.body.address) {
                 user.address = { ...user.address, ...req.body.address };
@@ -75,7 +79,10 @@ export const updateUserProfile = async (req, res) => {
                 _id: updatedUser._id,
                 name: updatedUser.name,
                 email: updatedUser.email,
+                phone: updatedUser.phone,
+                avatar: updatedUser.avatar,
                 role: updatedUser.role,
+                token: req.headers.authorization?.split(' ')[1], // return same token
             });
         } else {
             res.status(404).json({ message: 'User not found' });

@@ -1,5 +1,6 @@
 import Booking from '../models/Booking.js';
 import Service from '../models/Service.js';
+import Message from '../models/Message.js';
 
 // @desc    Create new booking
 // @route   POST /api/bookings
@@ -26,6 +27,15 @@ export const createBooking = async (req, res) => {
         });
 
         const createdBooking = await booking.save();
+
+        // Create initial system message in the chat
+        await Message.create({
+            senderId: req.user._id,
+            receiverId: service.provider,
+            roomId: createdBooking._id.toString(),
+            message: `BOOKING: New booking request for ${service.title} on ${date} at ${timeSlot}.`
+        });
+
         res.status(201).json(createdBooking);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -77,6 +87,17 @@ export const updateBookingStatus = async (req, res) => {
             ) {
                 booking.status = status;
                 const updatedBooking = await booking.save();
+
+                // Create system message about status change
+                // Decide sender/receiver based on who updated
+                const isProvider = booking.provider.toString() === req.user._id.toString();
+                await Message.create({
+                    senderId: req.user._id,
+                    receiverId: isProvider ? booking.user : booking.provider,
+                    roomId: booking._id.toString(),
+                    message: `STATUS UPDATE: Booking status changed to ${status.toUpperCase()}.`
+                });
+
                 res.json(updatedBooking);
             } else {
                 res.status(401).json({ message: 'Not authorized to update this booking' });
@@ -84,6 +105,21 @@ export const updateBookingStatus = async (req, res) => {
         } else {
             res.status(404).json({ message: 'Booking not found' });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+// @desc    Get all bookings (Admin only)
+// @route   GET /api/bookings/all
+// @access  Private/Admin
+export const getAllBookings = async (req, res) => {
+    try {
+        const bookings = await Booking.find({})
+            .populate('service', 'title category price')
+            .populate('user', 'name email phone avatar')
+            .populate('provider', 'name email phone avatar')
+            .sort({ createdAt: -1 });
+        res.json(bookings);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

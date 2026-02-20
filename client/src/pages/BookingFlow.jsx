@@ -1,164 +1,259 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Calendar, CreditCard } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { MapPin, Calendar, CreditCard, CheckCircle, ArrowLeft, Loader } from 'lucide-react';
+import api from '../utils/api';
+import useAuthStore from '../store/useAuthStore';
 
 const BookingFlow = () => {
-    const { id } = useParams();
+    const { id } = useParams();         // service ID
     const navigate = useNavigate();
+    const { user } = useAuthStore();
+
+    const [service, setService] = useState(null);
+    const [loadingService, setLoadingService] = useState(true);
 
     const [step, setStep] = useState(1);
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
-    const [address, setAddress] = useState('');
-    const [payment, setPayment] = useState('card');
+    const [street, setStreet] = useState('');
+    const [city, setCity] = useState('');
+    const [payment, setPayment] = useState('cash_on_delivery');
+    const [submitting, setSubmitting] = useState(false);
+    const [bookingDone, setBookingDone] = useState(false);
+    const [bookingId, setBookingId] = useState(null);
+
+    // Fetch the service so we can show real price / title
+    useEffect(() => {
+        const fetchService = async () => {
+            try {
+                const { data } = await api.get(`/api/services/${id}`);
+                setService(data);
+            } catch (err) {
+                console.error('Error fetching service', err);
+            } finally {
+                setLoadingService(false);
+            }
+        };
+        fetchService();
+    }, [id]);
+
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (!user) navigate('/login');
+    }, [user]);
+
+    const tax = service ? +(service.price * 0.05).toFixed(2) : 0;
+    const total = service ? +(service.price + tax).toFixed(2) : 0;
 
     const handleNext = () => {
-        if (step < 3) setStep(step + 1);
-        else handleConfirm();
+        if (step === 1 && (!date || !time)) { alert('Please select a date and time'); return; }
+        if (step === 2 && !street) { alert('Please enter your address'); return; }
+        if (step < 3) { setStep(step + 1); return; }
+        handleConfirm();
     };
 
-    const handleConfirm = () => {
-        console.log('Booking Confirmed', { id, date, time, address, payment });
-        alert('Booking Confirmed!');
-        navigate('/dashboard');
+    const handleConfirm = async () => {
+        setSubmitting(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.post('/api/bookings', {
+                serviceId: id,
+                date,
+                timeSlot: time,
+                address: { street, city },
+                paymentMethod: payment,
+            }, config);
+            setBookingId(data._id);
+            setBookingDone(true);
+        } catch (err) {
+            alert(err.response?.data?.message || 'Booking failed. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
     };
+
+    // ── Success Screen ─────────────────────────────────────────
+    if (bookingDone) {
+        return (
+            <div className="container" style={{ padding: '60px 20px', maxWidth: 600, textAlign: 'center' }}>
+                <div className="card" style={{ padding: '48px 40px' }}>
+                    <div style={{ width: 72, height: 72, borderRadius: '50%', backgroundColor: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                        <CheckCircle size={40} color="#059669" />
+                    </div>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: 8 }}>Booking Confirmed! 🎉</h1>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: 12 }}>
+                        Your booking for <strong>{service?.title}</strong> on <strong>{new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</strong> at <strong>{time}</strong> has been placed.
+                    </p>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: 28 }}>
+                        Booking ID: <code style={{ backgroundColor: '#f1f5f9', padding: '2px 8px', borderRadius: 6 }}>#{bookingId?.slice(-8).toUpperCase()}</code>
+                    </p>
+                    <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button className="btn-primary" onClick={() => navigate('/chat')}>
+                            💬 Chat with Provider
+                        </button>
+                        <button className="btn-outline" onClick={() => navigate('/dashboard')}>
+                            My Bookings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (loadingService) {
+        return (
+            <div className="container" style={{ padding: '80px 20px', textAlign: 'center' }}>
+                <Loader size={32} className="spin" style={{ color: 'var(--primary)' }} />
+                <p style={{ marginTop: 12 }}>Loading service…</p>
+            </div>
+        );
+    }
+
+    if (!service) {
+        return (
+            <div className="container" style={{ padding: '80px 20px', textAlign: 'center' }}>
+                <p>Service not found.</p>
+                <Link to="/services" className="btn-primary" style={{ marginTop: 16 }}>Browse Services</Link>
+            </div>
+        );
+    }
 
     return (
-        <div className="container" style={{ padding: '40px 20px', maxWidth: '800px' }}>
-            <div className="card" style={{ padding: '40px' }}>
-                <h1 className="text-h2" style={{ marginBottom: '32px', textAlign: 'center' }}>Complete Your Booking</h1>
+        <div className="container" style={{ padding: '40px 20px', maxWidth: 840 }}>
+            {/* Back link */}
+            <Link to={`/services/${id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', marginBottom: 24, fontSize: '0.9rem' }}>
+                <ArrowLeft size={16} /> Back to {service.title}
+            </Link>
 
-                {/* Progress Bar */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px', position: 'relative' }}>
-                    <div style={{ ...styles.stepIndicator, color: step >= 1 ? 'var(--primary)' : 'var(--text-muted)' }}>
-                        <Calendar size={24} />
-                        <span className="text-small" style={{ marginTop: '8px' }}>Date & Time</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 24, alignItems: 'start' }}>
+                {/* Left — Steps */}
+                <div className="card" style={{ padding: 36 }}>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: 28 }}>Complete Your Booking</h1>
+
+                    {/* Progress Steps */}
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 36 }}>
+                        {[{ icon: <Calendar size={18} />, label: 'Date & Time' }, { icon: <MapPin size={18} />, label: 'Address' }, { icon: <CreditCard size={18} />, label: 'Payment' }].map((s, i) => (
+                            <React.Fragment key={i}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1 }}>
+                                    <div style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: step > i ? 'var(--primary)' : step === i + 1 ? '#ede9fe' : '#f1f5f9', color: step > i ? '#fff' : step === i + 1 ? 'var(--primary)' : '#94a3b8', fontWeight: 700, border: step === i + 1 ? '2px solid var(--primary)' : 'none', transition: 'all 0.3s' }}>
+                                        {step > i + 1 ? <CheckCircle size={18} /> : s.icon}
+                                    </div>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: step === i + 1 ? 700 : 400, color: step === i + 1 ? 'var(--primary)' : 'var(--text-muted)' }}>{s.label}</span>
+                                </div>
+                                {i < 2 && <div style={{ flex: 1, height: 2, backgroundColor: step > i + 1 ? 'var(--primary)' : '#e2e8f0', margin: '0 4px', marginBottom: 20 }} />}
+                            </React.Fragment>
+                        ))}
                     </div>
-                    <div style={{ ...styles.stepIndicator, color: step >= 2 ? 'var(--primary)' : 'var(--text-muted)' }}>
-                        <MapPin size={24} />
-                        <span className="text-small" style={{ marginTop: '8px' }}>Address</span>
+
+                    {/* Step 1 */}
+                    {step === 1 && (
+                        <div className="animate-fade-in">
+                            <h3 style={{ marginBottom: 20, fontWeight: 700 }}>Select Date & Time Slot</h3>
+                            <div style={s.formGroup}>
+                                <label style={s.label}>Preferred Date</label>
+                                <input type="date" className="input-field" value={date}
+                                    min={new Date().toISOString().split('T')[0]}
+                                    onChange={e => setDate(e.target.value)} />
+                            </div>
+                            <div style={s.formGroup}>
+                                <label style={s.label}>Time Slot</label>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                                    {['09:00 AM – 11:00 AM', '11:00 AM – 01:00 PM', '02:00 PM – 04:00 PM', '04:00 PM – 06:00 PM'].map(slot => (
+                                        <button key={slot} onClick={() => setTime(slot)} style={{ padding: '12px 10px', borderRadius: 10, border: `2px solid ${time === slot ? 'var(--primary)' : '#e2e8f0'}`, backgroundColor: time === slot ? '#ede9fe' : '#fff', color: time === slot ? 'var(--primary)' : '#374151', fontWeight: time === slot ? 700 : 400, cursor: 'pointer', fontSize: '0.82rem', transition: 'all 0.2s' }}>
+                                            {slot}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step 2 */}
+                    {step === 2 && (
+                        <div className="animate-fade-in">
+                            <h3 style={{ marginBottom: 20, fontWeight: 700 }}>Service Location</h3>
+                            <div style={s.formGroup}>
+                                <label style={s.label}>Street Address</label>
+                                <textarea className="input-field" rows="3" placeholder="e.g. 42, MG Road, Near Metro Station" value={street} onChange={e => setStreet(e.target.value)} />
+                            </div>
+                            <div style={s.formGroup}>
+                                <label style={s.label}>City</label>
+                                <input type="text" className="input-field" placeholder="e.g. Mumbai" value={city} onChange={e => setCity(e.target.value)} />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step 3 */}
+                    {step === 3 && (
+                        <div className="animate-fade-in">
+                            <h3 style={{ marginBottom: 20, fontWeight: 700 }}>Payment Method</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                {[{ key: 'cash_on_delivery', label: '💵 Cash on Completion', desc: 'Pay after the service is done' }, { key: 'upi', label: '📱 UPI / Online Payment', desc: 'Pay via UPI, wallets, or net banking' }].map(opt => (
+                                    <label key={opt.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '16px', border: `2px solid ${payment === opt.key ? 'var(--primary)' : '#e2e8f0'}`, borderRadius: 12, cursor: 'pointer', backgroundColor: payment === opt.key ? '#f5f3ff' : '#fff', transition: 'all 0.2s' }}>
+                                        <input type="radio" name="payment" value={opt.key} checked={payment === opt.key} onChange={() => setPayment(opt.key)} style={{ marginTop: 3 }} />
+                                        <div>
+                                            <div style={{ fontWeight: 700 }}>{opt.label}</div>
+                                            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{opt.desc}</div>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Navigation Buttons */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32 }}>
+                        {step > 1 ? (
+                            <button className="btn-outline" onClick={() => setStep(step - 1)}>← Back</button>
+                        ) : <div />}
+                        <button className="btn-primary" onClick={handleNext} disabled={submitting}
+                            style={{ minWidth: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                            {submitting ? <><Loader size={16} className="spin" /> Processing…</> : step === 3 ? 'Confirm Booking ✓' : 'Next Step →'}
+                        </button>
                     </div>
-                    <div style={{ ...styles.stepIndicator, color: step >= 3 ? 'var(--primary)' : 'var(--text-muted)' }}>
-                        <CreditCard size={24} />
-                        <span className="text-small" style={{ marginTop: '8px' }}>Payment</span>
-                    </div>
-                    {/* Connecting Line */}
-                    <div style={{ position: 'absolute', top: '12px', left: '10%', right: '10%', height: '2px', backgroundColor: 'var(--border-color)', zIndex: 0 }}></div>
                 </div>
 
-                {/* Step 1: Date & Time */}
-                {step === 1 && (
-                    <div className="animate-fade-in">
-                        <h3 className="text-h3" style={{ marginBottom: '16px' }}>Select Date and Time</h3>
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={styles.label}>Date</label>
-                            <input type="date" className="input-field" value={date} onChange={(e) => setDate(e.target.value)} />
-                        </div>
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={styles.label}>Time Slot</label>
-                            <select className="input-field" value={time} onChange={(e) => setTime(e.target.value)}>
-                                <option value="">Select a time slot</option>
-                                <option value="09:00 AM - 11:00 AM">09:00 AM - 11:00 AM</option>
-                                <option value="11:00 AM - 01:00 PM">11:00 AM - 01:00 PM</option>
-                                <option value="02:00 PM - 04:00 PM">02:00 PM - 04:00 PM</option>
-                                <option value="04:00 PM - 06:00 PM">04:00 PM - 06:00 PM</option>
-                            </select>
-                        </div>
-                    </div>
-                )}
-
-                {/* Step 2: Address */}
-                {step === 2 && (
-                    <div className="animate-fade-in">
-                        <h3 className="text-h3" style={{ marginBottom: '16px' }}>Service Location</h3>
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={styles.label}>Full Address</label>
-                            <textarea
-                                className="input-field"
-                                rows="4"
-                                placeholder="Enter your complete address..."
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                            ></textarea>
-                        </div>
-                    </div>
-                )}
-
-                {/* Step 3: Payment */}
-                {step === 3 && (
-                    <div className="animate-fade-in">
-                        <h3 className="text-h3" style={{ marginBottom: '16px' }}>Payment Method</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-                            <label style={{ ...styles.paymentOption, borderColor: payment === 'card' ? 'var(--primary)' : 'var(--border-color)' }}>
-                                <input type="radio" name="payment" value="card" checked={payment === 'card'} onChange={() => setPayment('card')} />
-                                <span style={{ marginLeft: '8px', fontWeight: '500' }}>Credit / Debit Card</span>
-                            </label>
-                            <label style={{ ...styles.paymentOption, borderColor: payment === 'cash' ? 'var(--primary)' : 'var(--border-color)' }}>
-                                <input type="radio" name="payment" value="cash" checked={payment === 'cash'} onChange={() => setPayment('cash')} />
-                                <span style={{ marginLeft: '8px', fontWeight: '500' }}>Cash on Completion</span>
-                            </label>
-                        </div>
-
-                        <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: 'var(--radius-sm)' }}>
-                            <div className="flex-between" style={{ marginBottom: '8px' }}>
-                                <span className="text-body">Service Fee</span>
-                                <span>$50.00</span>
+                {/* Right — Order Summary */}
+                <div style={{ position: 'sticky', top: 90 }}>
+                    <div className="card">
+                        <h3 style={{ fontWeight: 700, marginBottom: 16 }}>Order Summary</h3>
+                        <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                            <img src={service.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(service.title)}&background=ede9fe&color=4f46e5`} alt={service.title} style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover' }} />
+                            <div>
+                                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{service.title}</div>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{service.category}</div>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>by {service.provider?.name}</div>
                             </div>
-                            <div className="flex-between" style={{ marginBottom: '8px' }}>
-                                <span className="text-body">Taxes</span>
-                                <span>$5.00</span>
+                        </div>
+                        {date && <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 4 }}>📅 {date} • {time || '—'}</div>}
+                        {city && <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 12 }}>📍 {city}</div>}
+                        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 14, marginTop: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>Service Fee</span>
+                                <span style={{ fontWeight: 600 }}>₹{service.price}</span>
                             </div>
-                            <div className="flex-between" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '8px', marginTop: '8px', fontWeight: 'bold' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>Platform Fee (5%)</span>
+                                <span style={{ fontWeight: 600 }}>₹{tax}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.1rem', borderTop: '1px solid var(--border-color)', paddingTop: 10 }}>
                                 <span>Total</span>
-                                <span style={{ color: 'var(--primary)', fontSize: '1.2rem' }}>$55.00</span>
+                                <span style={{ color: 'var(--primary)' }}>₹{total}</span>
                             </div>
                         </div>
+                        <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: 12, textAlign: 'center' }}>
+                            🔒 You won't be charged until the service is confirmed
+                        </p>
                     </div>
-                )}
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', marginTop: '32px' }}>
-                    {step > 1 && (
-                        <button className="btn-outline" onClick={() => setStep(step - 1)}>
-                            Back
-                        </button>
-                    )}
-                    <button
-                        className="btn-primary"
-                        onClick={handleNext}
-                        disabled={(step === 1 && (!date || !time)) || (step === 2 && !address)}
-                    >
-                        {step === 3 ? 'Confirm Booking' : 'Next Step'}
-                    </button>
                 </div>
             </div>
         </div>
     );
 };
 
-const styles = {
-    stepIndicator: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        zIndex: 1,
-        backgroundColor: 'var(--card-bg)',
-        padding: '0 10px',
-    },
-    label: {
-        display: 'block',
-        marginBottom: '8px',
-        fontWeight: '500',
-        color: 'var(--text-main)',
-    },
-    paymentOption: {
-        display: 'flex',
-        alignItems: 'center',
-        padding: '16px',
-        border: '1px solid',
-        borderRadius: 'var(--radius-sm)',
-        cursor: 'pointer',
-        transition: 'var(--transition-normal)'
-    }
+const s = {
+    formGroup: { marginBottom: 20 },
+    label: { display: 'block', marginBottom: 8, fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-main)' },
 };
 
 export default BookingFlow;

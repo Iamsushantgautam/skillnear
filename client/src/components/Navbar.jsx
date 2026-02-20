@@ -12,9 +12,21 @@ const Navbar = () => {
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [selectedStateCode, setSelectedStateCode] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
+    const [searchKeyword, setSearchKeyword] = useState('');
+
+    const handleSearch = (e) => {
+        if (e.key === 'Enter' && searchKeyword.trim()) {
+            navigate(`/services?keyword=${encodeURIComponent(searchKeyword)}`);
+        }
+    };
 
     const indianStates = State.getStatesOfCountry('IN');
     const citiesOfState = selectedStateCode ? City.getCitiesOfState('IN', selectedStateCode) : [];
+
+    const getAvatar = (userData) => {
+        if (userData?.avatar && userData.avatar.startsWith('http')) return userData.avatar;
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.name || 'U')}&background=ede9fe&color=4f46e5&size=80`;
+    };
 
     const handleLogout = () => {
         logout();
@@ -59,6 +71,9 @@ const Navbar = () => {
                         type="text"
                         placeholder="Search for services..."
                         style={styles.searchInput}
+                        value={searchKeyword}
+                        onChange={(e) => setSearchKeyword(e.target.value)}
+                        onKeyDown={handleSearch}
                     />
                 </div>
 
@@ -71,7 +86,7 @@ const Navbar = () => {
                     {user ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                             <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', ...styles.link }}>
-                                <img src={user.avatar || 'https://via.placeholder.com/32'} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                                <img src={getAvatar(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
                                 <span className="hide-on-mobile">{user.name}</span>
                             </Link>
                             <button onClick={handleLogout} style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -92,7 +107,7 @@ const Navbar = () => {
                 <button style={styles.mobileMenuBtn} className="show-on-mobile">
                     {user ? (
                         <Link to="/dashboard">
-                            <img src={user.avatar || 'https://via.placeholder.com/32'} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                            <img src={getAvatar(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
                         </Link>
                     ) : (
                         <Link to="/login" style={{ color: 'var(--primary)', fontWeight: '500' }}>Login</Link>

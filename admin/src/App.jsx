@@ -4,6 +4,7 @@ import AdminLayout from './layouts/AdminLayout';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import AdminServices from './pages/AdminServices';
+import Bookings from './pages/Bookings';
 import Login from './pages/Login';
 import useAuthStore from './store/useAuthStore';
 import './App.css';
@@ -28,7 +29,7 @@ function App() {
           <Route path="users" element={<Users />} />
           <Route path="services" element={<AdminServices />} />
           <Route path="categories" element={<AdminServices />} />
-          <Route path="activity" element={<div style={{ padding: '40px' }}><h2>Bookings & Projects — coming soon</h2></div>} />
+          <Route path="activity" element={<Bookings />} />
           <Route path="reports" element={<div style={{ padding: '40px' }}><h2>Reports — coming soon</h2></div>} />
         </Route>
       </Routes>

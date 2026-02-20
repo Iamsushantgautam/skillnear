@@ -3,9 +3,10 @@ import {
     createBooking,
     getMyBookings,
     getProviderBookings,
-    updateBookingStatus
+    updateBookingStatus,
+    getAllBookings
 } from '../controllers/bookingController.js';
-import { protect, provider } from '../middleware/authMiddleware.js';
+import { protect, provider, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.route('/')
 
 router.get('/mybookings', protect, getMyBookings);
 router.get('/provider', protect, provider, getProviderBookings);
+router.get('/all', protect, admin, getAllBookings);
 
 router.route('/:id/status')
     .put(protect, updateBookingStatus);

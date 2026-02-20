@@ -129,7 +129,11 @@ const ServiceDetails = () => {
                             {service.provider ? (
                                 <>
                                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                                        <img src={service.provider.avatar || 'https://via.placeholder.com/64'} alt={service.provider.name} style={{ width: '64px', height: '64px', borderRadius: '50%' }} />
+                                        <img
+                                            src={service.provider.avatar && service.provider.avatar.startsWith('http') ? service.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider.name || 'P')}&background=ede9fe&color=4f46e5&size=64`}
+                                            alt={service.provider.name}
+                                            style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover' }}
+                                        />
                                         <div>
                                             <h4 style={{ fontSize: '1.1rem', fontWeight: '600' }}>{service.provider.name}</h4>
                                             <p className="text-small">Member since {new Date(service.provider.createdAt || Date.now()).getFullYear()}</p>

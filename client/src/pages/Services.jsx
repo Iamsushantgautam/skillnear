@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { Search, MapPin, Star, Filter } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
 
 const Services = () => {
     const { userLocation } = useAuthStore();
-    const [searchTerm, setSearchTerm] = useState('');
+    const query = new URLSearchParams(useLocation().search);
+    const urlKeyword = query.get('keyword') || '';
+
+    const [searchTerm, setSearchTerm] = useState(urlKeyword);
     const [category, setCategory] = useState('');
     const [location, setLocation] = useState(userLocation?.city && userLocation.city !== 'All of India' ? userLocation.city : '');
+
+    // Sync search term with URL keyword
+    useEffect(() => {
+        if (urlKeyword) setSearchTerm(urlKeyword);
+    }, [urlKeyword]);
 
     useEffect(() => {
         if (userLocation?.city && userLocation.city !== 'All of India') {
@@ -127,7 +135,11 @@ const Services = () => {
 
                                     <div className="flex-between" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: 'auto' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <img src={(srv.provider && srv.provider.avatar) ? srv.provider.avatar : "https://via.placeholder.com/30"} alt="Avatar" style={{ borderRadius: '50%', width: '24px', height: '24px' }} />
+                                            <img
+                                                src={srv.provider?.avatar && srv.provider.avatar.startsWith('http') ? srv.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || 'P')}&background=ede9fe&color=4f46e5&size=30`}
+                                                alt="Avatar"
+                                                style={{ borderRadius: '50%', width: '24px', height: '24px', objectFit: 'cover' }}
+                                            />
                                             <span className="text-small">{srv.provider ? srv.provider.name : 'Unknown'}</span>
                                         </div>
                                         <div style={{ fontWeight: '600', color: 'var(--text-main)' }}>

@@ -80,7 +80,7 @@ export const getAdminServices = async (req, res) => {
 // @access  Private/Admin
 export const approveService = async (req, res) => {
     try {
-        const service = await Service.findById(req.params.id);
+        const service = await Service.findById(req.params.serviceId);
         if (!service) return res.status(404).json({ message: 'Service not found' });
 
         service.isApproved = true;
@@ -99,7 +99,7 @@ export const approveService = async (req, res) => {
 // @access  Private/Admin
 export const rejectService = async (req, res) => {
     try {
-        const service = await Service.findById(req.params.id);
+        const service = await Service.findById(req.params.serviceId);
         if (!service) return res.status(404).json({ message: 'Service not found' });
 
         service.isApproved = false;
@@ -118,7 +118,7 @@ export const rejectService = async (req, res) => {
 // @access  Private/Admin
 export const deleteAdminService = async (req, res) => {
     try {
-        const service = await Service.findById(req.params.id);
+        const service = await Service.findById(req.params.serviceId);
         if (!service) return res.status(404).json({ message: 'Service not found' });
 
         await service.deleteOne();

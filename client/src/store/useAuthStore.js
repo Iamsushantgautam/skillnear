@@ -52,6 +52,13 @@ const useAuthStore = create((set) => ({
         localStorage.setItem('userLocation', JSON.stringify(locationData));
         set({ userLocation: locationData });
     },
+
+    updateUserInfo: (userData) => {
+        localStorage.setItem('userInfo', JSON.stringify(userData));
+        set({ user: userData });
+    },
+
+    clearError: () => set({ error: null })
 }));
 
 export default useAuthStore;

@@ -1,5 +1,7 @@
 import Message from '../models/Message.js';
 import Booking from '../models/Booking.js';
+import User from '../models/User.js';
+import mongoose from 'mongoose';
 
 // Helper to validate room access and get room info
 const validateRoom = async (roomId, userId) => {
@@ -7,19 +9,46 @@ const validateRoom = async (roomId, userId) => {
     let title = '';
     let otherUser = null;
 
-    // Check if it's a booking
-    let booking = null;
-    try { booking = await Booking.findById(roomId).populate('user', 'name avatar').populate('provider', 'name avatar'); } catch (e) { }
+    // 1. Check if it's a booking-based room
+    if (mongoose.Types.ObjectId.isValid(roomId)) {
+        let booking = null;
+        try {
+            booking = await Booking.findById(roomId)
+                .populate('user', 'name avatar')
+                .populate('provider', 'name avatar');
+        } catch (e) { }
 
-    if (booking) {
-        if (booking.user._id.toString() !== userId && booking.provider._id.toString() !== userId) return null; // Unauthorized
-        type = 'Booking';
-        title = `Booking #${roomId.slice(-6)}`;
-        otherUser = booking.user._id.toString() === userId ? booking.provider : booking.user;
-        return { type, title, otherUser };
+        if (booking) {
+            if (booking.user._id.toString() !== userId && booking.provider._id.toString() !== userId) return null;
+            type = 'Booking';
+            title = `Booking #${roomId.slice(-6).toUpperCase()}`;
+            otherUser = booking.user._id.toString() === userId ? booking.provider : booking.user;
+            return { type, title, otherUser };
+        }
     }
 
-    return null; // Not found
+    // 2. Check if it's a direct room (format: direct_id1_id2)
+    if (typeof roomId === 'string' && roomId.startsWith('direct_')) {
+        const parts = roomId.split('_');
+        if (parts.length === 3) {
+            const id1 = parts[1];
+            const id2 = parts[2];
+
+            if (id1 !== userId && id2 !== userId) return null; // User not in this room
+
+            const otherUserId = id1 === userId ? id2 : id1;
+            try {
+                otherUser = await User.findById(otherUserId).select('name avatar');
+                if (otherUser) {
+                    type = 'Direct';
+                    title = 'General Inquiry';
+                    return { type, title, otherUser };
+                }
+            } catch (e) { }
+        }
+    }
+
+    return null; // Not found or invalid
 };
 
 // @desc    Get chat history for a room
@@ -76,20 +105,20 @@ export const getRooms = async (req, res) => {
     try {
         const myId = req.user._id.toString();
 
-        // Find Bookings where user is client or provider
+        // 1. Find Bookings (Booking Rooms)
         const bookings = await Booking.find({
             $or: [{ user: myId }, { provider: myId }]
         }).populate('user', 'name avatar').populate('provider', 'name avatar');
 
-        const rooms = [];
+        const roomsMap = new Map();
 
         for (const booking of bookings) {
             const otherUser = booking.user._id.toString() === myId ? booking.provider : booking.user;
             const latestMsg = await Message.findOne({ roomId: booking._id.toString() }).sort({ createdAt: -1 });
 
-            rooms.push({
+            roomsMap.set(booking._id.toString(), {
                 roomId: booking._id.toString(),
-                title: `Booking #${booking._id.toString().slice(-6)}`,
+                title: `Booking #${booking._id.toString().slice(-6).toUpperCase()}`,
                 type: 'Booking',
                 otherUser,
                 lastMessage: latestMsg ? latestMsg.message : 'No messages yet',
@@ -97,9 +126,61 @@ export const getRooms = async (req, res) => {
             });
         }
 
-        rooms.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        // 2. Find Direct Rooms from Message history (where not linked to a booking)
+        const directMessages = await Message.find({
+            $or: [{ senderId: myId }, { receiverId: myId }],
+            roomId: { $regex: /^direct_/ }
+        }).sort({ createdAt: -1 });
+
+        for (const msg of directMessages) {
+            if (!roomsMap.has(msg.roomId)) {
+                const parts = msg.roomId.split('_');
+                const otherUserId = parts[1] === myId ? parts[2] : parts[1];
+
+                // Avoid redundant DB calls if possible, but for rooms list we need user info
+                const otherUser = await User.findById(otherUserId).select('name avatar');
+
+                roomsMap.set(msg.roomId, {
+                    roomId: msg.roomId,
+                    title: 'General Chat',
+                    type: 'Direct',
+                    otherUser,
+                    lastMessage: msg.message,
+                    updatedAt: msg.createdAt
+                });
+            } else {
+                // If room exists, check if this message is newer
+                const existing = roomsMap.get(msg.roomId);
+                if (new Date(msg.createdAt) > new Date(existing.updatedAt)) {
+                    existing.lastMessage = msg.message;
+                    existing.updatedAt = msg.createdAt;
+                }
+            }
+        }
+
+        const rooms = Array.from(roomsMap.values()).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
         res.json(rooms);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Delete all messages in a room
+// @route   DELETE /api/messages/:roomId
+// @access  Private
+export const deleteRoom = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const myId = req.user._id.toString();
+
+        const roomValid = await validateRoom(roomId, myId);
+        if (!roomValid) {
+            return res.status(403).json({ message: 'Not authorized or room does not exist' });
+        }
+
+        await Message.deleteMany({ roomId });
+        res.json({ message: 'Chat history deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

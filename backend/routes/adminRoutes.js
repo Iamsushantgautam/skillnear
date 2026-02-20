@@ -13,10 +13,12 @@ const router = express.Router();
 // Analytics
 router.get('/analytics', protect, admin, getAnalytics);
 
-// Service management
+// Service management — list all services
 router.get('/services', protect, admin, getAdminServices);
-router.put('/services/:id/approve', protect, admin, approveService);
-router.put('/services/:id/reject', protect, admin, rejectService);
-router.delete('/services/:id', protect, admin, deleteAdminService);
+
+// Service management — actions on specific service
+router.put('/services/:serviceId/approve', protect, admin, approveService);
+router.put('/services/:serviceId/reject', protect, admin, rejectService);
+router.delete('/services/:serviceId', protect, admin, deleteAdminService);
 
 export default router;
