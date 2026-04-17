@@ -28,11 +28,13 @@ const server = http.createServer(app);
 
 // CORS allowed origins: localhost + production Vercel domains from environment
 const allowedOrigins = [
-    'http://localhost:5173',   // client dev
-    'http://localhost:5174',   // admin dev (vite may use 5174 if 5173 is occupied)
-    process.env.FRONTEND_URL,          // e.g. https://skillnear.vercel.app
-    process.env.ADMIN_FRONTEND_URL,    // e.g. https://skillnear-admin.vercel.app
-].filter(Boolean); // remove undefined entries
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://skillnear.sushant.online',
+    'https://skillnear-admin.sushant.online',
+    process.env.FRONTEND_URL,
+    process.env.ADMIN_FRONTEND_URL,
+].filter(Boolean);
 
 const corsOptions = {
     origin: (origin, callback) => {
