@@ -726,12 +726,16 @@ const Dashboard = () => {
                                             <div style={styles.formGroup}>
                                                 <label style={styles.label}>Category</label>
                                                 <select className="input-field" value={gigCategory} onChange={e => setGigCategory(e.target.value)}>
-                                                    <option value="Home Repairs">Home Repairs</option>
-                                                    <option value="Electronics">Electronics</option>
-                                                    <option value="Salon & Beauty">Salon & Beauty</option>
-                                                    <option value="Groceries">Groceries</option>
+                                                    <option value="Salon">Salon</option>
+                                                    <option value="Carpenters">Carpenters</option>
+                                                    <option value="Plumbers">Plumbers</option>
                                                     <option value="Electricians">Electricians</option>
                                                     <option value="Cleaning">Cleaning</option>
+                                                    <option value="AC Repair">AC Repair</option>
+                                                    <option value="Painters">Painters</option>
+                                                    <option value="Tutors">Tutors</option>
+                                                    <option value="Groceries">Groceries</option>
+                                                    <option value="Electronics">Electronics</option>
                                                 </select>
                                             </div>
                                             <div style={styles.formGroup}>

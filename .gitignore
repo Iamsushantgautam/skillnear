@@ -24,7 +24,7 @@
 *.caffemodel
 *.npy
 *.npz
-models/
+# models/
 checkpoints/
 weights/
 

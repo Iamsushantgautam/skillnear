@@ -9,16 +9,18 @@ const Services = () => {
     const { userLocation } = useAuthStore();
     const query = new URLSearchParams(useLocation().search);
     const urlKeyword = query.get('keyword') || '';
+    const urlCategory = query.get('category') || '';
 
     const [searchTerm, setSearchTerm] = useState(urlKeyword);
-    const [category, setCategory] = useState('');
+    const [category, setCategory] = useState(urlCategory);
     const [location, setLocation] = useState(userLocation?.city && userLocation.city !== 'All of India' ? userLocation.city : '');
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
 
-    // Sync search term with URL keyword
+    // Sync state with URL changes
     useEffect(() => {
-        if (urlKeyword) setSearchTerm(urlKeyword);
-    }, [urlKeyword]);
+        setSearchTerm(query.get('keyword') || '');
+        setCategory(query.get('category') || '');
+    }, [useLocation().search]);
 
     useEffect(() => {
         if (userLocation?.city && userLocation.city !== 'All of India') {
@@ -60,9 +62,16 @@ const Services = () => {
                         <label style={styles.label}>Category</label>
                         <select className="input-field" value={category} onChange={(e) => setCategory(e.target.value)}>
                             <option value="">All Categories</option>
+                            <option value="Salon">Salon</option>
+                            <option value="Carpenters">Carpenters</option>
                             <option value="Plumbers">Plumbers</option>
                             <option value="Electricians">Electricians</option>
-                            <option value="Web Developers">Web Developers</option>
+                            <option value="Cleaning">Cleaning</option>
+                            <option value="AC Repair">AC Repair</option>
+                            <option value="Painters">Painters</option>
+                            <option value="Tutors">Tutors</option>
+                            <option value="Groceries">Groceries</option>
+                            <option value="Electronics">Electronics</option>
                         </select>
                     </div>
 
