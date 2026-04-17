@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { MapPin, Calendar, CreditCard, CheckCircle, ArrowLeft, Loader } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../utils/api';
 import useAuthStore from '../store/useAuthStore';
 
@@ -46,8 +47,8 @@ const BookingFlow = () => {
     const total = service ? +(service.price + tax).toFixed(2) : 0;
 
     const handleNext = () => {
-        if (step === 1 && (!date || !time)) { alert('Please select a date and time'); return; }
-        if (step === 2 && !street) { alert('Please enter your address'); return; }
+        if (step === 1 && (!date || !time)) { toast.error('Please select a date and time'); return; }
+        if (step === 2 && !street) { toast.error('Please enter your address'); return; }
         if (step < 3) { setStep(step + 1); return; }
         handleConfirm();
     };
@@ -65,8 +66,9 @@ const BookingFlow = () => {
             }, config);
             setBookingId(data._id);
             setBookingDone(true);
+            toast.success('Booking placed successfully!');
         } catch (err) {
-            alert(err.response?.data?.message || 'Booking failed. Please try again.');
+            toast.error(err.response?.data?.message || 'Booking failed. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -218,7 +220,7 @@ const BookingFlow = () => {
                     <div className="card">
                         <h3 style={{ fontWeight: 700, marginBottom: 16 }}>Order Summary</h3>
                         <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-                            <img src={service.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(service.title)}&background=ede9fe&color=4f46e5`} alt={service.title} style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover' }} />
+                            <img src={service.images?.[0] || (service.provider?.avatar && service.provider.avatar.startsWith('http') ? service.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || service.title)}&background=ede9fe&color=4f46e5`)} alt={service.title} style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || service.title || 'S')}&background=ede9fe&color=4f46e5&size=56`; }} />
                             <div>
                                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{service.title}</div>
                                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{service.category}</div>

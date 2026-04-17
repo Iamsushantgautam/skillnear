@@ -5,7 +5,9 @@ import {
     updateUserProfile,
     updateProviderStatus,
     updateUser,
-    deleteUser
+    deleteUser,
+    getShops,
+    getPublicProfileByUsername
 } from '../controllers/userController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -16,6 +18,12 @@ router.route('/')
 
 router.route('/profile')
     .put(protect, updateUserProfile);
+
+router.route('/shops')
+    .get(getShops);
+
+router.route('/public/:username')
+    .get(getPublicProfileByUsername);
 
 router.route('/:id')
     .get(getUserById)

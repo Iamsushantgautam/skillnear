@@ -60,6 +60,15 @@ export const updateUserProfile = async (req, res) => {
             user.name = req.body.name || user.name;
             user.email = req.body.email || user.email;
             user.phone = req.body.phone || user.phone;
+            
+            // Only update username if it's provided and different (ignore empty strings)
+            if (req.body.username && req.body.username.trim() !== "" && req.body.username !== user.username) {
+                const usernameExists = await User.findOne({ username: req.body.username });
+                if (usernameExists && usernameExists._id.toString() !== user._id.toString()) {
+                    return res.status(400).json({ message: 'Username is already taken' });
+                }
+                user.username = req.body.username;
+            }
             // Update avatar if provided
             if (req.body.avatar) {
                 user.avatar = req.body.avatar;
@@ -81,6 +90,7 @@ export const updateUserProfile = async (req, res) => {
                 email: updatedUser.email,
                 phone: updatedUser.phone,
                 avatar: updatedUser.avatar,
+                username: updatedUser.username,
                 role: updatedUser.role,
                 token: req.headers.authorization?.split(' ')[1], // return same token
             });
@@ -88,7 +98,11 @@ export const updateUserProfile = async (req, res) => {
             res.status(404).json({ message: 'User not found' });
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        if (error.code === 11000) {
+            res.status(400).json({ message: 'Username is already taken' });
+        } else {
+            res.status(500).json({ message: error.message });
+        }
     }
 };
 
@@ -162,6 +176,47 @@ export const updateUser = async (req, res) => {
         } else {
             res.status(404).json({ message: 'User not found' });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get all active shops
+// @route   GET /api/users/shops
+// @access  Public
+export const getShops = async (req, res) => {
+    try {
+        const shops = await User.find({
+            role: 'provider',
+            'providerDetails.providerType': 'Shop',
+            'providerDetails.isApproved': true
+        }).select('-password -otp -otpExpiry');
+        
+        res.json(shops);
+    } catch (error) {
+        console.error('getShops error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getPublicProfileByUsername = async (req, res) => {
+    try {
+        const usernameQuery = req.params.username;
+        // Case-insensitive search
+        const user = await User.findOne({ 
+            username: { $regex: new RegExp(`^${usernameQuery}$`, 'i') } 
+        }).select('-password -otp -otpExpiry');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const services = await Service.find({ provider: user._id, isApproved: true });
+
+        res.json({
+            user,
+            services
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

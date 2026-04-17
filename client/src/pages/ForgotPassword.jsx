@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../utils/api';
+import toast from 'react-hot-toast';
 import { Mail, ShieldCheck, Lock, ArrowLeft, Send } from 'lucide-react';
 
 const ForgotPassword = () => {
@@ -53,7 +54,7 @@ const ForgotPassword = () => {
                 otp,
                 newPassword
             });
-            alert(data.message);
+            toast.success(data.message);
             navigate('/login');
         } catch (err) {
             setError(err.response?.data?.message || 'Something went wrong');

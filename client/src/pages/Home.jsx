@@ -104,7 +104,7 @@ const Home = () => {
                             {servicesByCategory[category].map((service) => (
                                 <Link to={`/services/${service._id}`} key={service._id} className="card" style={{ textDecoration: 'none', color: 'inherit', display: 'block', padding: 0, overflow: 'hidden', cursor: 'pointer' }}>
                                     <div style={{ position: 'relative', width: '100%', height: '180px', backgroundColor: '#f3f4f6' }}>
-                                        <img src={service.images && service.images.length > 0 ? service.images[0] : 'https://via.placeholder.com/300x200'} alt={service.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <img src={service.images && service.images.length > 0 ? service.images[0] : (service.provider?.avatar && service.provider.avatar.startsWith('http') ? service.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || service.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`)} alt={service.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || service.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`; }} />
                                         <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--bg-color)', padding: '4px 8px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                             <Star size={14} color="#f59e0b" fill="#f59e0b" /> {service.rating?.toFixed(1) || '4.5'}
                                         </div>
@@ -113,7 +113,7 @@ const Home = () => {
                                         <h3 className="text-h3" style={{ fontSize: '1.1rem', marginBottom: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{service.title}</h3>
 
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                                            <img src={service.provider?.avatar || 'https://via.placeholder.com/32'} alt="Provider" style={{ width: '28px', height: '28px', borderRadius: '50%' }} />
+                                            <img src={service.provider?.avatar && service.provider.avatar.startsWith('http') ? service.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || 'P')}&background=ede9fe&color=4f46e5&size=32`} alt="Provider" style={{ width: '28px', height: '28px', borderRadius: '50%' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || 'P')}&background=ede9fe&color=4f46e5&size=32`; }} />
                                             <span style={{ fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: '500' }}>{service.provider?.name || 'Unknown Provider'}</span>
                                         </div>
 

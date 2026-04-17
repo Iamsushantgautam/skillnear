@@ -79,6 +79,7 @@ const Navbar = () => {
 
                 {/* Right Nav Links */}
                 <div style={styles.navLinks} className="hide-on-mobile">
+                    <Link to="/shops" style={styles.link}>Local Shops</Link>
                     <Link to="/services" style={styles.link}>Services</Link>
 
                     <div style={styles.divider}></div>
@@ -86,7 +87,7 @@ const Navbar = () => {
                     {user ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                             <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', ...styles.link }}>
-                                <img src={getAvatar(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                                <img src={getAvatar(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=ede9fe&color=4f46e5&size=80`; }} />
                                 <span className="hide-on-mobile">{user.name}</span>
                             </Link>
                             <button onClick={handleLogout} style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -107,7 +108,7 @@ const Navbar = () => {
                 <button style={styles.mobileMenuBtn} className="show-on-mobile">
                     {user ? (
                         <Link to="/dashboard">
-                            <img src={getAvatar(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                            <img src={getAvatar(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=ede9fe&color=4f46e5&size=80`; }} />
                         </Link>
                     ) : (
                         <Link to="/login" style={{ color: 'var(--primary)', fontWeight: '500' }}>Login</Link>

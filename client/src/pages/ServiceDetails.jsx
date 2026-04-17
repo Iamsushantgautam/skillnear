@@ -15,7 +15,7 @@ const ServiceDetails = () => {
             try {
                 const { data } = await api.get(`/api/services/${id}`);
                 setService(data);
-                setMainImage(data.images && data.images.length > 0 ? data.images[0] : 'https://via.placeholder.com/600x400');
+                setMainImage(data.images && data.images.length > 0 ? data.images[0] : (data.provider?.avatar && data.provider.avatar.startsWith('http') ? data.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.provider?.name || data.title || 'S')}&background=f3f4f6&color=4f46e5&size=600`));
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching service details", error);
@@ -62,7 +62,7 @@ const ServiceDetails = () => {
                     {/* Gallery */}
                     <div style={styles.gallery}>
                         <div style={styles.mainImageWrapper}>
-                            <img src={mainImage} alt={service.title} style={styles.mainImage} className="animate-fade-in" />
+                            <img src={mainImage} alt={service.title} style={styles.mainImage} className="animate-fade-in" onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || service.title || 'S')}&background=f3f4f6&color=4f46e5&size=600`; }} />
                         </div>
                         {service.images && service.images.length > 0 && (
                             <div style={styles.thumbnailList}>
@@ -73,6 +73,7 @@ const ServiceDetails = () => {
                                         alt={`Thumbnail ${idx}`}
                                         style={{ ...styles.thumbnail, borderColor: mainImage === img ? 'var(--primary)' : 'transparent' }}
                                         onClick={() => setMainImage(img)}
+                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || service.title || 'S')}&background=f3f4f6&color=4f46e5&size=100`; }}
                                     />
                                 ))}
                             </div>
@@ -128,17 +129,19 @@ const ServiceDetails = () => {
                             <h3 className="text-h3" style={{ fontSize: '1.1rem', marginBottom: '16px' }}>About the Provider</h3>
                             {service.provider ? (
                                 <>
-                                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                                    <Link to={`/u/${service.provider.username}`} style={{ display: 'flex', gap: '16px', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
                                         <img
                                             src={service.provider.avatar && service.provider.avatar.startsWith('http') ? service.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider.name || 'P')}&background=ede9fe&color=4f46e5&size=64`}
                                             alt={service.provider.name}
                                             style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover' }}
+                                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider.name || 'P')}&background=ede9fe&color=4f46e5&size=64`; }}
                                         />
                                         <div>
                                             <h4 style={{ fontSize: '1.1rem', fontWeight: '600' }}>{service.provider.name}</h4>
+                                            <p className="text-small">@{service.provider.username || 'provider'}</p>
                                             <p className="text-small">Member since {new Date(service.provider.createdAt || Date.now()).getFullYear()}</p>
                                         </div>
-                                    </div>
+                                    </Link>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', background: 'var(--bg-color)', padding: '12px', borderRadius: 'var(--radius-sm)' }}>
                                         <div style={{ textAlign: 'center' }}>
                                             <div style={{ fontWeight: '600' }}>{service.provider.providerDetails?.experienceYears || 0}</div>

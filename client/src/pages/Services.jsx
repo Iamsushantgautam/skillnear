@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Search, MapPin, Star, Filter } from 'lucide-react';
+import { Search, MapPin, Star, Filter, Map, List } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
+import ServiceMap from '../components/ServiceMap';
 
 const Services = () => {
     const { userLocation } = useAuthStore();
@@ -12,6 +13,7 @@ const Services = () => {
     const [searchTerm, setSearchTerm] = useState(urlKeyword);
     const [category, setCategory] = useState('');
     const [location, setLocation] = useState(userLocation?.city && userLocation.city !== 'All of India' ? userLocation.city : '');
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
 
     // Sync search term with URL keyword
     useEffect(() => {
@@ -110,19 +112,41 @@ const Services = () => {
                     </div>
                 </div>
 
-                <h2 className="text-h2" style={{ marginBottom: '24px', fontSize: '1.5rem' }}>
-                    {category ? `${category} Services` : 'All Services'}
-                </h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <h2 className="text-h2" style={{ fontSize: '1.5rem', margin: 0 }}>
+                        {category ? `${category} Services` : 'All Services'}
+                    </h2>
+                    
+                    <div style={{ display: 'flex', gap: '8px', backgroundColor: '#e2e8f0', padding: '4px', borderRadius: '8px' }}>
+                        <button 
+                            onClick={() => setViewMode('list')} 
+                            style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: viewMode === 'list' ? '#fff' : 'transparent', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: '500', transition: 'all 0.2s' }}
+                        >
+                            <List size={16} /> List
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('map')} 
+                            style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', background: viewMode === 'map' ? '#fff' : 'transparent', color: viewMode === 'map' ? 'var(--primary)' : 'var(--text-muted)', boxShadow: viewMode === 'map' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: '500', transition: 'all 0.2s' }}
+                        >
+                            <Map size={16} /> Map
+                        </button>
+                    </div>
+                </div>
 
-                <div style={styles.grid}>
-                    {loading ? (
-                        <p>Loading services...</p>
-                    ) : servicesList.length === 0 ? (
-                        <p>No services found matching your criteria.</p>
-                    ) : (
-                        servicesList.map((srv) => (
+                {viewMode === 'map' ? (
+                    <div className="animate-fade-in">
+                        <ServiceMap />
+                    </div>
+                ) : (
+                    <div style={styles.grid} className="animate-fade-in">
+                        {loading ? (
+                            <p>Loading services...</p>
+                        ) : servicesList.length === 0 ? (
+                            <p>No services found matching your criteria.</p>
+                        ) : (
+                            servicesList.map((srv) => (
                             <Link to={`/services/${srv._id}`} key={srv._id} className="card" style={styles.serviceCard}>
-                                <img src={srv.images && srv.images.length > 0 ? srv.images[0] : 'https://via.placeholder.com/300x200'} alt={srv.title} style={styles.cardImage} />
+                                <img src={srv.images && srv.images.length > 0 ? srv.images[0] : (srv.provider?.avatar && srv.provider.avatar.startsWith('http') ? srv.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`)} alt={srv.title} style={styles.cardImage} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`; }} />
                                 <div style={styles.cardContent}>
                                     <span className="text-small" style={{ color: 'var(--primary)', fontWeight: '600' }}>{srv.category}</span>
                                     <h3 className="text-h3" style={{ fontSize: '1.1rem', margin: '8px 0' }}>{srv.title}</h3>
@@ -139,6 +163,7 @@ const Services = () => {
                                                 src={srv.provider?.avatar && srv.provider.avatar.startsWith('http') ? srv.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || 'P')}&background=ede9fe&color=4f46e5&size=30`}
                                                 alt="Avatar"
                                                 style={{ borderRadius: '50%', width: '24px', height: '24px', objectFit: 'cover' }}
+                                                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || 'P')}&background=ede9fe&color=4f46e5&size=30`; }}
                                             />
                                             <span className="text-small">{srv.provider ? srv.provider.name : 'Unknown'}</span>
                                         </div>
@@ -156,6 +181,7 @@ const Services = () => {
                         ))
                     )}
                 </div>
+                )}
             </div>
         </div>
     );

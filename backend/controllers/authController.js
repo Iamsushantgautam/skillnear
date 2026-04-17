@@ -7,7 +7,7 @@ import sendEmail from '../utils/sendEmail.js';
 // @access  Public
 export const registerUser = async (req, res) => {
     try {
-        const { name, email, password, phone } = req.body;
+        const { name, email, password, phone, username } = req.body;
 
         const userExists = await User.findOne({ email });
 
@@ -15,9 +15,17 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        if (username) {
+            const usernameExists = await User.findOne({ username });
+            if (usernameExists) {
+                return res.status(400).json({ message: 'Username is already taken' });
+            }
+        }
+
         const user = await User.create({
             name,
             email,
+            username,
             password,
             phone,
         });
@@ -29,6 +37,7 @@ export const registerUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 avatar: user.avatar,
+                username: user.username,
                 role: user.role,
                 token
             });
@@ -47,7 +56,13 @@ export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
+        const identifier = email.trim();
+        const user = await User.findOne({ 
+            $or: [
+                { email: identifier },
+                { username: identifier }
+            ]
+        });
 
         if (user && (await user.matchPassword(password))) {
             const token = generateToken(res, user._id);
@@ -56,6 +71,7 @@ export const loginUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 avatar: user.avatar,
+                username: user.username,
                 role: user.role,
                 token
             });
@@ -107,7 +123,7 @@ export const applyToBeProvider = async (req, res) => {
             user.providerDetails = {
                 about: about || '',
                 experienceYears: isNaN(exp) ? 0 : exp,
-                isApproved: false,
+                isApproved: true,
                 availability: true,
                 providerType: providerType || 'Services',
                 title: title || '',

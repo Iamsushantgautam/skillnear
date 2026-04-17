@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, MapPin, Edit, Trash2, X, Plus } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, MapPin, Edit, Trash2, X, Plus, Inbox, Loader } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import toast from 'react-hot-toast';
 import useAuthStore from '../store/useAuthStore';
 import api from '../utils/api';
 import ChatList from '../components/ChatList';
@@ -11,6 +12,8 @@ const Dashboard = () => {
     const navigate = useNavigate();
     const [role, setRole] = useState(user?.role || 'customer');
     const [activeTab, setActiveTab] = useState(user?.role === 'provider' ? 'mygigs' : 'profile');
+    const [revisionNote, setRevisionNote] = useState('');
+    const [bookingForRevision, setBookingForRevision] = useState(null);
 
     const getAvatar = (userData) => {
         if (userData?.avatar && userData.avatar.startsWith('http')) return userData.avatar;
@@ -43,16 +46,47 @@ const Dashboard = () => {
     const [shopImages, setShopImages] = useState([]);
     const [uploadingImage, setUploadingImage] = useState(false);
 
-    // Gig Registration States
+    // Expanded Gig Registration States (3-Page Flow)
+    const [gigStep, setGigStep] = useState(1);
+    const [gigBusinessType, setGigBusinessType] = useState('service'); // service or shop
     const [gigTitle, setGigTitle] = useState('');
     const [gigCategory, setGigCategory] = useState('Home Repairs');
     const [gigDesc, setGigDesc] = useState('');
-    const [gigPrice, setGigPrice] = useState('');
+    const [gigPrice, setGigPrice] = useState(''); // Default/Basic price
     const [gigPriceType, setGigPriceType] = useState('fixed');
-    const [gigCity, setGigCity] = useState(userLocation?.city && userLocation.city !== 'All of India' ? userLocation.city : '');
-    const [gigImages, setGigImages] = useState([]);   // up to 5 thumbnail URLs
+    const [gigState, setGigState] = useState('');
+    const [gigCity, setGigCity] = useState('');
+    const [gigAddress, setGigAddress] = useState('');
+    const [gigZipCode, setGigZipCode] = useState('');
+    
+    // Plans state (Fiverr-style 3 plans)
+    const [usePlans, setUsePlans] = useState(true);
+    const [gigPlans, setGigPlans] = useState([
+        { name: 'Basic', price: '', description: '', features: '', deliveryTime: '2 Days' },
+        { name: 'Standard', price: '', description: '', features: '', deliveryTime: '5 Days' },
+        { name: 'Premium', price: '', description: '', features: '', deliveryTime: '10 Days' }
+    ]);
+
+    // Shop specific details
+    const [shopOpeningTime, setShopOpeningTime] = useState('09:00 AM');
+    const [shopClosingTime, setShopClosingTime] = useState('09:00 PM');
+    const [shopIsHomeDelivery, setShopIsHomeDelivery] = useState(false);
+
+    const [gigImages, setGigImages] = useState([]);   
     const [uploadingGigImages, setUploadingGigImages] = useState(false);
     const [creatingGig, setCreatingGig] = useState(false);
+
+    const indiaLocations = {
+        "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore"],
+        "Delhi": ["New Delhi", "North Delhi", "South Delhi", "West Delhi"],
+        "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
+        "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Mangaluru"],
+        "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik"],
+        "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Salem"],
+        "Telangana": ["Hyderabad", "Warangal", "Nizamabad"],
+        "Uttar Pradesh": ["Lucknow", "Kanpur", "Ghaziabad", "Agra", "Varanasi", "Noida"],
+        "West Bengal": ["Kolkata", "Howrah", "Durgapur"],
+    };
 
     // Edit Gig State
     const [showEditModal, setShowEditModal] = useState(false);
@@ -71,6 +105,7 @@ const Dashboard = () => {
     const [savingProfile, setSavingProfile] = useState(false);
     const [profileName, setProfileName] = useState(user?.name || '');
     const [profilePhone, setProfilePhone] = useState(user?.phone || '');
+    const [profileUsername, setProfileUsername] = useState(user?.username || '');
 
     // Bookings state
     const [myBookings, setMyBookings] = useState([]);
@@ -88,6 +123,7 @@ const Dashboard = () => {
             setProfileAvatar(user.avatar || '');
             setProfileName(user.name || '');
             setProfilePhone(user.phone || '');
+            setProfileUsername(user.username || '');
             fetchMyBookings();
         }
     }, [user, activeTab]);
@@ -120,15 +156,17 @@ const Dashboard = () => {
         }
     };
 
-    const updateBookingStatus = async (bookingId, status) => {
+    const updateBookingStatus = async (bookingId, status, note = '') => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await api.put(`/api/bookings/${bookingId}/status`, { status }, config);
+            await api.put(`/api/bookings/${bookingId}/status`, { status, revisionNote: note || revisionNote }, config);
             fetchMyBookings();
             fetchProviderRequests();
-            alert(`Booking status updated to ${status}`);
+            toast.success(`Booking status updated to ${status.replace('_', ' ')}`);
+            setBookingForRevision(null);
+            setRevisionNote('');
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to update status');
+            toast.error(err.response?.data?.message || 'Failed to update status');
         }
     };
 
@@ -163,7 +201,7 @@ const Dashboard = () => {
     const handleGigImageUpload = async (e) => {
         const files = Array.from(e.target.files);
         const remaining = 5 - gigImages.length;
-        if (remaining <= 0) { alert('Maximum 5 images allowed'); return; }
+        if (remaining <= 0) { toast.error('Maximum 5 images allowed'); return; }
         const toUpload = files.slice(0, remaining);
         setUploadingGigImages(true);
         try {
@@ -171,7 +209,7 @@ const Dashboard = () => {
             setGigImages(prev => [...prev, ...urls]);
         } catch (err) {
             console.error('Image upload failed', err);
-            alert('One or more images failed to upload');
+            toast.error('One or more images failed to upload');
         } finally {
             setUploadingGigImages(false);
             e.target.value = '';
@@ -187,7 +225,7 @@ const Dashboard = () => {
             const url = await uploadSingleFile(file);
             setProfileAvatar(url);
         } catch (err) {
-            alert('Avatar upload failed');
+            toast.error('Avatar upload failed');
         } finally {
             setUploadingAvatar(false);
             e.target.value = '';
@@ -199,113 +237,124 @@ const Dashboard = () => {
         setSavingProfile(true);
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await api.put('/api/users/profile', { name: profileName, phone: profilePhone, avatar: profileAvatar }, config);
-            // Update local store globally
-            const updated = { ...user, name: data.name, phone: data.phone, avatar: data.avatar };
+            const cleanUsername = profileUsername.trim().toLowerCase().replace(/\s+/g, '_');
+            const { data } = await api.put('/api/users/profile', { 
+                name: profileName, 
+                phone: profilePhone, 
+                avatar: profileAvatar, 
+                username: cleanUsername 
+            }, config);
+            
+            // The server returns the updated user.
+            const updated = { 
+                ...user, 
+                name: data.name, 
+                phone: data.phone, 
+                avatar: data.avatar, 
+                username: data.username || cleanUsername
+            };
             updateUserInfo(updated);
-            alert('Profile updated successfully!');
+            toast.success('Profile updated successfully!');
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to save profile');
+            toast.error(err.response?.data?.message || 'Failed to save profile');
         } finally {
             setSavingProfile(false);
         }
     };
 
     const handleApplyProvider = async () => {
-        // Validation could be added here based on type
-        if (!providerTitle || !providerExp || !providerAbout || !providerType) {
-            alert("Please fill all required base fields and select a provider type");
-            return;
-        }
-
         try {
             setIsSubmitting(true);
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${user.token}`
-                }
-            };
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
 
             const payload = {
-                title: providerTitle,
-                experienceYears: providerExp,
-                about: providerAbout,
-                providerType,
+                title: 'Professional Provider',
+                about: 'Ready to provide high-quality local services.',
+                experienceYears: 0,
+                providerType: 'Services',
             };
-
-            if (providerType === 'Shop') {
-                payload.shopName = shopName;
-                payload.ownerName = ownerName;
-                payload.location = location;
-                payload.images = shopImages;
-            } else if (providerType === 'Services') {
-                payload.serviceName = serviceName;
-                payload.serviceProviderName = serviceProviderName;
-                payload.liveLocation = liveLocation;
-                payload.shopDetails = shopDetails;
-                payload.shopAddress = shopAddress;
-            }
 
             const { data } = await api.post('/api/auth/become-provider', payload, config);
 
             // Update local storage and store
             const updatedUser = { ...user, role: data.role, providerDetails: data.providerDetails };
-            localStorage.setItem('userInfo', JSON.stringify(updatedUser));
-            window.location.reload(); // Quick refresh to update store properly
+            updateUserInfo(updatedUser);
+            
+            toast.success("Congratulations! You are now a professional.");
+            setProviderStatus('approved');
+            setRole('provider');
+            setActiveTab('mygigs');
         } catch (error) {
             console.error("Error applying", error);
-            alert(error.response?.data?.message || "Failed to submit application");
+            toast.error(error.response?.data?.message || "Failed to submit application");
+        } finally {
             setIsSubmitting(false);
         }
     };
 
     const handleCreateGig = async () => {
-        if (!gigTitle || !gigDesc || !gigPrice) {
-            alert("Please fill all required gig fields");
+        // Validation: For services, price is usually needed. For shops, it is optional.
+        if (!gigTitle || !gigDesc || (gigBusinessType === 'service' && !gigPrice && !usePlans)) {
+            toast.error("Please fill all required fields (Title, Description, and Price/Plans)");
             return;
         }
 
         try {
             setCreatingGig(true);
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${user.token}`
-                }
-            };
-            await api.post('/api/services', {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const payload = {
                 title: gigTitle,
                 category: gigCategory,
                 description: gigDesc,
+                businessType: gigBusinessType,
                 price: Number(gigPrice),
                 priceType: gigPriceType,
-                images: gigImages,   // send uploaded thumbnail URLs
-                location: { city: gigCity || 'Remote', isRemote: !gigCity }
-            }, config);
+                images: gigImages,
+                location: { 
+                    city: gigCity || 'Remote', 
+                    state: gigState,
+                    address: gigAddress,
+                    zipCode: gigZipCode,
+                    isRemote: !gigCity 
+                },
+                plans: usePlans ? gigPlans.map(p => ({ ...p, price: Number(p.price) })) : [],
+                shopDetails: gigBusinessType === 'shop' ? {
+                    openingTime: shopOpeningTime,
+                    closingTime: shopClosingTime,
+                    isHomeDelivery: shopIsHomeDelivery
+                } : null
+            };
 
-            alert("Gig submitted! It is now pending admin approval.");
+            await api.post('/api/services', payload, config);
+
+            toast.success("Gig published successfully!");
+            // Reset form
+            setGigStep(1);
             setGigTitle('');
             setGigDesc('');
             setGigPrice('');
             setGigCity('');
+            setGigState('');
+            setGigAddress('');
             setGigImages([]);
             setCreatingGig(false);
             fetchMyGigs();
+            setActiveTab('mygigs');
         } catch (error) {
             console.error("Error creating gig", error);
-            alert("Failed to create gig");
+            toast.error("Failed to create gig");
             setCreatingGig(false);
         }
     };
 
     const handleDeleteGig = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this gig? This action cannot be undone.")) return;
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             await api.delete(`/api/services/${id}`, config);
-            alert("Gig deleted successfully");
+            toast.success("Gig deleted successfully");
             fetchMyGigs();
         } catch (error) {
-            alert("Failed to delete gig");
+            toast.error("Failed to delete gig");
         }
     };
 
@@ -331,11 +380,11 @@ const Dashboard = () => {
                 location: { city: editForm.city || 'Remote', isRemote: !editForm.city }
             }, config);
 
-            alert("Gig updated successfully!");
+            toast.success("Gig updated successfully!");
             setShowEditModal(false);
             fetchMyGigs();
         } catch (error) {
-            alert("Failed to update gig");
+            toast.error("Failed to update gig");
         }
     };
 
@@ -373,12 +422,15 @@ const Dashboard = () => {
                 <Settings size={18} /> Add New Gig
             </button>
             <button style={getTabStyle('requests')} onClick={() => setActiveTab('requests')}>
-                <CalendarIcon size={18} /> Booking Requests
+                <Inbox size={18} /> Booking Requests
                 {bookingRequests.filter(r => r.status === 'pending').length > 0 && (
                     <span style={{ marginLeft: '6px', backgroundColor: '#dc2626', color: 'white', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem' }}>
                         {bookingRequests.filter(r => r.status === 'pending').length}
                     </span>
                 )}
+            </button>
+            <button style={getTabStyle('bookings')} onClick={() => setActiveTab('bookings')}>
+                <CalendarIcon size={18} /> My Orders (Purchased)
             </button>
             <button style={getTabStyle('messages')} onClick={() => setActiveTab('messages')}>
                 <MessageSquare size={18} /> Messages
@@ -410,7 +462,7 @@ const Dashboard = () => {
                 {/* Sidebar */}
                 <aside className="card" style={{ padding: '0', overflow: 'hidden', alignSelf: 'start' }}>
                     <div style={{ padding: '24px', textAlign: 'center', borderBottom: '1px solid var(--border-color)' }}>
-                        <img src={getAvatar(user)} alt="Avatar" style={{ borderRadius: '50%', marginBottom: '16px', width: '80px', height: '80px', objectFit: 'cover' }} />
+                        <img src={getAvatar(user)} alt="Avatar" style={{ borderRadius: '50%', marginBottom: '16px', width: '80px', height: '80px', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=ede9fe&color=4f46e5&size=120`; }} />
                         <h3 className="text-h3" style={{ fontSize: '1.2rem', textTransform: 'capitalize' }}>{user?.name || 'User'}</h3>
                         <p className="text-small" style={{ textTransform: 'capitalize', fontWeight: '600', color: providerStatus === 'approved' ? '#059669' : 'var(--text-muted)' }}>
                             {role === 'provider' ? (providerStatus === 'approved' ? 'Activated' : 'Pending Approval') : role}
@@ -478,6 +530,7 @@ const Dashboard = () => {
                                         src={getAvatar({ avatar: profileAvatar, name: profileName })}
                                         alt="avatar"
                                         style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }}
+                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileName || 'U')}&background=ede9fe&color=4f46e5&size=120`; }}
                                     />
                                     {uploadingAvatar && (
                                         <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.7rem' }}>Uploading…</div>
@@ -495,6 +548,18 @@ const Dashboard = () => {
                             <div style={styles.formGroup}>
                                 <label style={styles.label}>Full Name</label>
                                 <input type="text" className="input-field" value={profileName} onChange={e => setProfileName(e.target.value)} />
+                            </div>
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>Username</label>
+                                <input type="text" className="input-field" placeholder="Choose a unique username" value={profileUsername} onChange={e => setProfileUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))} />
+                                {profileUsername && (
+                                    <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                        Public URL: <a href={`/u/${profileUsername}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>{window.location.host}/u/{profileUsername}</a>
+                                    </div>
+                                )}
+                                {!profileUsername && (
+                                    <p style={{ marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Setting a username creates a public profile page for your services.</p>
+                                )}
                             </div>
                             <div style={styles.formGroup}>
                                 <label style={styles.label}>Email Address</label>
@@ -521,97 +586,28 @@ const Dashboard = () => {
                                 <div style={{ backgroundColor: '#d1fae5', color: '#065f46', padding: '16px', borderRadius: '8px' }}>
                                     Congratulations! You are an approved provider. Go to "Manage Services" to add items.
                                 </div>
-                            ) : (
-                                <>
-                                    <p className="text-body" style={{ marginBottom: '24px' }}>
-                                        Join our network of professionals and start earning by offering your skills.
-                                    </p>
-                                    <div style={styles.formGroup}>
-                                        <label style={styles.label}>Professional Title / Specialty</label>
-                                        <input type="text" className="input-field" placeholder="e.g. Master Plumber, SEO Expert" value={providerTitle} onChange={e => setProviderTitle(e.target.value)} />
-                                    </div>
-                                    <div style={styles.formGroup}>
-                                        <label style={styles.label}>Years of Experience</label>
-                                        <input type="number" className="input-field" placeholder="e.g. 5" value={providerExp} onChange={e => setProviderExp(e.target.value)} />
-                                    </div>
-                                    <div style={styles.formGroup}>
-                                        <label style={styles.label}>About You</label>
-                                        <textarea className="input-field" rows="4" placeholder="Describe your expertise and services..." value={providerAbout} onChange={e => setProviderAbout(e.target.value)}></textarea>
-                                    </div>
-                                    <div style={styles.formGroup}>
-                                        <label style={styles.label}>Provider Type</label>
-                                        <select className="input-field" value={providerType} onChange={e => setProviderType(e.target.value)}>
-                                            <option value="Shop">Shop</option>
-                                            <option value="Services">Services (No Shop required)</option>
-                                        </select>
-                                    </div>
-
-                                    {providerType === 'Shop' && (
-                                        <>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Shop Name</label>
-                                                <input type="text" className="input-field" value={shopName} onChange={e => setShopName(e.target.value)} />
-                                            </div>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Owner Name</label>
-                                                <input type="text" className="input-field" value={ownerName} onChange={e => setOwnerName(e.target.value)} />
-                                            </div>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Location / Physical Address</label>
-                                                <input type="text" className="input-field" value={location} onChange={e => setLocation(e.target.value)} />
-                                            </div>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Upload Shop Images
-                                                    {uploadingGigImages && <span style={{ fontSize: '0.8rem', color: 'var(--primary)', marginLeft: 6 }}>(Uploading...)</span>}
-                                                </label>
-                                                <input type="file" className="input-field" multiple accept="image/*"
-                                                    onChange={async (e) => {
-                                                        const files = Array.from(e.target.files);
-                                                        setUploadingGigImages(true);
-                                                        try {
-                                                            const urls = await Promise.all(files.map(uploadSingleFile));
-                                                            setShopImages(prev => [...prev, ...urls]);
-                                                        } catch { alert('Upload failed'); }
-                                                        finally { setUploadingGigImages(false); e.target.value = ''; }
-                                                    }}
-                                                    disabled={uploadingGigImages} />
-                                                {shopImages.length > 0 && <p className="text-small" style={{ marginTop: '4px', color: 'var(--success)' }}>{shopImages.length} image(s) uploaded</p>}
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {providerType === 'Services' && (
-                                        <>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Service Name</label>
-                                                <input type="text" className="input-field" value={serviceName} onChange={e => setServiceName(e.target.value)} />
-                                            </div>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Service Provider Name</label>
-                                                <input type="text" className="input-field" value={serviceProviderName} onChange={e => setServiceProviderName(e.target.value)} />
-                                            </div>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Live Location / Coverage Area</label>
-                                                <input type="text" className="input-field" value={liveLocation} onChange={e => setLiveLocation(e.target.value)} />
-                                            </div>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Shop Details (if applicable)</label>
-                                                <textarea className="input-field" rows="3" value={shopDetails} onChange={e => setShopDetails(e.target.value)}></textarea>
-                                            </div>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Shop Address</label>
-                                                <textarea className="input-field" rows="2" value={shopAddress} onChange={e => setShopAddress(e.target.value)}></textarea>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    <button className="btn-primary" onClick={handleApplyProvider} disabled={isSubmitting}>
-                                        {isSubmitting ? 'Submitting...' : 'Submit Application'}
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    )}
+                             ) : (
+                                 <div className="animate-fade-in" style={{ maxWidth: '600px', margin: '0 auto' }}>
+                                     <div className="card" style={{ padding: '48px', textAlign: 'center' }}>
+                                         <div style={{ width: '80px', height: '80px', backgroundColor: '#ede9fe', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: 'var(--primary)' }}>
+                                             <Briefcase size={40} />
+                                         </div>
+                                         <h2 className="text-h2" style={{ marginBottom: '12px' }}>Join the Network</h2>
+                                         <p className="text-body" style={{ marginBottom: '32px', color: 'var(--text-muted)' }}>
+                                             Start offering your skills to thousands of local customers. Auto-approval enabled!
+                                         </p>
+         
+                                         <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                                             <button className="btn-primary" onClick={handleApplyProvider} disabled={isSubmitting} style={{ height: '52px', padding: '0 40px', fontSize: '1.1rem' }}>
+                                                 {isSubmitting ? <span className="flex-center" style={{ gap: 10 }}><Loader size={20} className="spin" /> Activating...</span> : 'Activate Professional Account'}
+                                             </button>
+                                             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '16px' }}> ⚡ Instant activation. Start listing your gigs immediately. </p>
+                                         </div>
+                                     </div>
+                                 </div>
+                             )}
+                         </div>
+                     )}
 
                     {activeTab === 'bookings' && (
                         <div className="animate-fade-in">
@@ -626,10 +622,10 @@ const Dashboard = () => {
                                         <div className="flex-between" style={{ marginBottom: '12px' }}>
                                             <span style={{ fontWeight: '600' }}>{b.service?.title}</span>
                                             <span style={{
-                                                color: b.status === 'pending' ? '#f59e0b' : b.status === 'confirmed' ? '#2563eb' : b.status === 'completed' ? '#059669' : '#dc2626',
-                                                backgroundColor: b.status === 'pending' ? '#fef3c7' : b.status === 'confirmed' ? '#dbeafe' : b.status === 'completed' ? '#d1fae5' : '#fee2e2',
+                                                color: ['pending', 'in_progress', 'revision_requested'].includes(b.status) ? '#f59e0b' : ['confirmed', 'delivered'].includes(b.status) ? '#2563eb' : b.status === 'completed' ? '#059669' : '#dc2626',
+                                                backgroundColor: ['pending', 'in_progress', 'revision_requested'].includes(b.status) ? '#fef3c7' : ['confirmed', 'delivered'].includes(b.status) ? '#dbeafe' : b.status === 'completed' ? '#d1fae5' : '#fee2e2',
                                                 padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase'
-                                            }}>{b.status}</span>
+                                            }}>{b.status.replace('_', ' ')}</span>
                                         </div>
                                         <div className="text-body" style={{ marginBottom: '4px' }}><CalendarIcon size={14} style={{ display: 'inline', marginRight: '8px' }} /> {new Date(b.date).toLocaleDateString()} | {b.timeSlot}</div>
                                         <div className="text-body" style={{ marginBottom: '12px' }}><MapPin size={14} style={{ display: 'inline', marginRight: '8px' }} /> {b.address?.street}, {b.address?.city}</div>
@@ -637,6 +633,36 @@ const Dashboard = () => {
                                             <span className="text-small" style={{ color: 'var(--text-muted)' }}>Provider: {b.provider?.name}</span>
                                             <span style={{ fontWeight: 'bold' }}>₹{b.totalPrice}</span>
                                         </div>
+                                        {b.status === 'delivered' && (
+                                            <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <button onClick={() => updateBookingStatus(b._id, 'completed')} className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem', flex: 1 }}>Accept & Mark Complete</button>
+                                                    <button onClick={() => setBookingForRevision(b._id)} className="btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem', flex: 1, borderColor: '#f59e0b', color: '#f59e0b' }}>Request Revision</button>
+                                                </div>
+                                                
+                                                {bookingForRevision === b._id && (
+                                                    <div className="animate-fade-in" style={{ marginTop: '12px', padding: '12px', backgroundColor: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
+                                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: '#92400e' }}>Revision Details:</label>
+                                                        <textarea 
+                                                            className="input-field" 
+                                                            placeholder="What needs to be changed?" 
+                                                            value={revisionNote} 
+                                                            onChange={(e) => setRevisionNote(e.target.value)}
+                                                            style={{ fontSize: '0.85rem', marginBottom: '8px' }}
+                                                        />
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            <button onClick={() => updateBookingStatus(b._id, 'revision_requested')} className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem', backgroundColor: '#f59e0b' }}>Submit Revision Request</button>
+                                                            <button onClick={() => setBookingForRevision(null)} className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Cancel</button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        {b.revisions && b.revisions.length > 0 && (
+                                            <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#fffbeb', borderRadius: '8px', fontSize: '0.85rem' }}>
+                                                <strong>Revision Note:</strong> {b.revisions[b.revisions.length - 1].note}
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             )}
@@ -644,102 +670,241 @@ const Dashboard = () => {
                     )}
 
                     {activeTab === 'services' && (
-                        <div className="animate-fade-in">
-                            <h2 className="text-h2" style={{ marginBottom: '16px' }}>Manage Services & Gigs</h2>
-                            <p className="text-body" style={{ marginBottom: '24px' }}>
-                                Register a new service gig. Once approved by the admin, it will be visible to customers.
-                            </p>
-                            <div className="card" style={{ backgroundColor: '#f9fafb', borderColor: 'var(--border-color)', boxShadow: 'none' }}>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>Gig Title</label>
-                                    <input type="text" className="input-field" placeholder="e.g. I will fix your plumbing issues" value={gigTitle} onChange={e => setGigTitle(e.target.value)} />
+                        <div className="animate-fade-in" style={{ maxWidth: '900px', margin: '0 auto' }}>
+                            <div className="flex-between" style={{ marginBottom: '24px' }}>
+                                <div>
+                                    <h2 className="text-h2">Publish Your Expertise</h2>
+                                    <p className="text-body" style={{ color: 'var(--text-muted)' }}>Step {gigStep} of 3: {gigStep === 1 ? 'General Details' : gigStep === 2 ? 'Pricing & Plans' : 'Location & Media'}</p>
                                 </div>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>Category</label>
-                                    <select className="input-field" value={gigCategory} onChange={e => setGigCategory(e.target.value)}>
-                                        <option value="Carpenters">Carpenters</option>
-                                        <option value="Plumbers">Plumbers</option>
-                                        <option value="Electricians">Electricians</option>
-                                        <option value="Salon">Salon</option>
-                                        <option value="Painters">Painters</option>
-                                        <option value="Cleaning">Cleaning</option>
-                                    </select>
-                                </div>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>Location / City</label>
-                                    <input type="text" className="input-field" placeholder="e.g. New York, NY" value={gigCity} onChange={e => setGigCity(e.target.value)} />
-                                </div>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>Description</label>
-                                    <textarea className="input-field" rows="4" placeholder="Detail the specific service you offer..." value={gigDesc} onChange={e => setGigDesc(e.target.value)}></textarea>
-                                </div>
-                                <div style={{ display: 'flex', gap: '16px' }}>
-                                    <div style={{ ...styles.formGroup, flex: 1 }}>
-                                        <label style={styles.label}>Price ($)</label>
-                                        <input type="number" className="input-field" placeholder="e.g. 50" value={gigPrice} onChange={e => setGigPrice(e.target.value)} />
-                                    </div>
-                                    <div style={{ ...styles.formGroup, flex: 1 }}>
-                                        <label style={styles.label}>Price Type</label>
-                                        <select className="input-field" value={gigPriceType} onChange={e => setGigPriceType(e.target.value)}>
-                                            <option value="fixed">Fixed Rate</option>
-                                            <option value="hourly">Hourly</option>
-                                            <option value="starting_at">Starting At</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                {/* Gig Thumbnail Images — up to 5 */}
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Gig Thumbnails
-                                        <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.8rem', marginLeft: 8 }}>
-                                            ({gigImages.length}/5) — First image = main thumbnail
-                                        </span>
-                                    </label>
-
-                                    {/* Thumbnail previews */}
-                                    {gigImages.length > 0 && (
-                                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
-                                            {gigImages.map((url, i) => (
-                                                <div key={i} style={{ position: 'relative' }}>
-                                                    <img src={url} alt={`thumb-${i}`}
-                                                        style={{
-                                                            width: 90, height: 70, objectFit: 'cover', borderRadius: 8,
-                                                            border: i === 0 ? '2px solid var(--primary)' : '2px solid var(--border-color)'
-                                                        }} />
-                                                    {i === 0 && (
-                                                        <span style={{
-                                                            position: 'absolute', top: 4, left: 4, backgroundColor: 'var(--primary)', color: '#fff',
-                                                            fontSize: '0.6rem', fontWeight: 700, padding: '1px 5px', borderRadius: 4
-                                                        }}>MAIN</span>
-                                                    )}
-                                                    <button onClick={() => setGigImages(prev => prev.filter((_, idx) => idx !== i))}
-                                                        style={{
-                                                            position: 'absolute', top: 4, right: 4, width: 18, height: 18, background: '#dc2626', border: 'none',
-                                                            borderRadius: '50%', color: '#fff', fontSize: '0.65rem', cursor: 'pointer', lineHeight: 1,
-                                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                        }}>✕</button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {gigImages.length < 5 && (
-                                        <label style={{
-                                            display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-                                            border: '2px dashed var(--border-color)', borderRadius: 10, padding: '12px 20px',
-                                            backgroundColor: '#f9fafb', color: 'var(--text-muted)', fontSize: '0.85rem'
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    {[1, 2, 3].map(s => (
+                                        <div key={s} style={{
+                                            width: '32px', height: '32px', borderRadius: '50%',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            backgroundColor: gigStep === s ? 'var(--primary)' : gigStep > s ? '#d1fae5' : '#f3f4f6',
+                                            color: gigStep === s ? '#fff' : gigStep > s ? '#059669' : 'var(--text-muted)',
+                                            fontWeight: '700', fontSize: '0.85rem', transition: 'all 0.3s ease'
                                         }}>
-                                            <span style={{ fontSize: '1.4rem' }}>📷</span>
-                                            {uploadingGigImages ? 'Uploading…' : `Add images (${5 - gigImages.length} remaining)`}
-                                            <input type="file" accept="image/*" multiple style={{ display: 'none' }}
-                                                onChange={handleGigImageUpload} disabled={uploadingGigImages} />
-                                        </label>
+                                            {gigStep > s ? '✓' : s}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="card" style={{ padding: '32px', minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
+                                {gigStep === 1 && (
+                                    <div className="animate-fade-in">
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
+                                            <div 
+                                                onClick={() => setGigBusinessType('service')}
+                                                style={{
+                                                    padding: '24px', borderRadius: '12px', border: `2px solid ${gigBusinessType === 'service' ? 'var(--primary)' : 'var(--border-color)'}`,
+                                                    cursor: 'pointer', backgroundColor: gigBusinessType === 'service' ? '#f5f3ff' : 'transparent', textAlign: 'center', transition: 'all 0.3s'
+                                                }}>
+                                                <Briefcase size={32} color={gigBusinessType === 'service' ? 'var(--primary)' : '#94a3b8'} style={{ marginBottom: '12px' }} />
+                                                <div style={{ fontWeight: '700', color: gigBusinessType === 'service' ? 'var(--primary)' : 'var(--text-main)' }}>Offering a Service</div>
+                                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Gigs, consulting, or local home services</p>
+                                            </div>
+                                            <div 
+                                                onClick={() => setGigBusinessType('shop')}
+                                                style={{
+                                                    padding: '24px', borderRadius: '12px', border: `2px solid ${gigBusinessType === 'shop' ? 'var(--primary)' : 'var(--border-color)'}`,
+                                                    cursor: 'pointer', backgroundColor: gigBusinessType === 'shop' ? '#f5f3ff' : 'transparent', textAlign: 'center', transition: 'all 0.3s'
+                                                }}>
+                                                <MapPin size={32} color={gigBusinessType === 'shop' ? 'var(--primary)' : '#94a3b8'} style={{ marginBottom: '12px' }} />
+                                                <div style={{ fontWeight: '700', color: gigBusinessType === 'shop' ? 'var(--primary)' : 'var(--text-main)' }}>Registering a Shop</div>
+                                                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>Physical outlets, local vendor spaces</p>
+                                            </div>
+                                        </div>
+
+                                        <div style={styles.formGroup}>
+                                            <label style={styles.label}>{gigBusinessType === 'service' ? 'Gig Title' : 'Shop Name'}</label>
+                                            <input type="text" className="input-field" placeholder={gigBusinessType === 'service' ? "e.g. I will fix your technical plumbing issues" : "e.g. Sharma Grocery Store"} value={gigTitle} onChange={e => setGigTitle(e.target.value)} />
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                            <div style={styles.formGroup}>
+                                                <label style={styles.label}>Category</label>
+                                                <select className="input-field" value={gigCategory} onChange={e => setGigCategory(e.target.value)}>
+                                                    <option value="Home Repairs">Home Repairs</option>
+                                                    <option value="Electronics">Electronics</option>
+                                                    <option value="Salon & Beauty">Salon & Beauty</option>
+                                                    <option value="Groceries">Groceries</option>
+                                                    <option value="Electricians">Electricians</option>
+                                                    <option value="Cleaning">Cleaning</option>
+                                                </select>
+                                            </div>
+                                            <div style={styles.formGroup}>
+                                                <label style={styles.label}>{gigBusinessType === 'service' ? 'Project Type' : 'Shop Category'}</label>
+                                                <select className="input-field">
+                                                    <option value="Single Project">Single Project</option>
+                                                    <option value="Subscription">Monthly Support</option>
+                                                    <option value="Maintenance">Maintenance</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div style={styles.formGroup}>
+                                            <label style={styles.label}>Detailed Description</label>
+                                            <textarea className="input-field" rows="6" placeholder="Describe what you offer in detail..." value={gigDesc} onChange={e => setGigDesc(e.target.value)}></textarea>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {gigStep === 2 && (
+                                    <div className="animate-fade-in">
+                                        <div className="flex-between" style={{ marginBottom: '20px' }}>
+                                            <div style={{ fontWeight: '700', fontSize: '1.1rem' }}>Pricing & Packages {gigBusinessType === 'shop' && <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.9rem' }}>(Optional for Shops)</span>}</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span className="text-small" style={{ color: 'var(--text-muted)' }}>Use 3 Tier Plans?</span>
+                                                <input type="checkbox" checked={usePlans} onChange={e => setUsePlans(e.target.checked)} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
+                                            </div>
+                                        </div>
+
+                                        {!usePlans ? (
+                                            <div style={{ display: 'flex', gap: '16px', backgroundColor: '#f9fafb', padding: '24px', borderRadius: '12px' }}>
+                                                <div style={{ ...styles.formGroup, flex: 1 }}>
+                                                    <label style={styles.label}>Standard Price (₹) {gigBusinessType === 'shop' && '(Optional)'}</label>
+                                                    <input type="number" className="input-field" placeholder="0.00" value={gigPrice} onChange={e => setGigPrice(e.target.value)} />
+                                                </div>
+                                                <div style={{ ...styles.formGroup, flex: 1 }}>
+                                                    <label style={styles.label}>Billing Type</label>
+                                                    <select className="input-field" value={gigPriceType} onChange={e => setGigPriceType(e.target.value)}>
+                                                        <option value="fixed">Fixed Price</option>
+                                                        <option value="hourly">Hourly Rate</option>
+                                                        <option value="starting_at">Starting At</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                                                {gigPlans.map((plan, idx) => (
+                                                    <div key={idx} style={{ 
+                                                        border: '1.5px solid var(--border-color)', borderRadius: '12px', padding: '16px', 
+                                                        backgroundColor: idx === 1 ? '#f5f3ff' : '#fff', borderColor: idx === 1 ? 'var(--primary)' : 'var(--border-color)' 
+                                                    }}>
+                                                        <div style={{ fontWeight: '800', fontSize: '0.9rem', color: idx === 1 ? 'var(--primary)' : 'var(--text-main)', marginBottom: '12px', textAlign: 'center' }}>
+                                                            {idx === 0 ? 'BASIC' : idx === 1 ? 'STANDARD' : 'PREMIUM'}
+                                                        </div>
+                                                        <div style={styles.formGroup}>
+                                                            <input type="number" className="input-field" placeholder={`Price (₹) ${gigBusinessType === 'shop' ? '(Optional)' : ''}`} value={plan.price} onChange={e => {
+                                                                const np = [...gigPlans]; np[idx].price = e.target.value; setGigPlans(np);
+                                                            }} />
+                                                        </div>
+                                                        <div style={styles.formGroup}>
+                                                            <textarea className="input-field" rows="3" placeholder={`Description ${gigBusinessType === 'shop' ? '(Optional)' : ''}...`} value={plan.description} onChange={e => {
+                                                                const np = [...gigPlans]; np[idx].description = e.target.value; setGigPlans(np);
+                                                            }} style={{ fontSize: '0.8rem' }} />
+                                                        </div>
+                                                        <div style={styles.formGroup}>
+                                                            <input type="text" className="input-field" placeholder="Features (comma separated)" value={plan.features} onChange={e => {
+                                                                const np = [...gigPlans]; np[idx].features = e.target.value; setGigPlans(np);
+                                                            }} style={{ fontSize: '0.8rem' }} />
+                                                        </div>
+                                                        <div style={styles.formGroup}>
+                                                            <select className="input-field" value={plan.deliveryTime} onChange={e => {
+                                                                const np = [...gigPlans]; np[idx].deliveryTime = e.target.value; setGigPlans(np);
+                                                            }} style={{ fontSize: '0.8rem' }}>
+                                                                <option>1 Day Delivery</option>
+                                                                <option>2 Days Delivery</option>
+                                                                <option>5 Days Delivery</option>
+                                                                <option>10 Days Delivery</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {gigBusinessType === 'shop' && (
+                                            <div style={{ marginTop: '32px', padding: '24px', backgroundColor: '#f0f9ff', borderRadius: '12px' }}>
+                                                <div style={{ fontWeight: '700', marginBottom: '16px', color: '#0369a1' }}>Shop Specific Details</div>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                                    <div style={styles.formGroup}>
+                                                        <label style={styles.label}>Opening Time</label>
+                                                        <input type="time" className="input-field" value={shopOpeningTime} onChange={e => setShopOpeningTime(e.target.value)} />
+                                                    </div>
+                                                    <div style={styles.formGroup}>
+                                                        <label style={styles.label}>Closing Time</label>
+                                                        <input type="time" className="input-field" value={shopClosingTime} onChange={e => setShopClosingTime(e.target.value)} />
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                                    <input type="checkbox" checked={shopIsHomeDelivery} onChange={e => setShopIsHomeDelivery(e.target.checked)} />
+                                                    <label className="text-small">Provide Home Delivery?</label>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {gigStep === 3 && (
+                                    <div className="animate-fade-in">
+                                        <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '20px' }}>Location & Search Visibility</div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                            <div style={styles.formGroup}>
+                                                <label style={styles.label}>State</label>
+                                                <select className="input-field" value={gigState} onChange={e => { setGigState(e.target.value); setGigCity(''); }}>
+                                                    <option value="">Select State</option>
+                                                    {Object.keys(indiaLocations).map(s => <option key={s} value={s}>{s}</option>)}
+                                                </select>
+                                            </div>
+                                            <div style={styles.formGroup}>
+                                                <label style={styles.label}>City</label>
+                                                <select className="input-field" value={gigCity} onChange={e => setGigCity(e.target.value)} disabled={!gigState}>
+                                                    <option value="">Select City</option>
+                                                    {gigState && indiaLocations[gigState].map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+                                            <div style={styles.formGroup}>
+                                                <label style={styles.label}>Physical Address / Street</label>
+                                                <input type="text" className="input-field" placeholder="Full address" value={gigAddress} onChange={e => setGigAddress(e.target.value)} />
+                                            </div>
+                                            <div style={styles.formGroup}>
+                                                <label style={styles.label}>Pincode</label>
+                                                <input type="text" className="input-field" placeholder="e.g. 226001" value={gigZipCode} onChange={e => setGigZipCode(e.target.value)} />
+                                            </div>
+                                        </div>
+
+                                        <div style={{ marginTop: '24px' }}>
+                                            <label style={styles.label}>Gig Gallery (Add up to 5 photos)</label>
+                                            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: '12px' }}>
+                                                {gigImages.map((url, i) => (
+                                                    <div key={i} style={{ position: 'relative' }}>
+                                                        <img src={url} alt={`gig-${i}`} style={{ width: 100, height: 80, objectFit: 'cover', borderRadius: 8, border: '1.5px solid #e2e8f0' }} />
+                                                        <button onClick={() => setGigImages(prev => prev.filter((_, idx) => idx !== i))} style={{ position: 'absolute', top: -5, right: -5, width: 22, height: 22, background: '#ef4444', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>×</button>
+                                                    </div>
+                                                ))}
+                                                {gigImages.length < 5 && (
+                                                    <label style={{ width: 100, height: 80, border: '2px dashed #cbd5e1', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#94a3b8' }}>
+                                                        <Plus size={24} />
+                                                        <input type="file" multiple accept="image/*" onChange={handleGigImageUpload} style={{ display: 'none' }} />
+                                                    </label>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div style={{ marginTop: 'auto', paddingTop: '40px', display: 'flex', justifyContent: 'space-between' }}>
+                                    <button 
+                                        onClick={() => setGigStep(prev => Math.max(1, prev - 1))} 
+                                        className="btn-outline" 
+                                        disabled={gigStep === 1}
+                                        style={{ visibility: gigStep === 1 ? 'hidden' : 'visible' }}
+                                    >Back</button>
+                                    
+                                    {gigStep < 3 ? (
+                                        <button onClick={() => setGigStep(prev => prev + 1)} className="btn-primary" style={{ padding: '12px 32px' }}>Next Step</button>
+                                    ) : (
+                                        <button onClick={handleCreateGig} disabled={creatingGig || uploadingGigImages} className="btn-primary" style={{ padding: '12px 48px', backgroundColor: '#059669' }}>
+                                            {creatingGig ? 'Publishing...' : 'Complete & Publish Gig'}
+                                        </button>
                                     )}
                                 </div>
-
-                                <button className="btn-primary" style={{ marginTop: '8px' }} onClick={handleCreateGig} disabled={creatingGig || uploadingGigImages}>
-                                    {creatingGig ? 'Publishing Gig...' : uploadingGigImages ? 'Uploading images...' : 'Publish New Gig'}
-                                </button>
                             </div>
                         </div>
                     )}
@@ -794,9 +959,10 @@ const Dashboard = () => {
                                             }}>
                                                 {/* Thumbnail */}
                                                 <img
-                                                    src={gig.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(gig.title)}&background=ede9fe&color=4f46e5&size=60`}
+                                                    src={gig.images?.[0] || (user?.avatar && user.avatar.startsWith('http') ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || gig.title)}&background=ede9fe&color=4f46e5&size=60`)}
                                                     alt={gig.title}
                                                     style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border-color)' }}
+                                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || gig.title)}&background=ede9fe&color=4f46e5&size=60`; }}
                                                 />
                                                 <div style={{ flex: 1 }}>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
@@ -866,10 +1032,10 @@ const Dashboard = () => {
                                             <div className="flex-between" style={{ marginBottom: '16px' }}>
                                                 <div>
                                                     <span style={{
-                                                        color: req.status === 'pending' ? '#f59e0b' : req.status === 'confirmed' ? '#2563eb' : req.status === 'completed' ? '#059669' : '#dc2626',
-                                                        backgroundColor: req.status === 'pending' ? '#fef3c7' : req.status === 'confirmed' ? '#dbeafe' : req.status === 'completed' ? '#d1fae5' : '#fee2e2',
+                                                        color: ['pending', 'in_progress', 'revision_requested'].includes(req.status) ? '#f59e0b' : ['confirmed', 'delivered'].includes(req.status) ? '#2563eb' : req.status === 'completed' ? '#059669' : '#dc2626',
+                                                        backgroundColor: ['pending', 'in_progress', 'revision_requested'].includes(req.status) ? '#fef3c7' : ['confirmed', 'delivered'].includes(req.status) ? '#dbeafe' : req.status === 'completed' ? '#d1fae5' : '#fee2e2',
                                                         padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700'
-                                                    }}>{req.status.toUpperCase()}</span>
+                                                    }}>{req.status.replace('_', ' ').toUpperCase()}</span>
                                                     <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginTop: '8px' }}>{req.service?.title}</h3>
                                                 </div>
                                                 <div style={{ textAlign: 'right' }}>
@@ -908,18 +1074,33 @@ const Dashboard = () => {
                                                     </>
                                                 )}
                                                 {req.status === 'confirmed' && (
-                                                    <>
-                                                        <button onClick={() => updateBookingStatus(req._id, 'completed')} className="btn-primary" style={{ flex: 1, padding: '10px' }}>Mark Completed</button>
-                                                        <button onClick={() => navigate(`/chat?provider=${req.user?._id}`)} className="btn-outline" style={{ flex: 1, padding: '10px' }}>Chat with Customer</button>
-                                                    </>
+                                                    <button onClick={() => updateBookingStatus(req._id, 'in_progress')} className="btn-primary" style={{ flex: 1, padding: '10px' }}>Mark In Progress</button>
+                                                )}
+                                                {['in_progress', 'revision_requested'].includes(req.status) && (
+                                                    <button onClick={() => updateBookingStatus(req._id, 'delivered')} className="btn-primary" style={{ flex: 1, padding: '10px', backgroundColor: '#059669' }}>Deliver Service</button>
+                                                )}
+                                                {['confirmed', 'in_progress', 'revision_requested', 'delivered'].includes(req.status) && (
+                                                    <button onClick={() => navigate(`/chat?roomId=${req._id}`)} className="btn-outline" style={{ flex: 1, padding: '10px' }}>Chat with Customer</button>
                                                 )}
                                                 {req.status === 'completed' && (
-                                                    <p style={{ color: '#059669', fontWeight: '600', fontSize: '0.9rem' }}>✓ Service has been successfully delivered</p>
+                                                    <p style={{ color: '#059669', fontWeight: '600', fontSize: '0.9rem' }}>✓ Service completed & accepted</p>
                                                 )}
                                                 {req.status === 'cancelled' && (
                                                     <p style={{ color: '#dc2626', fontWeight: '600', fontSize: '0.9rem' }}>This booking was cancelled</p>
                                                 )}
                                             </div>
+                                            
+                                            {req.status === 'revision_requested' && req.revisions?.length > 0 && (
+                                                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', borderRadius: '4px' }}>
+                                                    <strong style={{ color: '#92400e', fontSize: '0.9rem' }}>Customer requested revision:</strong>
+                                                    <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem' }}>{req.revisions[req.revisions.length - 1].note}</p>
+                                                </div>
+                                            )}
+                                            {req.status === 'delivered' && (
+                                                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '4px', fontSize: '0.85rem', color: '#1e40af' }}>
+                                                    Waiting for customer to accept or request a revision.
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

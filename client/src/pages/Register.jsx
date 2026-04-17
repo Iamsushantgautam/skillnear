@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import useAuthStore from '../store/useAuthStore';
 
 const Register = () => {
     const [name, setName] = useState('');
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,10 +22,10 @@ const Register = () => {
     const submitHandler = async (e) => {
         e.preventDefault();
         if (password !== confirmPassword) {
-            alert("Passwords do not match");
+            toast.error("Passwords do not match");
             return;
         }
-        const success = await register(name, email, password);
+        const success = await register(name, email, username, password, '');
         if (success) {
             navigate('/');
         }
@@ -47,6 +49,18 @@ const Register = () => {
                             placeholder="Enter your name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label style={styles.label}>Username</label>
+                        <input
+                            type="text"
+                            className="input-field"
+                            placeholder="Choose a username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
                             required
                         />
                     </div>

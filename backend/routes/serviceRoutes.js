@@ -6,10 +6,14 @@ import {
     updateService,
     deleteService,
     getMyServices,
+    getNearbyServices,
 } from '../controllers/serviceController.js';
 import { protect, provider } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+// Public: Get nearby services map
+router.get('/nearby', getNearbyServices);
 
 // Public: Get all APPROVED services
 router.route('/')

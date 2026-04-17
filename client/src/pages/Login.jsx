@@ -34,11 +34,11 @@ const Login = () => {
 
                 <form onSubmit={submitHandler} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
-                        <label style={styles.label}>Email Address</label>
+                        <label style={styles.label}>Email Address or Username</label>
                         <input
-                            type="email"
+                            type="text"
                             className="input-field"
-                            placeholder="Enter your email"
+                            placeholder="Enter your email or username"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required

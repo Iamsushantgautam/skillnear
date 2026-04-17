@@ -61,20 +61,24 @@ export const createService = async (req, res) => {
             return res.status(403).json({ message: 'Only providers can create services' });
         }
 
-        const { title, category, subCategory, description, price, priceType, images, location } = req.body;
+        const { title, category, subCategory, description, businessType, plans, shopDetails, price, priceType, images, location, geoCoordinates } = req.body;
 
         const service = new Service({
             title,
             category,
             subCategory,
             description,
+            businessType,
+            plans,
+            shopDetails,
             price,
             priceType,
             images,
             location,
+            geoCoordinates: geoCoordinates || { type: 'Point', coordinates: [0, 0] },
             provider: req.user._id,
-            isApproved: false, // Always starts pending admin review
-            isActive: false,
+            isApproved: true, // Auto-approved for this project
+            isActive: true,
         });
 
         const createdService = await service.save();
@@ -149,6 +153,35 @@ export const deleteService = async (req, res) => {
         } else {
             res.status(404).json({ message: 'Service not found' });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Fetch nearby services
+// @route   GET /api/services/nearby
+// @access  Public
+export const getNearbyServices = async (req, res) => {
+    try {
+        const { lng, lat, distance = 5 } = req.query; // distance in km
+        
+        if (!lng || !lat) {
+            return res.status(400).json({ message: 'Longitude and latitude are required' });
+        }
+
+        const radius = distance / 6378.1; // Convert km to radians
+
+        const services = await Service.find({
+            isActive: true,
+            isApproved: true,
+            geoCoordinates: {
+                $geoWithin: {
+                    $centerSphere: [[parseFloat(lng), parseFloat(lat)], radius]
+                }
+            }
+        }).populate('provider', 'name avatar');
+
+        res.json(services);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

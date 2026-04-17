@@ -6,6 +6,7 @@ import Users from './pages/Users';
 import AdminServices from './pages/AdminServices';
 import Bookings from './pages/Bookings';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
 import useAuthStore from './store/useAuthStore';
 import './App.css';
 
@@ -22,6 +23,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* Protected Admin Routes wrapping in Layout */}
         <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
