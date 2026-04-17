@@ -38,7 +38,9 @@ export const registerUser = async (req, res) => {
                 email: user.email,
                 avatar: user.avatar,
                 username: user.username,
+                phone: user.phone,
                 role: user.role,
+                providerDetails: user.providerDetails,
                 token
             });
         } else {
@@ -72,7 +74,9 @@ export const loginUser = async (req, res) => {
                 email: user.email,
                 avatar: user.avatar,
                 username: user.username,
+                phone: user.phone,
                 role: user.role,
+                providerDetails: user.providerDetails,
                 token
             });
         } else {

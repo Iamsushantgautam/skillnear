@@ -151,3 +151,54 @@ export const getAllBookings = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+// @desc    Get provider dashboard stats
+// @route   GET /api/bookings/provider/stats
+// @access  Private/Provider
+export const getProviderStats = async (req, res) => {
+    try {
+        const providerId = req.user._id;
+
+        // 1. Gigs count
+        const totalGigs = await Service.countDocuments({ provider: providerId });
+        const activeGigs = await Service.countDocuments({ provider: providerId, isActive: true, isApproved: true });
+
+        // 2. Bookings count
+        const bookings = await Booking.find({ provider: providerId });
+        const totalOrders = bookings.length;
+        const pendingOrders = bookings.filter(b => b.status === 'pending').length;
+
+        // 3. Earnings (Sum of completed bookings)
+        const totalEarnings = bookings
+            .filter(b => b.status === 'completed')
+            .reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+
+        // 4. Chart Data (Last 6 Months)
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const chartData = [];
+        const now = new Date();
+        
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const monthName = months[d.getMonth()];
+            const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
+            const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+
+            const monthEarnings = bookings
+                .filter(b => b.status === 'completed' && b.createdAt >= monthStart && b.createdAt <= monthEnd)
+                .reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+
+            chartData.push({ name: monthName, earnings: monthEarnings });
+        }
+
+        res.json({
+            activeGigs,
+            totalGigs,
+            totalOrders,
+            totalEarnings,
+            pendingOrders,
+            chartData
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

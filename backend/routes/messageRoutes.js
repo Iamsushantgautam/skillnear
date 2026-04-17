@@ -1,5 +1,5 @@
 import express from 'express';
-import { getMessages, sendMessage, getRooms, deleteRoom } from '../controllers/messageController.js';
+import { getMessages, sendMessage, getRooms, deleteRoom, markMessagesAsRead } from '../controllers/messageController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -13,5 +13,8 @@ router.route('/')
 router.route('/:roomId')
     .get(protect, getMessages)
     .delete(protect, deleteRoom);
+
+router.route('/:roomId/read')
+    .put(protect, markMessagesAsRead);
 
 export default router;

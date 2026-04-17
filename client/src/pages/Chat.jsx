@@ -53,10 +53,20 @@ const Chat = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Setup Socket
+    const socketRef = useRef(null);
+    const activeRoomRef = useRef(null);
+
+    // Sync ref
+    useEffect(() => {
+        activeRoomRef.current = activeRoom;
+    }, [activeRoom]);
+
+    // Setup Socket once
     useEffect(() => {
         if (!user) return;
+        
         const newSocket = io(API_URL);
+        socketRef.current = newSocket;
         setSocket(newSocket);
 
         newSocket.emit('setup', user._id);
@@ -66,15 +76,17 @@ const Chat = () => {
         });
 
         newSocket.on('receiveMessage', async (data) => {
-            setMessages((prev) => {
-                if (activeRoom && activeRoom.roomId === data.roomId) {
+            const currentRoom = activeRoomRef.current;
+            
+            // If message is for the active room, add to messages list
+            if (currentRoom && currentRoom.roomId === data.roomId) {
+                setMessages((prev) => {
                     if (prev.find(m => m._id === data._id)) return prev;
                     return [...prev, data];
-                }
-                return prev;
-            });
+                });
+            }
 
-            // Update room list
+            // Always update rooms list for last message preview
             setRooms((prev) => {
                 const exists = prev.find(r => r.roomId === data.roomId);
                 if (exists) {
@@ -84,30 +96,24 @@ const Chat = () => {
                             : r
                     ).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
                 } else {
-                    // It's a new room for this user, we should ideally fetch room info or just reload rooms
-                    // For now, let's trigger a room refresh
-                    const fetchUpdatedRooms = async () => {
-                        try {
-                            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-                            const { data: updatedRooms } = await api.get('/api/messages/rooms', config);
-                            setRooms(updatedRooms);
-                        } catch (e) { }
-                    };
-                    fetchUpdatedRooms();
+                    // Trigger refresh for new room
+                    api.get('/api/messages/rooms', { headers: { Authorization: `Bearer ${user.token}` } })
+                        .then(({ data: updatedRooms }) => setRooms(updatedRooms))
+                        .catch(() => {});
                     return prev;
                 }
             });
         });
 
         newSocket.on('typing', (roomId) => {
-            if (activeRoom?.roomId === roomId) setPartnerTyping(true);
+            if (activeRoomRef.current?.roomId === roomId) setPartnerTyping(true);
         });
         newSocket.on('stopTyping', (roomId) => {
-            if (activeRoom?.roomId === roomId) setPartnerTyping(false);
+            if (activeRoomRef.current?.roomId === roomId) setPartnerTyping(false);
         });
 
         return () => newSocket.disconnect();
-    }, [user, activeRoom?.roomId]);
+    }, [user?._id]);
 
     // Fetch Rooms & Handle initial room
     useEffect(() => {
@@ -187,6 +193,9 @@ const Chat = () => {
                 const config = { headers: { Authorization: `Bearer ${user.token}` } };
                 const { data } = await api.get(`/api/messages/${activeRoom.roomId}`, config);
                 setMessages(data);
+                
+                // Mark messages as read when opening a room
+                await api.put(`/api/messages/${activeRoom.roomId}/read`, {}, config);
             } catch (error) {
                 console.error("Error fetching messages", error);
             }
@@ -254,9 +263,9 @@ const Chat = () => {
             <div className={`card ${isMobile ? 'no-border-radius' : ''}`} style={{ display: 'flex', height: '100%', padding: 0, overflow: 'hidden', border: isMobile ? 'none' : '1px solid var(--border-color)', boxShadow: isMobile ? 'none' : '0 10px 25px -5px rgba(0,0,0,0.1)' }}>
 
                 {/* Sidebar Contacts */}
-                <div style={{ ...styles.contactsSidebar, display: isMobile && showChatArea ? 'none' : 'flex' }}>
-                    <div style={{ padding: '24px 20px', borderBottom: '1px solid var(--border-color)', backgroundColor: '#fff' }}>
-                        <h2 className="text-h2" style={{ fontSize: '1.5rem', fontWeight: 800 }}>Messages</h2>
+                <div style={{ ...styles.sidebar, display: isMobile && showChatArea ? 'none' : 'flex' }}>
+                    <div style={{ padding: '24px 16px', borderBottom: '1px solid #f0f2f5', backgroundColor: '#fff' }}>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Messages</h2>
                     </div>
 
                     <div style={{ overflowY: 'auto', flex: 1, backgroundColor: '#fff' }}>
@@ -305,7 +314,7 @@ const Chat = () => {
                     {activeRoom ? (
                         <>
                             {/* Chat Header */}
-                            <div style={styles.chatHeader}>
+                            <div style={styles.header}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     {isMobile && (
                                         <ArrowLeft size={24} style={{ cursor: 'pointer', color: '#64748b' }} onClick={() => setShowChatArea(false)} />
@@ -370,16 +379,22 @@ const Chat = () => {
                                                     </div>
                                                 )}
                                                 <div style={{ ...styles.messageRow, alignSelf: isMe ? 'flex-end' : 'flex-start' }}>
-                                                    <div style={{ ...styles.bubble, backgroundColor: isMe ? 'var(--primary)' : '#fff', color: isMe ? '#white' : '#1e293b', boxShadow: isMe ? '0 4px 15px -3px rgba(79, 70, 229, 0.4)' : '0 1px 2px rgba(0,0,0,0.05)', borderRadius: isMe ? '18px 18px 2px 18px' : '18px 18px 18px 2px', color: isMe ? '#fff' : '#1e293b' }}>
+                                                    <div style={{ 
+                                                        ...styles.bubble, 
+                                                        backgroundColor: isMe ? '#dcf8c6' : '#fff', 
+                                                        borderRadius: isMe ? '8px 0px 8px 8px' : '0px 8px 8px 8px',
+                                                        color: '#1e293b',
+                                                        alignSelf: isMe ? 'flex-end' : 'flex-start'
+                                                    }}>
                                                         {msg.message}
-                                                    </div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4, justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-                                                        <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
-                                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                        {isMe && (
-                                                            msg.read ? <CheckCheck size={12} color="var(--primary)" /> : <Check size={12} color="#94a3b8" />
-                                                        )}
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, justifyContent: 'flex-end' }}>
+                                                            <span style={{ fontSize: '0.65rem', color: '#667781' }}>
+                                                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                            {isMe && (
+                                                                msg.read ? <CheckCheck size={14} color="#53bdeb" /> : <Check size={14} color="#667781" />
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </React.Fragment>
@@ -417,7 +432,7 @@ const Chat = () => {
                                     <button
                                         onClick={handleSendMessage}
                                         disabled={!message.trim()}
-                                        style={{ backgroundColor: message.trim() ? 'var(--primary)' : '#e2e8f0', color: '#white', border: 'none', width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: message.trim() ? 'pointer' : 'default', transition: 'all 0.3s', color: 'white' }}>
+                                        style={{ backgroundColor: message.trim() ? 'var(--primary)' : '#e2e8f0', border: 'none', width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: message.trim() ? 'pointer' : 'default', transition: 'all 0.3s', color: 'white' }}>
                                         <Send size={20} />
                                     </button>
                                 </div>
@@ -446,70 +461,84 @@ const MessageSquare = ({ size, style }) => (
 );
 
 const styles = {
-    contactsSidebar: {
-        width: '100%',
-        maxWidth: '380px',
-        borderRight: '1px solid var(--border-color)',
+    container: {
+        height: '100vh',
+        display: 'flex',
+        backgroundColor: '#fff',
+        overflow: 'hidden',
+    },
+    sidebar: {
+        width: '380px',
+        borderRight: '1px solid #f0f2f5',
+        display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#fff',
-        flexShrink: 0
     },
     contactItem: {
         display: 'flex',
         alignItems: 'center',
         gap: '14px',
-        padding: '20px',
+        padding: '16px',
         cursor: 'pointer',
-        borderBottom: '1px solid #f1f5f9',
+        borderBottom: '1px solid #f0f2f5',
         transition: 'all 0.2s',
     },
     chatArea: {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#efe7de',
+        position: 'relative',
+        backgroundImage: 'url("https://w0.peakpx.com/wallpaper/580/678/OHR.jpg")',
+        backgroundSize: 'contain',
+        backgroundRepeat: 'repeat',
     },
-    chatHeader: {
+    header: {
+        padding: '12px 16px',
+        backgroundColor: '#fff',
+        borderBottom: '1px solid #f0f2f5',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '16px 28px',
-        backgroundColor: '#fff',
-        borderBottom: '1px solid var(--border-color)',
         zIndex: 10,
     },
     messagesContainer: {
         flex: 1,
-        padding: '24px',
+        padding: '20px 7%',
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
-        gap: '8px',
+        gap: '4px',
+        scrollBehavior: 'smooth',
     },
     messageRow: {
         display: 'flex',
         flexDirection: 'column',
-        maxWidth: '75%',
+        marginBottom: '4px',
     },
     bubble: {
-        padding: '12px 18px',
-        fontSize: '0.94rem',
-        lineHeight: '1.5',
+        padding: '8px 12px',
+        maxWidth: '85%',
+        fontSize: '0.95rem',
+        position: 'relative',
+        boxShadow: '0 1px 0.5px rgba(0,0,0,0.13)',
     },
     inputArea: {
-        padding: '20px 28px',
-        backgroundColor: '#fff',
-        borderTop: '1px solid var(--border-color)',
+        padding: '10px 16px',
+        backgroundColor: '#f0f2f5',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        zIndex: 10,
     },
     messageInput: {
-        width: '100%',
+        flex: 1,
         border: 'none',
-        outline: 'none',
-        backgroundColor: '#f1f5f9',
-        padding: '14px 24px',
         borderRadius: '24px',
-        fontSize: '1rem',
-        transition: 'all 0.3s',
+        padding: '10px 18px',
+        fontSize: '0.95rem',
+        outline: 'none',
+        backgroundColor: '#fff',
     }
 };
 

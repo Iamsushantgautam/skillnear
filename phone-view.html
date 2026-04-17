@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#a33500",
+                        "secondary-fixed-dim": "#b4c5fb",
+                        "on-primary-fixed": "#001848",
+                        "inverse-surface": "#2e3038",
+                        "on-background": "#191b23",
+                        "surface-container": "#ededf8",
+                        "primary-container": "#0052cc",
+                        "on-tertiary-fixed": "#380d00",
+                        "tertiary-fixed": "#ffdbcf",
+                        "surface-dim": "#d9d9e4",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#344573",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#faf8ff",
+                        "on-tertiary-fixed-variant": "#812800",
+                        "on-secondary-fixed": "#021945",
+                        "surface-tint": "#0c56d0",
+                        "outline-variant": "#c3c6d6",
+                        "tertiary": "#7b2600",
+                        "secondary-container": "#b6c8fe",
+                        "surface-container-low": "#f3f3fd",
+                        "error": "#ba1a1a",
+                        "background": "#faf8ff",
+                        "inverse-primary": "#b2c5ff",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#dae2ff",
+                        "secondary": "#4c5d8d",
+                        "surface-variant": "#e1e2ec",
+                        "on-primary-container": "#c4d2ff",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "tertiary-fixed-dim": "#ffb59b",
+                        "primary-fixed": "#dae2ff",
+                        "outline": "#737685",
+                        "on-tertiary-container": "#ffc6b2",
+                        "inverse-on-surface": "#f0f0fb",
+                        "surface-container-high": "#e7e7f2",
+                        "on-surface-variant": "#434654",
+                        "surface": "#faf8ff",
+                        "surface-container-highest": "#e1e2ec",
+                        "on-secondary-container": "#415382",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "error-container": "#ffdad6",
+                        "primary": "#003d9b",
+                        "on-surface": "#191b23"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-background text-on-background font-body select-none">
+    <section class="bg-primary text-white pt-12 pb-32 px-6 relative overflow-hidden shadow-xl">
+        <div class="relative z-10">
+            <div class="flex justify-between items-center mb-6">
+                <span class="text-xl font-black font-headline tracking-tight text-white/90">Digital Curator</span>
+                <button
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md transition-colors active:scale-95 duration-200">
+                    <span class="material-symbols-outlined text-white">settings</span>
+                </button>
+            </div>
+        </div>
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-blue-400/20 rounded-full blur-[80px]"></div>
+        <div class="absolute -left-10 bottom-0 w-40 h-40 bg-indigo-600/30 rounded-full blur-[60px]"></div>
+    </section>
+    <main class="relative z-20 px-6 -mt-24 space-y-8 pb-32">
+        <section class="bg-white rounded-[2.5rem] p-6 shadow-2xl shadow-primary/20 border border-white">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <p class="text-primary text-xs font-bold uppercase tracking-widest opacity-60">Earnings Snapshot</p>
+                    <h2 class="text-4xl font-black font-headline mt-1 text-on-background">$12,840.00</h2>
+                </div>
+                <div class="bg-primary/5 p-3 rounded-2xl">
+                    <span class="material-symbols-outlined text-primary text-2xl">account_balance_wallet</span>
+                </div>
+            </div>
+            <div class="h-24 flex items-end gap-1.5 mb-2">
+                <div class="flex-1 bg-surface-container rounded-t-lg h-[40%]"></div>
+                <div class="flex-1 bg-surface-container rounded-t-lg h-[60%]"></div>
+                <div class="flex-1 bg-surface-container rounded-t-lg h-[50%]"></div>
+                <div class="flex-1 bg-primary/30 rounded-t-lg h-[85%]"></div>
+                <div class="flex-1 bg-primary rounded-t-lg h-[100%] shadow-[0_4px_12px_rgba(0,61,155,0.3)]"></div>
+                <div class="flex-1 bg-primary/50 rounded-t-lg h-[70%]"></div>
+                <div class="flex-1 bg-surface-container rounded-t-lg h-[45%]"></div>
+            </div>
+            <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4 px-1">
+                <span>Mon</span>
+                <span>Tue</span>
+                <span>Wed</span>
+                <span>Thu</span>
+                <span>Fri</span>
+                <span>Sat</span>
+                <span>Sun</span>
+            </div>
+        </section>
+        <section class="flex items-center gap-4">
+            <div class="relative shrink-0">
+                <div class="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-primary to-blue-400 shadow-xl">
+                    <img alt="Alex Rivera" class="w-full h-full rounded-full object-cover border-2 border-white"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVOVER680CAcRMxj_uMDT5WhXctCOZgvDRl-JX_ImvCRZ3XuNV0cdsA4zo-M40j1SFkMdnJFGVYjYbUmTUxsEP78BmwN_gqZoC65lM5owMX4H49EWkz29bZsmgOQQdPlPdRL_WCuQGlkcw_jGQ5V-ClCPgXLdIyGzgRVZ9CZHQ0LXPt2M_TOXlbTguUJ_JSfRS6DIWyNMp1ouyU25__XpWD01UB9WiMtnSUbiYf4JTzK12n8fslX9V48FhUEv_5H9ksodD8dgrx85s" />
+                </div>
+                <div
+                    class="absolute -bottom-1 -right-1 bg-primary-container text-white p-1 rounded-full border-2 border-white shadow-md">
+                    <span class="material-symbols-outlined text-[12px] block"
+                        style="font-variation-settings: 'FILL' 1;">verified</span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-2">
+                    <h1 class="font-headline font-extrabold text-2xl tracking-tight text-on-background">Alex Rivera</h1>
+                    <div class="bg-primary/10 px-2 py-0.5 rounded-full border border-primary/5">
+                        <span
+                            class="text-primary font-black text-[8px] uppercase tracking-tighter whitespace-nowrap">Top
+                            Rated Plus</span>
+                    </div>
+                </div>
+                <p class="font-body text-slate-500 text-sm font-medium leading-tight">Digital Strategist &amp; Content
+                    Curator</p>
+            </div>
+        </section>
+        <section class="grid grid-cols-2 gap-4">
+            <div class="col-span-2 bg-white p-5 rounded-3xl shadow-sm border border-outline-variant/20">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-headline font-bold text-sm text-slate-800 uppercase tracking-widest">Account Status
+                    </h3>
+                    <span class="text-[10px] font-bold text-primary px-2 py-0.5 bg-primary/5 rounded-full">Active</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex-1 space-y-1">
+                        <p class="text-3xl font-black font-headline text-on-background">14</p>
+                        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Active Gigs</p>
+                    </div>
+                    <div class="w-[1px] h-10 bg-surface-container"></div>
+                    <div class="flex-1 space-y-1 pl-4">
+                        <p class="text-3xl font-black font-headline text-on-background">98%</p>
+                        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Job Success</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="grid grid-cols-2 gap-4">
+            <div
+                class="aspect-square bg-surface-container-low rounded-[2rem] p-6 flex flex-col justify-between active:scale-95 transition-transform duration-200">
+                <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-md">
+                    <span class="material-symbols-outlined text-primary">inventory_2</span>
+                </div>
+                <div>
+                    <h4 class="font-headline font-bold text-sm">Gig Management</h4>
+                    <p class="text-[10px] text-slate-500 font-medium">Update listings</p>
+                </div>
+            </div>
+            <div
+                class="aspect-square bg-surface-container-low rounded-[2rem] p-6 flex flex-col justify-between active:scale-95 transition-transform duration-200">
+                <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-md">
+                    <span class="material-symbols-outlined text-primary">forum</span>
+                </div>
+                <div>
+                    <h4 class="font-headline font-bold text-sm">Messaging</h4>
+                    <p class="text-[10px] text-slate-500 font-medium">4 new alerts</p>
+                </div>
+            </div>
+        </section>
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-headline font-bold text-lg text-on-background">Live Gigs</h3>
+                <button class="text-primary font-bold text-xs uppercase tracking-widest">View all</button>
+            </div>
+            <div class="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 no-scrollbar">
+                <div
+                    class="min-w-[260px] bg-white rounded-3xl p-4 shadow-xl shadow-[#191b23]/5 border border-outline-variant/10">
+                    <div class="h-36 rounded-2xl mb-4 overflow-hidden">
+                        <img alt="Gig" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2uBt2yZW_hIGXc5JBO3XoEe0w6fAe-VA6l5lpuOMUwN6g7_PyYp5_3DWqXMe9X8uEW-5i0bGLXfSE2FR1mxkycCOe9CbZpzmaMJwBTHZ6wep8b97qqMv1YtU_3vMJUig_K7Nb5B5Qdtnnt8TcTTuWIOMsZU7hAy4-oefvPlHz7T_GB4-MOa9QPchXEIejZFccrmuE045kQYXMsb93720cp-qBzLCnwmgwHJIFMG7IHapGq2gzrQKIACOcs70NQYEz-M8QvulsvcsN" />
+                    </div>
+                    <h5 class="font-headline font-bold text-sm mb-2 line-clamp-1">Premium Editorial Brand Design</h5>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-black text-primary">$450</span>
+                        <div class="flex items-center text-yellow-500 text-xs font-bold gap-1">
+                            <span class="material-symbols-outlined text-[16px]"
+                                style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span>4.9 (120)</span>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="min-w-[260px] bg-white rounded-3xl p-4 shadow-xl shadow-[#191b23]/5 border border-outline-variant/10">
+                    <div class="h-36 rounded-2xl mb-4 overflow-hidden">
+                        <img alt="Gig" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGck_MEvyPkMl4Scn6q7z-UY_MJNxgk7yrut-MF_pg2Brcl5ME787jHn0SZoHbxiAVdmvkBrCSIqWFARX2olz8RSAyKEJXV_E3gX3gLQbYX4o2uJeWo574vd2trvyAk-jFX2MxTnYHNrerjVd4mD9ZgiZtjXIYctgHAG-9JBGQD1Q8sg1EohPrC6FR61itgYVM4XXtQuXzRhggL9Oxmhjl3iZJ95C_r30lSdNbgv7zRRs5DZBHG9GYMY8_Vzt7wWIgPm-B8ucr9ViK" />
+                    </div>
+                    <h5 class="font-headline font-bold text-sm mb-2 line-clamp-1">Conversion-Focused UI Audit</h5>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-black text-primary">$800</span>
+                        <div class="flex items-center text-yellow-500 text-xs font-bold gap-1">
+                            <span class="material-symbols-outlined text-[16px]"
+                                style="font-variation-settings: 'FILL' 1;">star</span>
+                            <span>5.0 (84)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <nav
+        class="fixed bottom-0 left-0 w-full h-20 bg-white/90 backdrop-blur-2xl flex justify-around items-center px-4 pb-safe z-50 shadow-[0_-10px_40px_rgba(25,27,35,0.08)] rounded-t-[2.5rem]">
+        <button class="flex flex-col items-center justify-center text-slate-400 active:scale-90 transition-transform">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="font-inter text-[9px] font-bold uppercase tracking-widest mt-1">Dash</span>
+        </button>
+        <button class="flex flex-col items-center justify-center text-slate-400 active:scale-90 transition-transform">
+            <span class="material-symbols-outlined">work</span>
+            <span class="font-inter text-[9px] font-bold uppercase tracking-widest mt-1">Gigs</span>
+        </button>
+        <button class="flex flex-col items-center justify-center text-slate-400 active:scale-90 transition-transform">
+            <span class="material-symbols-outlined">chat_bubble</span>
+            <span class="font-inter text-[9px] font-bold uppercase tracking-widest mt-1">Inbox</span>
+        </button>
+        <button
+            class="flex flex-col items-center justify-center text-primary after:content-[''] after:w-1 after:h-1 after:bg-primary after:rounded-full after:mt-1 active:scale-90 transition-transform">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+            <span class="font-inter text-[9px] font-bold uppercase tracking-widest mt-1 text-primary">Bank</span>
+        </button>
+    </nav>
+
+</body>
+
+</html>

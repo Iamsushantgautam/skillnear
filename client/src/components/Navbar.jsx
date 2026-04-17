@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, User, Menu, LogOut, MapPin, ChevronDown, X, LocateFixed } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
 import { State, City } from 'country-state-city';
+import api from '../utils/api';
+import { toast } from 'react-hot-toast';
 
 const Navbar = () => {
     const { user, logout, userLocation, setLocation } = useAuthStore();
@@ -45,7 +47,6 @@ const Navbar = () => {
         
         setLocation(locData);
 
-        // If logged in, save to DB also
         if (user) {
             try {
                 const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -68,7 +69,6 @@ const Navbar = () => {
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords;
             try {
-                // Reverse geocoding using Nominatim (OpenStreetMap)
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
                 const data = await res.json();
                 
@@ -80,7 +80,6 @@ const Navbar = () => {
                     setSelectedCity(city);
                     setSelectedPincode(pincode);
                     
-                    // Match state
                     const stateMatch = indianStates.find(s => s.name.toLowerCase() === state.toLowerCase());
                     if (stateMatch) {
                         setSelectedStateCode(stateMatch.isoCode);
@@ -88,7 +87,6 @@ const Navbar = () => {
                     
                     toast.success(`Detected: ${city}, ${pincode}`);
                     
-                    // Auto save if user is logged in
                     if (user) {
                         const config = { headers: { Authorization: `Bearer ${user.token}` } };
                         await api.put('/api/users/location', { lat: latitude, lng: longitude, city, state, pincode }, config);
@@ -113,7 +111,7 @@ const Navbar = () => {
     return (
         <nav style={styles.nav}>
             <div className="container" style={styles.container}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div className="nav-left">
                     {/* Logo */}
                     <Link to="/" style={styles.logo}>
                         SkillNear
@@ -121,23 +119,23 @@ const Navbar = () => {
 
                     {/* Location Selector */}
                     <div style={styles.locationSelector} onClick={() => setShowLocationModal(true)}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <span className="text-small" style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>Location</span>
+                        <div className="location-label">
+                            <span className="text-small">LOCATION</span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-main)', fontWeight: '600' }}>
+                        <div className="location-value">
                              <MapPin size={16} color="var(--primary)" />
-                            <span style={{ fontSize: '0.95rem' }}>
+                            <span className="loc-text truncate">
                                 {userLocation?.city && userLocation?.city !== 'All of India' 
                                     ? `${userLocation.city}${userLocation.pincode ? `, ${userLocation.pincode}` : ''}` 
-                                    : (userLocation?.pincode || 'All of India')}
+                                    : (userLocation?.pincode || 'Select Area')}
                             </span>
                             <ChevronDown size={14} color="var(--text-muted)" />
                         </div>
                     </div>
                 </div>
 
-                {/* Search Bar (Hidden on very small screens) */}
-                <div style={styles.searchContainer} className="hide-on-mobile">
+                {/* Search Bar */}
+                <div className="nav-search hide-on-mobile">
                     <Search size={18} color="#6b7280" />
                     <input
                         type="text"
@@ -150,43 +148,133 @@ const Navbar = () => {
                 </div>
 
                 {/* Right Nav Links */}
-                <div style={styles.navLinks} className="hide-on-mobile">
-                    <Link to="/shops" style={styles.link}>Local Shops</Link>
-                    <Link to="/services" style={styles.link}>Services</Link>
-
-                    <div style={styles.divider}></div>
+                <div className="nav-right">
+                    <div className="nav-links-desktop hide-on-mobile hide-on-tablet">
+                        <Link to="/shops" style={styles.link}>Local Shops</Link>
+                        <Link to="/services" style={styles.link}>Services</Link>
+                        <div style={styles.divider}></div>
+                    </div>
 
                     {user ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', ...styles.link }}>
-                                <img src={getAvatar(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=ede9fe&color=4f46e5&size=80`; }} />
-                                <span className="hide-on-mobile">{user.name}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <Link to="/dashboard" className="user-profile-link">
+                                <img src={getAvatar(user)} alt="Profile" className="nav-avatar" onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=ede9fe&color=4f46e5&size=80`; }} />
+                                <span className="nav-username hide-on-mobile">{user.name}</span>
                             </Link>
-                            <button onClick={handleLogout} style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <button onClick={handleLogout} className="logout-btn hide-on-mobile">
                                 <LogOut size={18} />
-                                <span className="hide-on-mobile">Logout</span>
+                                <span>Logout</span>
                             </button>
                         </div>
                     ) : (
-                        <>
+                        <div className="auth-btns hide-on-mobile">
                             <Link to="/login" style={styles.link}>Login</Link>
                             <Link to="/register" className="btn-primary">Sign Up</Link>
-                        </>
+                        </div>
                     )}
-
-                    {/* Mobile Menu Icon */}
                 </div>
-
-                <button style={styles.mobileMenuBtn} className="show-on-mobile">
-                    {user ? (
-                        <Link to="/dashboard">
-                            <img src={getAvatar(user)} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=ede9fe&color=4f46e5&size=80`; }} />
-                        </Link>
-                    ) : (
-                        <Link to="/login" style={{ color: 'var(--primary)', fontWeight: '500' }}>Login</Link>
-                    )}
-                </button>
             </div>
+
+            <style>{`
+                .nav-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 20px;
+                    flex: 1;
+                    min-width: 0;
+                }
+                .nav-right {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                }
+                .nav-search {
+                    display: flex;
+                    align-items: center;
+                    background-color: #f3f4f6;
+                    border-radius: var(--radius-md);
+                    padding: 8px 16px;
+                    flex: 0 1 350px;
+                    margin: 0 20px;
+                }
+                .nav-links-desktop {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                }
+                .location-label {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    line-height: 1;
+                }
+                .location-value {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    cursor: pointer;
+                    color: var(--text-main);
+                    font-weight: 600;
+                    min-width: 0;
+                }
+                .loc-text {
+                    font-size: 0.95rem;
+                }
+                .truncate {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .nav-avatar {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 2px solid #fff;
+                    box-shadow: 0 0 0 1px var(--border-color);
+                }
+                .user-profile-link {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-weight: 500;
+                    color: var(--text-main);
+                    min-width: 0;
+                }
+                .nav-username {
+                    max-width: 100px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .logout-btn {
+                    color: var(--danger);
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    font-weight: 500;
+                }
+
+                @media (max-width: 1024px) {
+                    .nav-left { gap: 12px; }
+                    .nav-search { margin: 0 10px; flex: 1; }
+                    .nav-links-desktop { gap: 10px; }
+                }
+
+                @media (max-width: 768px) {
+                    .nav-left { gap: 10px; }
+                    .loc-text { font-size: 0.85rem; }
+                    .location-label span { font-size: 0.7rem; }
+                    .nav-username { display: none; }
+                }
+
+                @media (max-width: 480px) {
+                    .skillnear-logo { font-size: 1.25rem !important; }
+                    .nav-left { gap: 8px; }
+                    .location-label { display: none; }
+                    .nav-search { display: none; }
+                }
+            `}</style>
 
             {/* Location Selection Modal */}
             {showLocationModal && (
@@ -224,7 +312,7 @@ const Navbar = () => {
                                 value={selectedStateCode}
                                 onChange={(e) => {
                                     setSelectedStateCode(e.target.value);
-                                    setSelectedCity(''); // Reset city when state changes
+                                    setSelectedCity(''); 
                                 }}
                             >
                                 <option value="">Select a State</option>
@@ -241,7 +329,7 @@ const Navbar = () => {
                                 value={selectedCity}
                                 onChange={(e) => {
                                     setSelectedCity(e.target.value);
-                                    setSelectedPincode(''); // Clear pincode when city is changed
+                                    setSelectedPincode(''); 
                                 }}
                             >
                                 <option value="">{selectedStateCode ? 'Select City' : 'State First'}</option>
@@ -295,18 +383,13 @@ const styles = {
         fontWeight: '700',
         color: 'var(--primary)',
         letterSpacing: '-0.5px',
+        flexShrink: 0,
     },
     locationSelector: {
         display: 'flex',
         flexDirection: 'column',
-    },
-    searchContainer: {
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: '#f3f4f6',
-        borderRadius: 'var(--radius-md)',
-        padding: '8px 16px',
-        flex: '0 1 400px',
+        minWidth: 0,
+        cursor: 'pointer',
     },
     searchInput: {
         border: 'none',
@@ -316,23 +399,16 @@ const styles = {
         marginLeft: '8px',
         fontSize: '0.95rem',
     },
-    navLinks: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '20px',
-    },
     link: {
         fontWeight: '500',
         color: 'var(--text-main)',
         transition: 'color 0.2s',
+        whiteSpace: 'nowrap',
     },
     divider: {
         height: '24px',
         width: '1px',
         backgroundColor: 'var(--border-color)',
-    },
-    mobileMenuBtn: {
-        display: 'none', // Handled by CSS class .show-on-mobile
     },
     modalOverlay: {
         position: 'fixed',

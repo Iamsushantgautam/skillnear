@@ -113,8 +113,13 @@ export const getRooms = async (req, res) => {
         const roomsMap = new Map();
 
         for (const booking of bookings) {
-            const otherUser = booking.user._id.toString() === myId ? booking.provider : booking.user;
+            if (!booking.user || !booking.provider) continue;
+
+            const bookingUserId = booking.user?._id ? booking.user._id.toString() : booking.user.toString();
+            const otherUser = bookingUserId === myId ? booking.provider : booking.user;
+            
             const latestMsg = await Message.findOne({ roomId: booking._id.toString() }).sort({ createdAt: -1 });
+            const unreadCount = await Message.countDocuments({ roomId: booking._id.toString(), receiverId: myId, read: false });
 
             roomsMap.set(booking._id.toString(), {
                 roomId: booking._id.toString(),
@@ -123,31 +128,34 @@ export const getRooms = async (req, res) => {
                 otherUser,
                 lastMessage: latestMsg ? latestMsg.message : 'No messages yet',
                 updatedAt: latestMsg ? latestMsg.createdAt : booking.createdAt,
+                unreadCount
             });
         }
 
         // 2. Find Direct Rooms from Message history (where not linked to a booking)
         const directMessages = await Message.find({
-            $or: [{ senderId: myId }, { receiverId: myId }],
-            roomId: { $regex: /^direct_/ }
+            $or: [{ senderId: myId }, { receiverId: myId }]
         }).sort({ createdAt: -1 });
 
         for (const msg of directMessages) {
             if (!roomsMap.has(msg.roomId)) {
-                const parts = msg.roomId.split('_');
-                const otherUserId = parts[1] === myId ? parts[2] : parts[1];
+                // If it's a direct room (verified by ID format in Chat.jsx)
+                if (msg.roomId.startsWith('direct_')) {
+                    const parts = msg.roomId.split('_');
+                    const otherUserId = parts[1] === myId ? parts[2] : parts[1];
+                    const otherUser = await User.findById(otherUserId).select('name avatar');
+                    const unreadCount = await Message.countDocuments({ roomId: msg.roomId, receiverId: myId, read: false });
 
-                // Avoid redundant DB calls if possible, but for rooms list we need user info
-                const otherUser = await User.findById(otherUserId).select('name avatar');
-
-                roomsMap.set(msg.roomId, {
-                    roomId: msg.roomId,
-                    title: 'General Chat',
-                    type: 'Direct',
-                    otherUser,
-                    lastMessage: msg.message,
-                    updatedAt: msg.createdAt
-                });
+                    roomsMap.set(msg.roomId, {
+                        roomId: msg.roomId,
+                        title: 'General Chat',
+                        type: 'Direct',
+                        otherUser,
+                        lastMessage: msg.message,
+                        updatedAt: msg.createdAt,
+                        unreadCount
+                    });
+                }
             } else {
                 // If room exists, check if this message is newer
                 const existing = roomsMap.get(msg.roomId);
@@ -159,7 +167,6 @@ export const getRooms = async (req, res) => {
         }
 
         const rooms = Array.from(roomsMap.values()).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-
         res.json(rooms);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -169,6 +176,22 @@ export const getRooms = async (req, res) => {
 // @desc    Delete all messages in a room
 // @route   DELETE /api/messages/:roomId
 // @access  Private
+export const markMessagesAsRead = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const myId = req.user._id;
+
+        await Message.updateMany(
+            { roomId, receiverId: myId, read: false },
+            { $set: { read: true } }
+        );
+
+        res.json({ message: 'Messages marked as read' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const deleteRoom = async (req, res) => {
     try {
         const { roomId } = req.params;

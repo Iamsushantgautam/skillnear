@@ -115,6 +115,13 @@ export const updateUserProfile = async (req, res) => {
                 user.password = req.body.password;
             }
 
+            if (user.role === 'provider' && req.body.providerDetails) {
+                user.providerDetails = {
+                    ...user.providerDetails,
+                    ...req.body.providerDetails
+                };
+            }
+
             const updatedUser = await user.save();
 
             res.json({
@@ -125,6 +132,7 @@ export const updateUserProfile = async (req, res) => {
                 avatar: updatedUser.avatar,
                 username: updatedUser.username,
                 role: updatedUser.role,
+                providerDetails: updatedUser.providerDetails,
                 token: req.headers.authorization?.split(' ')[1], // return same token
             });
         } else {

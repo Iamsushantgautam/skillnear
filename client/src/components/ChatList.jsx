@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader, MessageSquare } from 'lucide-react';
-import api from '../utils/api';
+import io from 'socket.io-client';
+import api, { API_URL } from '../utils/api';
 import useAuthStore from '../store/useAuthStore';
 
 const ChatList = ({ limit, onSelect }) => {
@@ -10,20 +11,31 @@ const ChatList = ({ limit, onSelect }) => {
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const fetchRooms = async () => {
+        if (!user) return;
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.get('/api/messages/rooms', config);
+            setRooms(limit ? data.slice(0, limit) : data);
+        } catch (err) {
+            console.error("Failed to fetch rooms", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchRooms = async () => {
-            if (!user) return;
-            try {
-                const config = { headers: { Authorization: `Bearer ${user.token}` } };
-                const { data } = await api.get('/api/messages/rooms', config);
-                setRooms(limit ? data.slice(0, limit) : data);
-            } catch (err) {
-                console.error("Failed to fetch rooms", err);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchRooms();
+        
+        // Listen for real-time updates to refresh the list matching DashboardMobile
+        if (user?._id) {
+            const socket = io(API_URL);
+            socket.emit('setup', user._id);
+            socket.on('receiveMessage', () => {
+                fetchRooms();
+            });
+            return () => socket.disconnect();
+        }
     }, [user, limit]);
 
     if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}><Loader className="spin" style={{ color: 'var(--primary)' }} /></div>;

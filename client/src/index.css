@@ -237,3 +237,44 @@ button {
   font-size: 0.875rem;
   color: var(--text-muted);
 }
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+    .hide-on-mobile {
+        display: none !important;
+    }
+    .show-on-mobile {
+        display: block !important;
+    }
+    .flex-on-mobile {
+        display: flex !important;
+    }
+}
+
+@media (min-width: 769px) {
+    .show-on-mobile {
+        display: none !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    .hide-on-tablet {
+        display: none !important;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .show-on-tablet {
+        display: block !important;
+    }
+}
+
+@media (min-width: 1025px) {
+    .show-on-tablet {
+        display: none !important;
+    }
+}
+
+.show-on-mobile.flex-center {
+    display: flex !important;
+}

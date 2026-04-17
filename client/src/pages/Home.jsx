@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { Search, MapPin, Shield, Star, Clock, ChevronRight, Zap, Target, Heart } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import CategoryBanners from '../components/CategoryBanners';
 
 const Home = () => {
     const [servicesByCategory, setServicesByCategory] = useState({});
@@ -89,21 +90,8 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* OFFERS SECTION */}
-            <section className="container" style={{ margin: '40px auto' }}>
-                <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '20px', scrollbarWidth: 'none' }}>
-                    {offers.map((offer, i) => (
-                        <div key={i} style={{ 
-                            minWidth: '340px', height: '180px', borderRadius: '16px', background: offer.bg, padding: '24px',
-                            color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', cursor: 'pointer', transition: 'transform 0.3s'
-                        }} className="offer-card">
-                            <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '8px' }}>{offer.title}</h3>
-                            <p style={{ opacity: 0.9 }}>{offer.subtitle}</p>
-                            <button style={{ marginTop: '20px', width: 'fit-content', backgroundColor: 'rgba(255,255,255,0.2)', padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600' }}>Check Now</button>
-                        </div>
-                    ))}
-                </div>
-            </section>
+            {/* CATEGORY BANNERS SECTION */}
+            <CategoryBanners />
 
             {/* DYNAMIC CATEGORY SECTIONS */}
             {loading ? (
@@ -181,12 +169,6 @@ const mainCategories = [
     { name: 'Painters', icon: '🎨', bg: '#ffedd5' },
     { name: 'Local Shops', icon: '🏪', bg: '#ecfdf5', link: '/shops' },
     { name: 'Tutors', icon: '📚', bg: '#f1f5f9' },
-];
-
-const offers = [
-    { title: 'Home Repairs', subtitle: 'Starting at ₹249', bg: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)' },
-    { title: 'Women Salon', subtitle: 'Flat 30% OFF', bg: 'linear-gradient(135deg, #db2777 0%, #9d174d 100%)' },
-    { title: 'AC Servicing', subtitle: 'Instant 2hr Booking', bg: 'linear-gradient(135deg, #059669 0%, #064e3b 100%)' },
 ];
 
 const styles = {
