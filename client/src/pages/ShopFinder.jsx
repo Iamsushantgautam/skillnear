@@ -10,11 +10,19 @@ const ShopFinder = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCity, setSelectedCity] = useState(userLocation?.city || 'All of India');
+    const [selectedPincode, setSelectedPincode] = useState(userLocation?.pincode || '');
+
+    useEffect(() => {
+        if (userLocation) {
+            setSelectedCity(userLocation.city || 'All of India');
+            setSelectedPincode(userLocation.pincode || '');
+        }
+    }, [userLocation]);
 
     useEffect(() => {
         const fetchShops = async () => {
             try {
-                const { data } = await api.get('/api/users/shops');
+                const { data } = await api.get('/api/services?businessType=shop');
                 setShops(data);
             } catch (error) {
                 console.error("Error fetching shops:", error);
@@ -27,16 +35,30 @@ const ShopFinder = () => {
 
     const userCity = selectedCity !== 'All of India' ? selectedCity : '';
 
-    // Filter shops based on search query and location
     const filteredShops = shops.filter(shop => {
-        const matchesSearch = shop.providerDetails?.shopName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              shop.providerDetails?.title?.toLowerCase().includes(searchQuery.toLowerCase());
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+            shop.title?.toLowerCase().includes(query) ||
+            shop.category?.toLowerCase().includes(query) ||
+            shop.provider?.name?.toLowerCase().includes(query) ||   // Owner name
+            shop.location?.address?.toLowerCase().includes(query) || // Area name
+            shop.location?.zipCode?.includes(query) ||            // Pincode in search
+            shop.location?.city?.toLowerCase().includes(query);   // City in search
         
-        const matchesLocation = userCity === '' || 
-                              (shop.address?.city?.toLowerCase() || '').includes(userCity.toLowerCase()) || 
-                              (shop.providerDetails?.shopAddress?.toLowerCase() || '').includes(userCity.toLowerCase());
+        const cityTerm = userCity.toLowerCase();
+        
+        // City matching from nav
+        const matchesCity = userCity === '' || 
+                          (shop.location?.city?.toLowerCase().includes(cityTerm)) || 
+                          (shop.location?.address?.toLowerCase().includes(cityTerm));
 
-        return matchesSearch && matchesLocation;
+        // Pincode matching from nav
+        const matchesPincode = selectedPincode === '' || 
+                             (shop.location?.zipCode === selectedPincode) ||
+                             (shop.location?.pincode === selectedPincode) || // Defensive
+                             (shop.coveragePincodes?.includes(selectedPincode));
+
+        return matchesSearch && (selectedPincode ? (matchesPincode || matchesCity) : matchesCity);
     });
 
     return (
@@ -47,7 +69,7 @@ const ShopFinder = () => {
                         Shop Finder Near Me
                     </h1>
                     <p className="text-body" style={{ color: '#e0e7ff', marginBottom: '32px', fontSize: '1.1rem' }}>
-                        Discover verified local shops, boutiques, and service centers in {userCity || 'your area'}
+                        Discover verified local shops, boutiques, and service centers in {selectedPincode ? `area ${selectedPincode}` : (userCity || 'your area')}
                     </p>
                     
                     <div className="card" style={styles.searchBar}>
@@ -66,16 +88,14 @@ const ShopFinder = () => {
                             onChange={(e) => setSelectedCity(e.target.value)}
                         >
                             <option value="All of India" style={{ color: '#333' }}>All Cities</option>
-                            <option value="Mumbai" style={{ color: '#333' }}>Mumbai</option>
-                            <option value="Delhi" style={{ color: '#333' }}>Delhi</option>
-                            <option value="Bangalore" style={{ color: '#333' }}>Bangalore</option>
-                            <option value="Hyderabad" style={{ color: '#333' }}>Hyderabad</option>
-                            <option value="Chennai" style={{ color: '#333' }}>Chennai</option>
-                            <option value="Pune" style={{ color: '#333' }}>Pune</option>
-                            <option value="Noida" style={{ color: '#333' }}>Noida</option>
-                            <option value="Gurgaon" style={{ color: '#333' }}>Gurgaon</option>
-                            <option value="Kolkata" style={{ color: '#333' }}>Kolkata</option>
-                            <option value="Ahmedabad" style={{ color: '#333' }}>Ahmedabad</option>
+                            {[
+                                "Ahmedabad", "Bangalore", "Chandigarh", "Chennai", "Coimbatore", 
+                                "Delhi", "Gurgaon", "Hyderabad", "Indore", "Jaipur", 
+                                "Kanpur", "Kochi", "Kolkata", "Lucknow", "Mumbai", 
+                                "Nagpur", "Noida", "Patna", "Pune", "Surat", "Thane", "Varanasi"
+                            ].sort().map(city => (
+                                <option key={city} value={city} style={{ color: '#333' }}>{city}</option>
+                            ))}
                         </select>
                     </div>
                 </div>
@@ -107,44 +127,44 @@ const ShopFinder = () => {
                 ) : (
                     <div style={styles.grid}>
                         {filteredShops.map((shop) => (
-                            <div key={shop._id} className="card" style={styles.shopCard}>
+                            <Link to={`/services/${shop._id}`} key={shop._id} className="card" style={{ ...styles.shopCard, textDecoration: 'none', color: 'inherit' }}>
                                 <div style={styles.imageWrapper}>
                                     <img 
-                                        src={shop.providerDetails?.images?.[0] || shop.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(shop.providerDetails?.shopName || 'Shop')}&background=ede9fe&color=4f46e5`}
-                                        alt={shop.providerDetails?.shopName}
+                                        src={shop.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(shop.title || 'Shop')}&background=ede9fe&color=4f46e5`}
+                                        alt={shop.title}
                                         style={styles.shopImage}
-                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(shop.providerDetails?.shopName || 'Shop')}&background=ede9fe&color=4f46e5`; }}
+                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(shop.title || 'Shop')}&background=ede9fe&color=4f46e5`; }}
                                     />
-                                    <div style={styles.badge}>VERIFIED</div>
+                                    <div style={styles.badge}>SHOP</div>
                                 </div>
                                 
                                 <div style={styles.cardContent}>
                                     <h3 className="text-h3" style={{ fontSize: '1.25rem', marginBottom: '4px' }}>
-                                        {shop.providerDetails?.shopName || shop.name}
+                                        {shop.title}
                                     </h3>
                                     <p style={{ color: 'var(--primary)', fontWeight: '600', fontSize: '0.9rem', marginBottom: '16px' }}>
-                                        {shop.providerDetails?.title || 'Local Business'}
+                                        {shop.category}
                                     </p>
                                     
                                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '12px', color: 'var(--text-muted)' }}>
                                         <MapPin size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
                                         <span style={{ fontSize: '0.9rem', lineHeight: '1.5' }}>
-                                            {shop.providerDetails?.shopAddress || shop.address?.street || 'Address not listed'}, {shop.address?.city}
+                                            {shop.location?.address || 'Address not listed'}
                                         </span>
                                     </div>
 
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', color: 'var(--text-muted)' }}>
                                         <Store size={18} />
-                                        <span style={{ fontSize: '0.9rem' }}>Owned by: {shop.providerDetails?.ownerName || shop.name}</span>
+                                        <span style={{ fontSize: '0.9rem' }}>Owner: {shop.provider?.name}</span>
                                     </div>
                                     
                                     <div style={{ marginTop: 'auto' }}>
-                                        <Link to={`/chat?provider=${shop._id}`} className="btn-outline" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', width: '100%' }}>
-                                            Contact Shop <ExternalLink size={16} />
-                                        </Link>
+                                        <div className="btn-primary" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', width: '100%', padding: '10px' }}>
+                                            View Shop Details
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 )}

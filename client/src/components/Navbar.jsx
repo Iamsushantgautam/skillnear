@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, Menu, LogOut, MapPin, ChevronDown, X } from 'lucide-react';
+import { Search, User, Menu, LogOut, MapPin, ChevronDown, X, LocateFixed } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
 import { State, City } from 'country-state-city';
 
@@ -12,7 +12,9 @@ const Navbar = () => {
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [selectedStateCode, setSelectedStateCode] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
+    const [selectedPincode, setSelectedPincode] = useState(userLocation?.pincode || '');
     const [searchKeyword, setSearchKeyword] = useState('');
+    const [isDetecting, setIsDetecting] = useState(false);
 
     const handleSearch = (e) => {
         if (e.key === 'Enter' && searchKeyword.trim()) {
@@ -33,13 +35,79 @@ const Navbar = () => {
         navigate('/login');
     };
 
-    const handleSaveLocation = () => {
+    const handleSaveLocation = async () => {
         const stateObj = indianStates.find(s => s.isoCode === selectedStateCode);
-        setLocation({
-            state: stateObj ? stateObj.name : '',
-            city: selectedCity || 'All of India'
-        });
+        const locData = {
+            state: stateObj ? stateObj.name : (userLocation?.state || ''),
+            city: selectedCity || 'All of India',
+            pincode: selectedPincode || ''
+        };
+        
+        setLocation(locData);
+
+        // If logged in, save to DB also
+        if (user) {
+            try {
+                const config = { headers: { Authorization: `Bearer ${user.token}` } };
+                await api.put('/api/users/location', locData, config);
+            } catch (error) {
+                console.error("Error saving location to DB", error);
+            }
+        }
+        
         setShowLocationModal(false);
+    };
+
+    const handleAutoDetect = () => {
+        if (!navigator.geolocation) {
+            toast.error("Geolocation is not supported by your browser");
+            return;
+        }
+
+        setIsDetecting(true);
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude, longitude } = pos.coords;
+            try {
+                // Reverse geocoding using Nominatim (OpenStreetMap)
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+                const data = await res.json();
+                
+                if (data.address) {
+                    const city = data.address.city || data.address.town || data.address.village || '';
+                    const state = data.address.state || '';
+                    const pincode = data.address.postcode || '';
+                    
+                    setSelectedCity(city);
+                    setSelectedPincode(pincode);
+                    
+                    // Match state
+                    const stateMatch = indianStates.find(s => s.name.toLowerCase() === state.toLowerCase());
+                    if (stateMatch) {
+                        setSelectedStateCode(stateMatch.isoCode);
+                    }
+                    
+                    toast.success(`Detected: ${city}, ${pincode}`);
+                    
+                    // Auto save if user is logged in
+                    if (user) {
+                        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+                        await api.put('/api/users/location', { lat: latitude, lng: longitude, city, state, pincode }, config);
+                    }
+                    
+                    setLocation({ city, state, pincode });
+                    setShowLocationModal(false);
+                }
+            } catch (error) {
+                console.error("Auto detect error", error);
+                toast.error("Could not automatically detect location details");
+            } finally {
+                setIsDetecting(false);
+            }
+        }, (err) => {
+            console.error(err);
+            toast.error("Location access denied or unavailable");
+            setIsDetecting(false);
+        });
     };
 
     return (
@@ -57,8 +125,12 @@ const Navbar = () => {
                             <span className="text-small" style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>Location</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'var(--text-main)', fontWeight: '600' }}>
-                            <MapPin size={16} color="var(--primary)" />
-                            <span style={{ fontSize: '0.95rem' }}>{userLocation?.city || 'All of India'}</span>
+                             <MapPin size={16} color="var(--primary)" />
+                            <span style={{ fontSize: '0.95rem' }}>
+                                {userLocation?.city && userLocation?.city !== 'All of India' 
+                                    ? `${userLocation.city}${userLocation.pincode ? `, ${userLocation.pincode}` : ''}` 
+                                    : (userLocation?.pincode || 'All of India')}
+                            </span>
                             <ChevronDown size={14} color="var(--text-muted)" />
                         </div>
                     </div>
@@ -127,6 +199,24 @@ const Navbar = () => {
                             </button>
                         </div>
 
+                        <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '12px', marginBottom: '24px', textAlign: 'center', border: '1.5px dashed var(--primary)' }}>
+                            <button 
+                                onClick={handleAutoDetect} 
+                                disabled={isDetecting}
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', color: 'var(--primary)', fontWeight: '600', cursor: 'pointer', background: 'none', border: 'none' }}
+                            >
+                                <LocateFixed size={20} className={isDetecting ? "animate-spin" : ""} />
+                                {isDetecting ? 'Detecting...' : 'Use My Current Location'}
+                            </button>
+                            <p style={{ fontSize: '0.75rem', marginTop: '6px', color: '#64748b' }}>Pinpoint your exact area automatically</p>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                            <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }}></div>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>OR SELECT MANUALLY</span>
+                            <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }}></div>
+                        </div>
+
                         <div style={{ marginBottom: '16px' }}>
                             <label style={styles.label}>Select State</label>
                             <select
@@ -144,21 +234,33 @@ const Navbar = () => {
                             </select>
                         </div>
 
-                        {selectedStateCode && (
-                            <div style={{ marginBottom: '24px' }}>
-                                <label style={styles.label}>Select City</label>
-                                <select
-                                    className="input-field"
-                                    value={selectedCity}
-                                    onChange={(e) => setSelectedCity(e.target.value)}
-                                >
-                                    <option value="">All Cities in State</option>
-                                    {citiesOfState.map(city => (
-                                        <option key={city.name} value={city.name}>{city.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={styles.label}>Select City</label>
+                            <select
+                                className="input-field"
+                                value={selectedCity}
+                                onChange={(e) => {
+                                    setSelectedCity(e.target.value);
+                                    setSelectedPincode(''); // Clear pincode when city is changed
+                                }}
+                            >
+                                <option value="">{selectedStateCode ? 'Select City' : 'State First'}</option>
+                                {citiesOfState.map(city => (
+                                    <option key={city.name} value={city.name}>{city.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={styles.label}>Pincode / Zip Code</label>
+                            <input 
+                                type="text" 
+                                className="input-field" 
+                                placeholder="e.g. 226001" 
+                                value={selectedPincode} 
+                                onChange={(e) => setSelectedPincode(e.target.value)} 
+                            />
+                        </div>
 
                         <button
                             className="btn-primary"

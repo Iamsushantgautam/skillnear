@@ -1,6 +1,39 @@
 import User from '../models/User.js';
 import Service from '../models/Service.js';
 
+// @desc    Update user location
+// @route   PUT /api/users/location
+// @access  Private
+export const updateLocation = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (user) {
+            const { lat, lng, pincode, city, state } = req.body;
+            
+            if (lat && lng) {
+                user.geoCoordinates = {
+                    type: 'Point',
+                    coordinates: [Number(lng), Number(lat)]
+                };
+            }
+            
+            user.address = {
+                ...user.address,
+                pincode: pincode || user.address?.pincode,
+                city: city || user.address?.city,
+                state: state || user.address?.state
+            };
+
+            await user.save();
+            res.json({ message: 'Location updated successfully', location: user.address, geoCoordinates: user.geoCoordinates });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Get all users (Admin only)
 // @route   GET /api/users
 // @access  Private/Admin

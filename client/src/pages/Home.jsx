@@ -59,7 +59,7 @@ const Home = () => {
                             
                             <div style={styles.heroCatGrid}>
                                 {mainCategories.map((cat, i) => (
-                                    <Link key={i} to={`/services?category=${cat.name}`} style={styles.heroCatItem}>
+                                    <Link key={i} to={cat.link ? cat.link : `/services?category=${cat.name}`} style={styles.heroCatItem}>
                                         <div style={{ ...styles.heroCatIcon, backgroundColor: cat.bg }}>{cat.icon}</div>
                                         <span style={styles.heroCatLabel}>{cat.name}</span>
                                     </Link>
@@ -80,10 +80,10 @@ const Home = () => {
                     {/* Hero Right - Collage */}
                     <div style={styles.heroRight} className="hide-on-mobile">
                         <div style={styles.collageGrid}>
-                            <div style={{ ...styles.collageImg, gridArea: 'a', backgroundImage: 'url("https://images.unsplash.com/photo-1621905251918-48416bd8575a?q=80&w=1469&auto=format&fit=crop")' }}></div>
-                            <div style={{ ...styles.collageImg, gridArea: 'b', backgroundImage: 'url("https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1374&auto=format&fit=crop")' }}></div>
-                            <div style={{ ...styles.collageImg, gridArea: 'c', backgroundImage: 'url("https://images.unsplash.com/photo-1581578731522-745d05db9a2d?q=80&w=1470&auto=format&fit=crop")' }}></div>
-                            <div style={{ ...styles.collageImg, gridArea: 'd', backgroundImage: 'url("https://images.unsplash.com/photo-1595475207225-428b62bda831?q=80&w=1480&auto=format&fit=crop")' }}></div>
+                            <div style={{ ...styles.collageImg, gridArea: 'a', backgroundImage: 'url("/images/categories/technical.png")' }}></div>
+                            <div style={{ ...styles.collageImg, gridArea: 'b', backgroundImage: 'url("/images/categories/salon.png")' }}></div>
+                            <div style={{ ...styles.collageImg, gridArea: 'c', backgroundImage: 'url("/images/categories/ac_repair.png")' }}></div>
+                            <div style={{ ...styles.collageImg, gridArea: 'd', backgroundImage: 'url("/images/categories/cleaning.png")' }}></div>
                         </div>
                     </div>
                 </div>
@@ -179,6 +179,7 @@ const mainCategories = [
     { name: 'Cleaning', icon: '🧹', bg: '#f3e8ff' },
     { name: 'AC Repair', icon: '❄️', bg: '#dff6f9' },
     { name: 'Painters', icon: '🎨', bg: '#ffedd5' },
+    { name: 'Local Shops', icon: '🏪', bg: '#ecfdf5', link: '/shops' },
     { name: 'Tutors', icon: '📚', bg: '#f1f5f9' },
 ];
 

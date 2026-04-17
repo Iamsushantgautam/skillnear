@@ -34,7 +34,19 @@ const userSchema = new mongoose.Schema(
             city: String,
             state: String,
             zipCode: String,
+            pincode: String,
             country: String,
+        },
+        geoCoordinates: {
+            type: {
+                type: String,
+                enum: ['Point'],
+                default: 'Point'
+            },
+            coordinates: {
+                type: [Number],
+                default: [0, 0]
+            }
         },
         avatar: {
             type: String,

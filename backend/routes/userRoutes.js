@@ -7,11 +7,15 @@ import {
     updateUser,
     deleteUser,
     getShops,
-    getPublicProfileByUsername
+    getPublicProfileByUsername,
+    updateLocation
 } from '../controllers/userController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+router.route('/location')
+    .put(protect, updateLocation);
 
 router.route('/')
     .get(protect, admin, getUsers);

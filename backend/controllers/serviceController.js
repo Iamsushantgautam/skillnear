@@ -15,6 +15,7 @@ export const getServices = async (req, res) => {
             : {};
 
         const category = req.query.category ? { category: req.query.category } : {};
+        const businessType = req.query.businessType ? { businessType: req.query.businessType } : {};
 
         const locFilter = req.query.location
             ? {
@@ -24,8 +25,8 @@ export const getServices = async (req, res) => {
                 }
             } : {};
 
-        const services = await Service.find({ ...keyword, ...category, ...locFilter, isActive: true, isApproved: true })
-            .populate('provider', 'name avatar');
+        const services = await Service.find({ ...keyword, ...category, ...businessType, ...locFilter, isActive: true, isApproved: true })
+            .populate('provider', 'name username avatar');
 
         res.json(services);
     } catch (error) {
@@ -39,7 +40,7 @@ export const getServices = async (req, res) => {
 export const getServiceById = async (req, res) => {
     try {
         const service = await Service.findById(req.params.id)
-            .populate('provider', 'name email avatar providerDetails');
+            .populate('provider', 'name username email avatar providerDetails createdAt');
 
         if (service) {
             res.json(service);
@@ -77,7 +78,7 @@ export const createService = async (req, res) => {
             location,
             geoCoordinates: geoCoordinates || { type: 'Point', coordinates: [0, 0] },
             provider: req.user._id,
-            isApproved: true, // Auto-approved for this project
+            isApproved: false, // Now requires admin approval
             isActive: true,
         });
 
@@ -105,21 +106,55 @@ export const getMyServices = async (req, res) => {
 // @access  Private/Provider
 export const updateService = async (req, res) => {
     try {
-        const { title, category, description, price, priceType, isActive } = req.body;
+        const { 
+            title, category, subCategory, description, businessType, 
+            price, priceType, plans, shopDetails, location, 
+            geoCoordinates, coveragePincodes, experience, jobsCompleted, 
+            images, isActive 
+        } = req.body;
 
         const service = await Service.findById(req.params.id);
 
         if (service) {
-            // Check if user is the provider representing the service
             if (service.provider.toString() !== req.user._id.toString()) {
                 return res.status(401).json({ message: 'Not authorized to update this service' });
             }
 
             service.title = title || service.title;
             service.category = category || service.category;
+            service.subCategory = subCategory || service.subCategory;
             service.description = description || service.description;
-            service.price = price || service.price;
+            
+            if (businessType) {
+                service.businessType = businessType;
+            }
+            
+            service.price = price !== undefined ? price : service.price;
             service.priceType = priceType || service.priceType;
+            service.plans = plans || service.plans;
+            service.images = images || service.images;
+            service.experience = experience !== undefined ? experience : service.experience;
+            service.jobsCompleted = jobsCompleted !== undefined ? jobsCompleted : service.jobsCompleted;
+
+            if (shopDetails) {
+                service.shopDetails = { ...service.shopDetails, ...shopDetails };
+            }
+            
+            if (location) {
+                const locationData = { ...location };
+                if (locationData.pincode && !locationData.zipCode) {
+                    locationData.zipCode = locationData.pincode;
+                }
+                service.location = { ...service.location, ...locationData };
+            }
+
+            if (geoCoordinates) {
+                service.geoCoordinates = geoCoordinates;
+            }
+
+            if (coveragePincodes) {
+                service.coveragePincodes = coveragePincodes;
+            }
 
             if (isActive !== undefined) {
                 service.isActive = isActive;

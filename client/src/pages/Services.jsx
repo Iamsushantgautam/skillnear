@@ -13,6 +13,7 @@ const Services = () => {
 
     const [searchTerm, setSearchTerm] = useState(urlKeyword);
     const [category, setCategory] = useState(urlCategory);
+    const [businessType, setBusinessType] = useState('');
     const [location, setLocation] = useState(userLocation?.city && userLocation.city !== 'All of India' ? userLocation.city : '');
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
 
@@ -36,7 +37,7 @@ const Services = () => {
     useEffect(() => {
         const fetchServices = async () => {
             try {
-                const { data } = await api.get(`/api/services?category=${category}&keyword=${searchTerm}&location=${location}`);
+                const { data } = await api.get(`/api/services?category=${category}&keyword=${searchTerm}&location=${location}&businessType=${businessType}`);
                 setServicesList(data);
                 setLoading(false);
             } catch (error) {
@@ -45,7 +46,7 @@ const Services = () => {
             }
         };
         fetchServices();
-    }, [category, searchTerm, location]);
+    }, [category, searchTerm, location, businessType]);
 
     return (
         <div className="container" style={{ padding: '40px 20px', display: 'flex', gap: '32px' }}>
@@ -73,6 +74,21 @@ const Services = () => {
                             <option value="Groceries">Groceries</option>
                             <option value="Electronics">Electronics</option>
                         </select>
+                    </div>
+
+                    <div style={styles.filterGroup}>
+                        <label style={styles.label}>Provider Type</label>
+                        <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
+                                <input type="radio" name="bizType" value="" checked={businessType === ''} onChange={() => setBusinessType('')} /> Any Type
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
+                                <input type="radio" name="bizType" value="service" checked={businessType === 'service'} onChange={() => setBusinessType('service')} /> Services Only
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
+                                <input type="radio" name="bizType" value="shop" checked={businessType === 'shop'} onChange={() => setBusinessType('shop')} /> Shops Only
+                            </label>
+                        </div>
                     </div>
 
                     <div style={styles.filterGroup}>

@@ -6,6 +6,8 @@ import useAuthStore from '../store/useAuthStore';
 import api from '../utils/api';
 import ChatList from '../components/ChatList';
 import { useNavigate } from 'react-router-dom';
+import MapPicker from '../components/MapPicker';
+import { State, City } from 'country-state-city';
 
 const Dashboard = () => {
     const { user, updateUserInfo, userLocation } = useAuthStore();
@@ -50,7 +52,7 @@ const Dashboard = () => {
     const [gigStep, setGigStep] = useState(1);
     const [gigBusinessType, setGigBusinessType] = useState('service'); // service or shop
     const [gigTitle, setGigTitle] = useState('');
-    const [gigCategory, setGigCategory] = useState('Home Repairs');
+    const [gigCategory, setGigCategory] = useState('');
     const [gigDesc, setGigDesc] = useState('');
     const [gigPrice, setGigPrice] = useState(''); // Default/Basic price
     const [gigPriceType, setGigPriceType] = useState('fixed');
@@ -58,6 +60,16 @@ const Dashboard = () => {
     const [gigCity, setGigCity] = useState('');
     const [gigAddress, setGigAddress] = useState('');
     const [gigZipCode, setGigZipCode] = useState('');
+    const [gigExperience, setGigExperience] = useState('');
+    const [gigJobsCompleted, setGigJobsCompleted] = useState('');
+    const [gigCustomCategory, setGigCustomCategory] = useState('');
+    const [gigCoveragePincodes, setGigCoveragePincodes] = useState('');
+    const [gigLat, setGigLat] = useState(null);
+    const [gigLng, setGigLng] = useState(null);
+    const [shopGoogleMapsLink, setShopGoogleMapsLink] = useState('');
+    const [editingGigId, setEditingGigId] = useState(null);
+    const [gigStateCode, setGigStateCode] = useState('');
+    const indianStates = State.getStatesOfCountry('IN');
     
     // Plans state (Fiverr-style 3 plans)
     const [usePlans, setUsePlans] = useState(true);
@@ -71,22 +83,13 @@ const Dashboard = () => {
     const [shopOpeningTime, setShopOpeningTime] = useState('09:00 AM');
     const [shopClosingTime, setShopClosingTime] = useState('09:00 PM');
     const [shopIsHomeDelivery, setShopIsHomeDelivery] = useState(false);
+    const [shopIsHomeService, setShopIsHomeService] = useState(false);
+    const [shopHomeServiceFee, setShopHomeServiceFee] = useState('');
+    const [shopAge, setShopAge] = useState('');
 
     const [gigImages, setGigImages] = useState([]);   
     const [uploadingGigImages, setUploadingGigImages] = useState(false);
     const [creatingGig, setCreatingGig] = useState(false);
-
-    const indiaLocations = {
-        "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore"],
-        "Delhi": ["New Delhi", "North Delhi", "South Delhi", "West Delhi"],
-        "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
-        "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Mangaluru"],
-        "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik"],
-        "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Salem"],
-        "Telangana": ["Hyderabad", "Warangal", "Nizamabad"],
-        "Uttar Pradesh": ["Lucknow", "Kanpur", "Ghaziabad", "Agra", "Varanasi", "Noida"],
-        "West Bengal": ["Kolkata", "Howrah", "Durgapur"],
-    };
 
     // Edit Gig State
     const [showEditModal, setShowEditModal] = useState(false);
@@ -294,8 +297,8 @@ const Dashboard = () => {
 
     const handleCreateGig = async () => {
         // Validation: For services, price is usually needed. For shops, it is optional.
-        if (!gigTitle || !gigDesc || (gigBusinessType === 'service' && !gigPrice && !usePlans)) {
-            toast.error("Please fill all required fields (Title, Description, and Price/Plans)");
+        if (!gigTitle || !gigCategory || !gigDesc || (gigBusinessType === 'service' && !gigPrice && !usePlans)) {
+            toast.error("Please fill all required fields (Title, Category, Description, and Price/Plans)");
             return;
         }
 
@@ -304,7 +307,7 @@ const Dashboard = () => {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const payload = {
                 title: gigTitle,
-                category: gigCategory,
+                category: gigCategory === 'Other' ? gigCustomCategory : gigCategory,
                 description: gigDesc,
                 businessType: gigBusinessType,
                 price: Number(gigPrice),
@@ -317,32 +320,61 @@ const Dashboard = () => {
                     zipCode: gigZipCode,
                     isRemote: !gigCity 
                 },
+                geoCoordinates: {
+                    type: 'Point',
+                    coordinates: gigLat && gigLng ? [Number(gigLng), Number(gigLat)] : [0, 0]
+                },
                 plans: usePlans ? gigPlans.map(p => ({ ...p, price: Number(p.price) })) : [],
+                experience: gigBusinessType === 'service' ? (Number(gigExperience) || 0) : 0,
+                jobsCompleted: gigBusinessType === 'service' ? (Number(gigJobsCompleted) || 0) : 0,
                 shopDetails: gigBusinessType === 'shop' ? {
                     openingTime: shopOpeningTime,
                     closingTime: shopClosingTime,
-                    isHomeDelivery: shopIsHomeDelivery
-                } : null
+                    isHomeDelivery: shopIsHomeDelivery,
+                    isHomeService: shopIsHomeService,
+                    homeServiceFee: shopIsHomeService ? (Number(shopHomeServiceFee) || 0) : 0,
+                    shopAge: Number(shopAge) || 0,
+                    googleMapsLink: shopGoogleMapsLink
+                } : null,
+                coveragePincodes: gigCoveragePincodes ? (Array.isArray(gigCoveragePincodes) ? gigCoveragePincodes : gigCoveragePincodes.split(',').map(s => s.trim()).filter(Boolean)) : []
             };
 
-            await api.post('/api/services', payload, config);
+            if (editingGigId) {
+                await api.put(`/api/services/${editingGigId}`, payload, config);
+                toast.success("Gig updated successfully!");
+            } else {
+                await api.post('/api/services', payload, config);
+                toast.success("Gig published successfully!");
+            }
 
-            toast.success("Gig published successfully!");
             // Reset form
             setGigStep(1);
             setGigTitle('');
+            setGigCategory('');
             setGigDesc('');
             setGigPrice('');
             setGigCity('');
             setGigState('');
             setGigAddress('');
+            setGigZipCode('');
             setGigImages([]);
+            setGigExperience('');
+            setGigJobsCompleted('');
+            setGigCustomCategory('');
+            setShopAge('');
+            setShopIsHomeService(false);
+            setShopHomeServiceFee('');
+            setGigCoveragePincodes('');
+            setGigLat(null);
+            setGigLng(null);
+            setShopGoogleMapsLink('');
+            setEditingGigId(null);
             setCreatingGig(false);
             fetchMyGigs();
             setActiveTab('mygigs');
         } catch (error) {
-            console.error("Error creating gig", error);
-            toast.error("Failed to create gig");
+            console.error("Error saving gig", error);
+            toast.error(error.response?.data?.message || "Failed to save gig");
             setCreatingGig(false);
         }
     };
@@ -359,34 +391,60 @@ const Dashboard = () => {
     };
 
     const handleEditClick = (gig) => {
-        setEditingGig(gig);
-        setEditForm({
-            title: gig.title,
-            category: gig.category,
-            description: gig.description,
-            price: gig.price,
-            priceType: gig.priceType,
-            city: gig.location?.city || ''
-        });
-        setShowEditModal(true);
-    };
-
-    const handleUpdateGig = async () => {
-        try {
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await api.put(`/api/services/${editingGig._id}`, {
-                ...editForm,
-                price: Number(editForm.price),
-                location: { city: editForm.city || 'Remote', isRemote: !editForm.city }
-            }, config);
-
-            toast.success("Gig updated successfully!");
-            setShowEditModal(false);
-            fetchMyGigs();
-        } catch (error) {
-            toast.error("Failed to update gig");
+        setEditingGigId(gig._id);
+        
+        // Populate all states
+        setGigTitle(gig.title || '');
+        setGigCategory(gig.category || '');
+        setGigDesc(gig.description || '');
+        setGigPrice(gig.price || '');
+        setGigPriceType(gig.priceType || 'fixed');
+        setGigBusinessType(gig.businessType || 'service');
+        setGigImages(gig.images || []);
+        
+        if (gig.location) {
+            const stName = gig.location.state || '';
+            setGigState(stName);
+            setGigCity(gig.location.city || '');
+            setGigAddress(gig.location.address || '');
+            setGigZipCode(gig.location.zipCode || gig.location.pincode || '');
+            
+            // Resolve State Code for dropdown
+            const foundState = indianStates.find(s => s.name === stName);
+            if (foundState) setGigStateCode(foundState.isoCode);
         }
+        
+        setGigExperience(gig.experience || '');
+        setGigJobsCompleted(gig.jobsCompleted || '');
+        setGigCoveragePincodes(gig.coveragePincodes || []);
+        
+        if (gig.geoCoordinates?.coordinates) {
+            setGigLng(gig.geoCoordinates.coordinates[0]);
+            setGigLat(gig.geoCoordinates.coordinates[1]);
+        }
+        
+        if (gig.shopDetails) {
+            setShopOpeningTime(gig.shopDetails.openingTime || '09:00 AM');
+            setShopClosingTime(gig.shopDetails.closingTime || '09:00 PM');
+            setShopIsHomeDelivery(gig.shopDetails.isHomeDelivery || false);
+            setShopIsHomeService(gig.shopDetails.isHomeService || false);
+            setShopHomeServiceFee(gig.shopDetails.homeServiceFee || '');
+            setShopAge(gig.shopDetails.shopAge || '');
+            setShopGoogleMapsLink(gig.shopDetails.googleMapsLink || '');
+        }
+
+        if (gig.plans?.length > 0) {
+            setUsePlans(true);
+            setGigPlans(gig.plans);
+        } else {
+            setUsePlans(false);
+        }
+
+        setGigStep(1);
+        setActiveTab('services');
     };
+
+
 
     // Customer Tabs
     const renderCustomerTabs = () => (
@@ -673,8 +731,12 @@ const Dashboard = () => {
                         <div className="animate-fade-in" style={{ maxWidth: '900px', margin: '0 auto' }}>
                             <div className="flex-between" style={{ marginBottom: '24px' }}>
                                 <div>
-                                    <h2 className="text-h2">Publish Your Expertise</h2>
-                                    <p className="text-body" style={{ color: 'var(--text-muted)' }}>Step {gigStep} of 3: {gigStep === 1 ? 'General Details' : gigStep === 2 ? 'Pricing & Plans' : 'Location & Media'}</p>
+                                    <h2 className="text-h2">
+                                        {editingGigId ? 'Update Your Gig' : 'Publish Your Expertise'}
+                                    </h2>
+                                    <p className="text-body" style={{ color: 'var(--text-muted)' }}>
+                                        Step {gigStep} of 3: {gigStep === 1 ? 'General Details' : gigStep === 2 ? 'Pricing & Plans' : 'Location & Media'}
+                                    </p>
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                     {[1, 2, 3].map(s => (
@@ -722,30 +784,49 @@ const Dashboard = () => {
                                             <input type="text" className="input-field" placeholder={gigBusinessType === 'service' ? "e.g. I will fix your technical plumbing issues" : "e.g. Sharma Grocery Store"} value={gigTitle} onChange={e => setGigTitle(e.target.value)} />
                                         </div>
 
+                                        <div style={styles.formGroup}>
+                                            <label style={styles.label}>Category</label>
+                                            <select className="input-field" value={gigCategory} onChange={e => setGigCategory(e.target.value)}>
+                                                <option value="" disabled>-- Select Category --</option>
+                                                <option value="Salon">Salon</option>
+                                                <option value="Carpenters">Carpenters</option>
+                                                <option value="Plumbers">Plumbers</option>
+                                                <option value="Electricians">Electricians</option>
+                                                <option value="Cleaning">Cleaning</option>
+                                                <option value="AC Repair">AC Repair</option>
+                                                <option value="Painters">Painters</option>
+                                                <option value="Tutors">Tutors</option>
+                                                <option value="Groceries">Groceries</option>
+                                                <option value="Electronics">Electronics</option>
+                                                <option value="Other">Other (Add Custom)</option>
+                                            </select>
+                                        </div>
+
+                                        {gigCategory === 'Other' && (
+                                            <div style={styles.formGroup} className="animate-fade-in">
+                                                <label style={styles.label}>Custom Category Name</label>
+                                                <input type="text" className="input-field" placeholder="e.g. Pet Grooming" value={gigCustomCategory} onChange={e => setGigCustomCategory(e.target.value)} />
+                                            </div>
+                                        )}
+
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Category</label>
-                                                <select className="input-field" value={gigCategory} onChange={e => setGigCategory(e.target.value)}>
-                                                    <option value="Salon">Salon</option>
-                                                    <option value="Carpenters">Carpenters</option>
-                                                    <option value="Plumbers">Plumbers</option>
-                                                    <option value="Electricians">Electricians</option>
-                                                    <option value="Cleaning">Cleaning</option>
-                                                    <option value="AC Repair">AC Repair</option>
-                                                    <option value="Painters">Painters</option>
-                                                    <option value="Tutors">Tutors</option>
-                                                    <option value="Groceries">Groceries</option>
-                                                    <option value="Electronics">Electronics</option>
-                                                </select>
-                                            </div>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>{gigBusinessType === 'service' ? 'Project Type' : 'Shop Category'}</label>
-                                                <select className="input-field">
-                                                    <option value="Single Project">Single Project</option>
-                                                    <option value="Subscription">Monthly Support</option>
-                                                    <option value="Maintenance">Maintenance</option>
-                                                </select>
-                                            </div>
+                                            {gigBusinessType === 'service' ? (
+                                                <>
+                                                    <div style={styles.formGroup}>
+                                                        <label style={styles.label}>Years of Experience</label>
+                                                        <input type="number" className="input-field" placeholder="e.g. 5" value={gigExperience} onChange={e => setGigExperience(e.target.value)} />
+                                                    </div>
+                                                    <div style={styles.formGroup}>
+                                                        <label style={styles.label}>Total Jobs Done</label>
+                                                        <input type="number" className="input-field" placeholder="e.g. 150" value={gigJobsCompleted} onChange={e => setGigJobsCompleted(e.target.value)} />
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div style={{ ...styles.formGroup, gridColumn: 'span 2' }}>
+                                                    <label style={styles.label}>How old is your Shop? (Years)</label>
+                                                    <input type="number" className="input-field" placeholder="e.g. 10" value={shopAge} onChange={e => setShopAge(e.target.value)} />
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div style={styles.formGroup}>
@@ -833,9 +914,23 @@ const Dashboard = () => {
                                                         <input type="time" className="input-field" value={shopClosingTime} onChange={e => setShopClosingTime(e.target.value)} />
                                                     </div>
                                                 </div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-                                                    <input type="checkbox" checked={shopIsHomeDelivery} onChange={e => setShopIsHomeDelivery(e.target.checked)} />
-                                                    <label className="text-small">Provide Home Delivery?</label>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', padding: '12px', background: '#f8fafc', borderRadius: '8px' }}>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                                        <input type="checkbox" checked={shopIsHomeDelivery} onChange={e => setShopIsHomeDelivery(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                                                        <span className="text-small" style={{ fontWeight: 500 }}>Provide Home Delivery?</span>
+                                                    </label>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                                        <input type="checkbox" checked={shopIsHomeService} onChange={e => setShopIsHomeService(e.target.checked)} style={{ width: '16px', height: '16px' }} />
+                                                        <span className="text-small" style={{ fontWeight: 500 }}>Provide Home Services? (Technician visits client)</span>
+                                                    </label>
+                                                    {shopIsHomeService && (
+                                                        <div className="animate-fade-in" style={{ paddingLeft: '26px', marginTop: '-4px' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                                <span className="text-small" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Visiting/Service Fee (₹):</span>
+                                                                <input type="number" className="input-field" style={{ padding: '4px 8px', fontSize: '0.85rem', width: '120px' }} placeholder="e.g. 150" value={shopHomeServiceFee} onChange={e => setShopHomeServiceFee(e.target.value)} />
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
@@ -845,19 +940,58 @@ const Dashboard = () => {
                                 {gigStep === 3 && (
                                     <div className="animate-fade-in">
                                         <div style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '20px' }}>Location & Search Visibility</div>
+                                        
+                                        {gigBusinessType === 'shop' && (
+                                            <div style={styles.formGroup}>
+                                                <label style={styles.label}>Business Location on Map</label>
+                                                <MapPicker lat={gigLat} lng={gigLng} onChange={({ lat, lng }) => { setGigLat(lat); setGigLng(lng); }} />
+                                            </div>
+                                        )}
+
+                                        {gigBusinessType === 'shop' && (
+                                            <div style={styles.formGroup}>
+                                                <label style={styles.label}>Google Maps Shop Link (Optional but Recommended)</label>
+                                                <input 
+                                                    type="url" 
+                                                    className="input-field" 
+                                                    placeholder="https://maps.app.goo.gl/..." 
+                                                    value={shopGoogleMapsLink} 
+                                                    onChange={e => setShopGoogleMapsLink(e.target.value)} 
+                                                />
+                                                <div style={{ marginTop: '8px', padding: '12px', background: 'var(--bg-color)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                                    <p style={{ fontSize: '0.8rem', fontWeight: '600', marginBottom: '4px' }}>How to get your shop link:</p>
+                                                    <ol style={{ fontSize: '0.75rem', paddingLeft: '16px', margin: 0, color: '#64748b' }}>
+                                                        <li>Open Google Maps and find your shop.</li>
+                                                        <li>Click the <strong>'Share'</strong> button.</li>
+                                                        <li>Choose <strong>'Copy Link'</strong> and paste it here.</li>
+                                                    </ol>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                             <div style={styles.formGroup}>
                                                 <label style={styles.label}>State</label>
-                                                <select className="input-field" value={gigState} onChange={e => { setGigState(e.target.value); setGigCity(''); }}>
+                                                <select 
+                                                    className="input-field" 
+                                                    value={gigStateCode} 
+                                                    onChange={e => { 
+                                                        const stateCode = e.target.value;
+                                                        const stateObj = indianStates.find(s => s.isoCode === stateCode);
+                                                        setGigStateCode(stateCode);
+                                                        setGigState(stateObj ? stateObj.name : '');
+                                                        setGigCity(''); 
+                                                    }}
+                                                >
                                                     <option value="">Select State</option>
-                                                    {Object.keys(indiaLocations).map(s => <option key={s} value={s}>{s}</option>)}
+                                                    {indianStates.map(s => <option key={s.isoCode} value={s.isoCode}>{s.name}</option>)}
                                                 </select>
                                             </div>
                                             <div style={styles.formGroup}>
                                                 <label style={styles.label}>City</label>
-                                                <select className="input-field" value={gigCity} onChange={e => setGigCity(e.target.value)} disabled={!gigState}>
+                                                <select className="input-field" value={gigCity} onChange={e => setGigCity(e.target.value)} disabled={!gigStateCode}>
                                                     <option value="">Select City</option>
-                                                    {gigState && indiaLocations[gigState].map(c => <option key={c} value={c}>{c}</option>)}
+                                                    {gigStateCode && City.getCitiesOfState('IN', gigStateCode).map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
                                                 </select>
                                             </div>
                                         </div>
@@ -871,6 +1005,12 @@ const Dashboard = () => {
                                                 <label style={styles.label}>Pincode</label>
                                                 <input type="text" className="input-field" placeholder="e.g. 226001" value={gigZipCode} onChange={e => setGigZipCode(e.target.value)} />
                                             </div>
+                                        </div>
+
+                                        <div style={styles.formGroup}>
+                                            <label style={styles.label}>Service Coverage Areas (Pincodes)</label>
+                                            <input type="text" className="input-field" placeholder="e.g. 110001, 110002, 110045" value={gigCoveragePincodes} onChange={e => setGigCoveragePincodes(e.target.value)} />
+                                            <p className="text-small" style={{ marginTop: '6px', color: 'var(--text-muted)' }}>Enter multiple pincodes separated by commas. Leave empty for city-wide coverage.</p>
                                         </div>
 
                                         <div style={{ marginTop: '24px' }}>
@@ -905,7 +1045,7 @@ const Dashboard = () => {
                                         <button onClick={() => setGigStep(prev => prev + 1)} className="btn-primary" style={{ padding: '12px 32px' }}>Next Step</button>
                                     ) : (
                                         <button onClick={handleCreateGig} disabled={creatingGig || uploadingGigImages} className="btn-primary" style={{ padding: '12px 48px', backgroundColor: '#059669' }}>
-                                            {creatingGig ? 'Publishing...' : 'Complete & Publish Gig'}
+                                            {creatingGig ? 'Saving...' : (editingGigId ? 'Save Changes' : 'Complete & Publish Gig')}
                                         </button>
                                     )}
                                 </div>
@@ -1135,98 +1275,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Edit Gig Modal */}
-            {showEditModal && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-                    backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-                }}>
-                    <div style={{
-                        backgroundColor: '#fff', borderRadius: 16, width: '100%', maxWidth: 500,
-                        maxHeight: '90vh', overflowY: 'auto', padding: 32, position: 'relative'
-                    }} className="animate-fade-in">
-                        <button onClick={() => setShowEditModal(false)} style={{ position: 'absolute', top: 20, right: 20, color: 'var(--text-muted)' }}>
-                            <X size={24} />
-                        </button>
-                        <h2 className="text-h2" style={{ marginBottom: 24 }}>Edit Gig Details</h2>
-
-                        <div style={styles.formGroup}>
-                            <label style={styles.label}>Gig Title</label>
-                            <input
-                                type="text"
-                                className="input-field"
-                                value={editForm.title}
-                                onChange={e => setEditForm({ ...editForm, title: e.target.value })}
-                            />
-                        </div>
-
-                        <div style={styles.formGroup}>
-                            <label style={styles.label}>Category</label>
-                            <select
-                                className="input-field"
-                                value={editForm.category}
-                                onChange={e => setEditForm({ ...editForm, category: e.target.value })}
-                            >
-                                <option value="Carpenters">Carpenters</option>
-                                <option value="Plumbers">Plumbers</option>
-                                <option value="Electricians">Electricians</option>
-                                <option value="Salon">Salon</option>
-                                <option value="Painters">Painters</option>
-                                <option value="Cleaning">Cleaning</option>
-                            </select>
-                        </div>
-
-                        <div style={styles.formGroup}>
-                            <label style={styles.label}>Description</label>
-                            <textarea
-                                className="input-field"
-                                rows="4"
-                                value={editForm.description}
-                                onChange={e => setEditForm({ ...editForm, description: e.target.value })}
-                            ></textarea>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                            <div style={styles.formGroup}>
-                                <label style={styles.label}>Price (₹)</label>
-                                <input
-                                    type="number"
-                                    className="input-field"
-                                    value={editForm.price}
-                                    onChange={e => setEditForm({ ...editForm, price: e.target.value })}
-                                />
-                            </div>
-                            <div style={styles.formGroup}>
-                                <label style={styles.label}>Price Type</label>
-                                <select
-                                    className="input-field"
-                                    value={editForm.priceType}
-                                    onChange={e => setEditForm({ ...editForm, priceType: e.target.value })}
-                                >
-                                    <option value="fixed">Fixed</option>
-                                    <option value="hourly">Hourly</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div style={styles.formGroup}>
-                            <label style={styles.label}>City (blank for remote)</label>
-                            <input
-                                type="text"
-                                className="input-field"
-                                value={editForm.city}
-                                onChange={e => setEditForm({ ...editForm, city: e.target.value })}
-                            />
-                        </div>
-
-                        <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                            <button className="btn-primary" style={{ flex: 1 }} onClick={handleUpdateGig}>Save Changes</button>
-                            <button className="btn-outline" style={{ flex: 1 }} onClick={() => setShowEditModal(false)}>Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Old modals removed - editing is now in the main wizard */}
         </div>
     );
 };

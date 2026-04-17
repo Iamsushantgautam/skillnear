@@ -23,6 +23,14 @@ const serviceSchema = new mongoose.Schema(
             enum: ['service', 'shop'],
             default: 'service'
         },
+        experience: {
+            type: Number,
+            default: 0
+        },
+        jobsCompleted: {
+            type: Number,
+            default: 0
+        },
         description: {
             type: String,
             required: true,
@@ -46,11 +54,7 @@ const serviceSchema = new mongoose.Schema(
                 deliveryTime: String // e.g. "2 days"
             }
         ],
-        images: [
-            {
-                type: String,
-            }
-        ],
+        images: [String],
         rating: {
             type: Number,
             default: 0,
@@ -73,7 +77,11 @@ const serviceSchema = new mongoose.Schema(
             openingTime: String,
             closingTime: String,
             isHomeDelivery: Boolean,
-            shopType: String // e.g. Grocery, Electronics
+            isHomeService: { type: Boolean, default: false },
+            homeServiceFee: { type: Number, default: 0 },
+            shopType: String, // e.g. Grocery, Electronics
+            shopAge: { type: Number, default: 0 },
+            googleMapsLink: { type: String, default: '' }
         },
         geoCoordinates: {
             type: {
@@ -86,6 +94,11 @@ const serviceSchema = new mongoose.Schema(
                 default: [0, 0]
             }
         },
+        coveragePincodes: [
+            {
+                type: String,
+            }
+        ],
         isActive: {
             type: Boolean,
             default: true,
