@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import MobileNav from './components/MobileNav';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 
@@ -17,13 +16,11 @@ import Chat from './pages/Chat';
 import ForgotPassword from './pages/ForgotPassword';
 import ShopFinder from './pages/ShopFinder';
 import PublicProfile from './pages/PublicProfile';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import Terms from './pages/Terms';
 
-function NavConditional() {
-  const location = useLocation();
-  // Do not show botton nav on Home Page
-  if (location.pathname === '/') return null;
-  return <MobileNav />;
-}
 
 function MainLayout() {
   return (
@@ -41,10 +38,13 @@ function MainLayout() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
         </Routes>
       </main>
       <Footer />
-      <NavConditional />
     </>
   );
 }

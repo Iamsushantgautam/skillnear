@@ -29,6 +29,16 @@ const Chat = () => {
     const queryParams = new URLSearchParams(location.search);
     const initialProviderId = queryParams.get('provider');
     const initialRoomId = queryParams.get('roomId');
+    const serviceId = queryParams.get('service');
+
+    const [activeService, setActiveService] = useState(null);
+
+    // Fetch active service if serviceId in URL
+    useEffect(() => {
+        if (serviceId) {
+            api.get(`/api/services/${serviceId}`).then(({ data }) => setActiveService(data)).catch(() => {});
+        }
+    }, [serviceId]);
 
     // Handle Resize
     useEffect(() => {
@@ -355,6 +365,49 @@ const Chat = () => {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Service Context Card */}
+                            {activeService && (
+                                <div style={{ 
+                                    padding: '12px 16px', 
+                                    backgroundColor: 'rgba(255,255,255,0.95)', 
+                                    borderBottom: '1px solid #e2e8f0', 
+                                    display: 'flex', 
+                                    gap: 16, 
+                                    alignItems: 'center', 
+                                    zIndex: 9, 
+                                    backdropFilter: 'blur(10px)',
+                                    animation: 'slideDown 0.3s ease-out'
+                                }}>
+                                    <style>{`
+                                        @keyframes slideDown {
+                                            from { transform: translateY(-100%); opacity: 0; }
+                                            to { transform: translateY(0); opacity: 1; }
+                                        }
+                                    `}</style>
+                                    <img 
+                                        src={activeService.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeService.title)}&background=ede9fe&color=4f46e5`} 
+                                        style={{ width: 70, height: 50, borderRadius: 10, objectFit: 'cover', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} 
+                                        alt={activeService.title} 
+                                        onError={(e) => e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(activeService.title)}&background=ede9fe&color=4f46e5`}
+                                    />
+                                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px', backgroundColor: '#f5f3ff', padding: '2px 8px', borderRadius: 4 }}>Inquiry For</span>
+                                        </div>
+                                        <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '4px 0 0', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeService.title}</h4>
+                                        <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {activeService.description}
+                                        </p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setActiveService(null)}
+                                        style={{ background: '#f1f5f9', border: 'none', color: '#94a3b8', cursor: 'pointer', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, transition: 'all 0.2s' }}
+                                        onMouseOver={(e) => { e.target.style.background = '#e2e8f0'; e.target.style.color = '#1e293b'; }}
+                                        onMouseOut={(e) => { e.target.style.background = '#f1f5f9'; e.target.style.color = '#94a3b8'; }}
+                                    >✕</button>
+                                </div>
+                            )}
 
                             {/* Messages Container */}
                             <div style={styles.messagesContainer}>

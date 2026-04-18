@@ -3,8 +3,13 @@ import { Link } from 'react-router-dom';
 
 const Footer = () => {
     return (
-        <footer style={styles.footer}>
+        <footer className="global-footer" style={styles.footer}>
             <div className="container">
+                <style>{`
+                    @media (max-width: 768px) {
+                        .global-footer { display: none !important; }
+                    }
+                `}</style>
                 <div style={styles.grid}>
                     {/* Brand Col */}
                     <div style={styles.col}>
@@ -35,6 +40,7 @@ const Footer = () => {
                         <Link to="/about" style={styles.link}>About Us</Link>
                         <Link to="/contact" style={styles.link}>Contact</Link>
                         <Link to="/privacy" style={styles.link}>Privacy Policy</Link>
+                        <Link to="/terms" style={styles.link}>Terms & Conditions</Link>
                     </div>
                 </div>
 

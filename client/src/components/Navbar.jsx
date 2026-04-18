@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, Menu, LogOut, MapPin, ChevronDown, X, LocateFixed } from 'lucide-react';
+import { Search, User, Menu, MapPin, ChevronDown, X, LocateFixed, Info, Mail, Shield, FileText, LogOut } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
 import { State, City } from 'country-state-city';
 import api from '../utils/api';
@@ -17,6 +17,7 @@ const Navbar = () => {
     const [selectedPincode, setSelectedPincode] = useState(userLocation?.pincode || '');
     const [searchKeyword, setSearchKeyword] = useState('');
     const [isDetecting, setIsDetecting] = useState(false);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const handleSearch = (e) => {
         if (e.key === 'Enter' && searchKeyword.trim()) {
@@ -113,7 +114,7 @@ const Navbar = () => {
             <div className="container" style={styles.container}>
                 <div className="nav-left">
                     {/* Logo */}
-                    <Link to="/" style={styles.logo}>
+                    <Link to="/" style={styles.logo} className="skillnear-logo">
                         SkillNear
                     </Link>
 
@@ -157,23 +158,100 @@ const Navbar = () => {
 
                     {user ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <Link to="/dashboard" className="user-profile-link">
+                            <Link to="/dashboard" className="user-profile-link hide-on-mobile">
                                 <img src={getAvatar(user)} alt="Profile" className="nav-avatar" onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=ede9fe&color=4f46e5&size=80`; }} />
                                 <span className="nav-username hide-on-mobile">{user.name}</span>
                             </Link>
-                            <button onClick={handleLogout} className="logout-btn hide-on-mobile">
-                                <LogOut size={18} />
-                                <span>Logout</span>
-                            </button>
                         </div>
                     ) : (
-                        <div className="auth-btns hide-on-mobile">
-                            <Link to="/login" style={styles.link}>Login</Link>
-                            <Link to="/register" className="btn-primary">Sign Up</Link>
+                        <div className="nav-auth-container">
+                            <div className="auth-btns hide-on-mobile">
+                                <Link to="/login" style={styles.link}>Login</Link>
+                                <Link to="/register" className="btn-primary">Sign Up</Link>
+                            </div>
+                            <Link to="/login" className="btn-login-small show-on-mobile">
+                                Login
+                            </Link>
                         </div>
                     )}
+
+                    {/* Mobile Hamburger Logic */}
+                    <button 
+                        onClick={() => setIsDrawerOpen(true)} 
+                        className="show-on-mobile" 
+                        style={{ background: 'none', border: 'none', color: 'var(--text-main)', padding: '4px' }}
+                    >
+                        <Menu size={24} />
+                    </button>
                 </div>
             </div>
+
+            {/* Mobile Drawer */}
+            {isDrawerOpen && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 2001 }}>
+                    <div onClick={() => setIsDrawerOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+                    <div className="animate-slide-in-left no-scrollbar" style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '280px', background: 'white', padding: '64px 24px 100px', overflowY: 'auto' }}>
+                        <button onClick={() => setIsDrawerOpen(false)} style={{ position: 'absolute', top: 24, right: 20, background: 'none', border: 'none' }}><X size={24} color="#64748b" /></button>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
+                            {user ? (
+                                <>
+                                    <img 
+                                        src={getAvatar(user)} 
+                                        style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} 
+                                        alt="" 
+                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=ede9fe&color=4f46e5&size=80`; }}
+                                    />
+                                    <div>
+                                        <h4 style={{ margin: 0, fontWeight: 800 }}>{user.name}</h4>
+                                        <p style={{ margin: 0, fontSize: 10, color: '#94a3b8' }}>SkillNear Member</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#f0f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <User size={24} color="#003d9b" />
+                                    </div>
+                                    <div>
+                                        <h4 style={{ margin: 0, fontWeight: 800 }}>Welcome to SkillNear</h4>
+                                        <p style={{ margin: 0, fontSize: 10, color: '#94a3b8' }}>Connect with local experts</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {[
+                                { label: 'Home', link: '/', icon: LocateFixed },
+                                { label: 'Local Shops', link: '/shops', icon: MapPin },
+                                { label: 'Browse Services', link: '/services', icon: Search },
+                                { divider: true },
+                                { label: 'About Us', link: '/about', icon: Info },
+                                { label: 'Connect With Us', link: '/contact', icon: Mail },
+                                { divider: true },
+                                { label: 'Privacy Policy', link: '/privacy', icon: Shield },
+                                { label: 'Terms & Conditions', link: '/terms', icon: FileText },
+                                { divider: true },
+                                ...(user ? [
+                                    { label: 'My Dashboard', link: '/dashboard', icon: User },
+                                    { divider: true },
+                                    { label: 'Logout', action: handleLogout, icon: LogOut, color: '#ef4444' }
+                                ] : [
+                                    { label: 'Login', link: '/login', icon: User },
+                                    { label: 'Sign Up', link: '/register', icon: User }
+                                ])
+                            ].map((item, idx) => (
+                                item.divider ? <div key={idx} style={{ height: '1px', background: '#f1f5f9', margin: '8px 0' }} /> : (
+                                    <button key={item.label} onClick={() => { item.action ? item.action() : navigate(item.link); setIsDrawerOpen(false); }} 
+                                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'none', border: 'none', borderRadius: 12, width: '100%', textAlign: 'left', fontWeight: 600, color: item.color || '#64748b' }}>
+                                        <item.icon size={20} /> {item.label}
+                                    </button>
+                                )
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 .nav-left {
@@ -247,12 +325,19 @@ const Navbar = () => {
                     overflow: hidden;
                     text-overflow: ellipsis;
                 }
-                .logout-btn {
-                    color: var(--danger);
+                .btn-login-small {
+                    padding: 5px 12px;
+                    font-size: 0.75rem;
+                    background-color: var(--primary);
+                    color: white;
+                    border-radius: var(--radius-sm);
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .nav-auth-container {
                     display: flex;
                     align-items: center;
-                    gap: 4px;
-                    font-weight: 500;
                 }
 
                 @media (max-width: 1024px) {

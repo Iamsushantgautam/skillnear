@@ -128,3 +128,58 @@ export const deleteAdminService = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// @desc    Get ALL users (for admin)
+// @route   GET /api/admin/users
+// @access  Private/Admin
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({}).sort({ createdAt: -1 });
+        res.json(users);
+    } catch (error) {
+        console.error('getAllUsers error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update a user's role
+// @route   PUT /api/admin/users/:userId/role
+// @access  Private/Admin
+export const updateUserRole = async (req, res) => {
+    try {
+        const { role } = req.body;
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.role = role;
+        // If changing from provider to customer, might want to disable provider approval
+        if (role === 'customer') {
+            if (user.providerDetails) {
+                user.providerDetails.isApproved = false;
+            }
+        }
+        
+        await user.save();
+        res.json({ message: `Role updated to ${role}`, user });
+    } catch (error) {
+        console.error('updateUserRole error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Toggle user ban status
+// @route   PUT /api/admin/users/:userId/ban
+// @access  Private/Admin
+export const toggleUserBan = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.isBanned = !user.isBanned;
+        await user.save();
+        res.json({ message: user.isBanned ? 'User banned' : 'User unbanned', user });
+    } catch (error) {
+        console.error('toggleUserBan error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};

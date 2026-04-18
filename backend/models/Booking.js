@@ -30,6 +30,9 @@ const bookingSchema = new mongoose.Schema(
             city: String,
             state: String,
             zipCode: String,
+            googleMapLink: String,
+            lat: Number,
+            lng: Number,
         },
         totalPrice: {
             type: Number,

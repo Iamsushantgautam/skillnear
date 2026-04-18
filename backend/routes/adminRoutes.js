@@ -5,6 +5,9 @@ import {
     approveService,
     rejectService,
     deleteAdminService,
+    getAllUsers,
+    updateUserRole,
+    toggleUserBan,
 } from '../controllers/adminController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -20,5 +23,10 @@ router.get('/services', protect, admin, getAdminServices);
 router.put('/services/:serviceId/approve', protect, admin, approveService);
 router.put('/services/:serviceId/reject', protect, admin, rejectService);
 router.delete('/services/:serviceId', protect, admin, deleteAdminService);
+
+// User management
+router.get('/users', protect, admin, getAllUsers);
+router.put('/users/:userId/role', protect, admin, updateUserRole);
+router.put('/users/:userId/ban', protect, admin, toggleUserBan);
 
 export default router;

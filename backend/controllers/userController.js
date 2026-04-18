@@ -115,11 +115,12 @@ export const updateUserProfile = async (req, res) => {
                 user.password = req.body.password;
             }
 
-            if (user.role === 'provider' && req.body.providerDetails) {
+            if (req.body.providerDetails) {
                 user.providerDetails = {
-                    ...user.providerDetails,
+                    ...(user.providerDetails || {}),
                     ...req.body.providerDetails
                 };
+                user.markModified('providerDetails');
             }
 
             const updatedUser = await user.save();
