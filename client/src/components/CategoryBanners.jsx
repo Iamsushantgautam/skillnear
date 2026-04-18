@@ -1,20 +1,28 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
+import homeRepairImg from '../assets/catg/homeRepair.png';
+import womenSalonImg from '../assets/catg/womenSolon.png';
+import acRepairImg from '../assets/catg/acRepair.png';
+import plumbingImg from '../assets/catg/plumbing.png';
+import paintersImg from '../assets/catg/painters.png';
+import cleaningImg from '../assets/catg/cleaning.png';
+import tutorsImg from '../assets/catg/tutors.png';
+import carpenterImg from '../assets/catg/carpenter.png';
 
 const CategoryBanners = () => {
     const navigate = useNavigate();
 
     const banners = [
-        { title: 'Home Repairs', subtitle: 'Starting at ₹249', bg: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)', cat: 'Carpenters', show: true },
-        { title: 'Women Salon', subtitle: 'Flat 30% OFF', bg: 'linear-gradient(135deg, #db2777 0%, #9d174d 100%)', cat: 'Salon', show: true },
-        { title: 'AC Servicing', subtitle: 'Instant 2hr Booking', bg: 'linear-gradient(135deg, #059669 0%, #064e3b 100%)', cat: 'AC Repair', show: true },
-        { title: 'Plumbing', subtitle: 'Expert Fixes ₹199', bg: 'linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)', cat: 'Plumbers', show: true },
-        { title: 'Electrical', subtitle: 'Safety First · Fast', bg: 'linear-gradient(135deg, #f59e0b 0%, #b45309 100%)', cat: 'Electricians', show: true },
-        { title: 'Painters', subtitle: 'Free Consultation', bg: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', cat: 'Painters', show: true },
-        { title: 'Cleaning', subtitle: 'Spotless Deep Clean', bg: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)', cat: 'Cleaning', show: true },
+        { title: 'Home Repairs', subtitle: 'Starting at ₹249', bg: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)', cat: 'Carpenters', img: homeRepairImg, show: true },
+        { title: 'Women Salon', subtitle: 'Flat 30% OFF', bg: 'linear-gradient(135deg, #db2777 0%, #9d174d 100%)', cat: 'Salon', img: womenSalonImg, show: true },
+        { title: 'AC Servicing', subtitle: 'Instant 2hr Booking', bg: 'linear-gradient(135deg, #059669 0%, #064e3b 100%)', cat: 'AC Repair', img: acRepairImg, show: true },
+        { title: 'Plumbing', subtitle: 'Expert Fixes ₹199', bg: 'linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)', cat: 'Plumbers', img: plumbingImg, show: true },
+        { title: 'Carpenters', subtitle: 'Safety First · Fast', bg: 'linear-gradient(135deg, #f59e0b 0%, #b45309 100%)', cat: 'Carpenters', img: carpenterImg, show: true },
+        { title: 'Painters', subtitle: 'Free Consultation', bg: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', cat: 'Painters', img: paintersImg, show: true },
+        { title: 'Cleaning', subtitle: 'Spotless Deep Clean', bg: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)', cat: 'Cleaning', img: cleaningImg, show: true },
         { title: 'Local Shops', subtitle: 'Essentials Nearby', bg: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', link: '/shops', show: false },
-        { title: 'Tutors', subtitle: 'Learn from Experts', bg: 'linear-gradient(135deg, #64748b 0%, #334155 100%)', cat: 'Tutors', show: true },
+        { title: 'Tutors', subtitle: 'Learn from Experts', bg: 'linear-gradient(135deg, #64748b 0%, #334155 100%)', cat: 'Tutors', img: tutorsImg, show: true },
     ];
 
     return (
@@ -35,6 +43,9 @@ const CategoryBanners = () => {
                             <p className="banner-subtitle">{item.subtitle}</p>
                             <button className="desktop-btn" style={styles.button}>Check Now</button>
                         </div>
+                        {item.img && (
+                            <img src={item.img} alt={item.title} className="banner-img" />
+                        )}
                         <div className="mobile-arrow">
                             <ChevronRight size={32} />
                         </div>
@@ -45,9 +56,9 @@ const CategoryBanners = () => {
             <style>{`
                 .banners-grid {
                     display: grid;
-                    grid-template-columns: repeat(4, 1fr);
-                    gap: 24px;
-                    padding: 10px 0;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 60px 24px;
+                    padding: 40px 0 10px 0;
                 }
                 
                 .banner-card {
@@ -56,6 +67,28 @@ const CategoryBanners = () => {
                     justify-content: center;
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     position: relative;
+                }
+                
+                .card-content {
+                    position: relative;
+                    z-index: 2;
+                }
+
+                .banner-img {
+                    position: absolute;
+                    bottom: 0px;
+                    right: -30px;
+                    height: 130%;
+                    object-fit: contain;
+                    z-index: 1;
+                    opacity: 1;
+                    transition: transform 0.3s ease;
+                    pointer-events: none;
+                    border-bottom-right-radius: 24px;
+                }
+
+                .banner-card:hover {
+                    transform: scale(1.05);
                 }
                 
                 .banner-card:hover {
@@ -87,56 +120,75 @@ const CategoryBanners = () => {
 
                 @media (max-width: 1024px) {
                     .banners-grid {
-                        grid-template-columns: repeat(3, 1fr);
+                        grid-template-columns: repeat(2, 1fr);
                     }
                 }
 
                 @media (max-width: 768px) {
                     .banners-grid {
                         grid-template-columns: 1fr;
-                        gap: 16px;
+                        gap: 20px;
                     }
                     .banner-card {
                         flex-direction: row;
-                        align-items: center;
+                        align-items: stretch;
                         justify-content: space-between;
-                        padding: 20px 24px !important;
-                        min-height: 120px !important;
+                        padding: 20px 0 0 24px !important;
+                        min-height: 130px !important;
+                        overflow: hidden;
+                    }
+                    .card-content {
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        padding-bottom: 20px;
+                        z-index: 2;
                     }
                     .desktop-btn {
                         display: none !important;
                     }
                     .mobile-arrow {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
+                        display: none !important;
                     }
                     .banner-title {
-                        font-size: 1.4rem;
+                        font-size: 1.3rem;
                         margin-bottom: 4px;
                     }
                     .banner-subtitle {
-                        font-size: 0.9rem;
+                        font-size: 0.85rem;
+                    }
+                    .banner-img {
+                        position: relative;
+                        bottom: 0;
+                        right: 0;
+                        height: 140%;
+                        width: 130px;
+                        flex-shrink: 0;
+                        align-self: flex-end;
+                        object-fit: contain;
+                        object-position: bottom right;
+                        border-bottom-right-radius: 24px;
+                        opacity: 1;
                     }
                 }
 
                 @media (max-width: 480px) {
                     .banners-grid {
-                        gap: 12px;
+                        gap: 16px;
                     }
                     .banner-card {
-                        padding: 16px 20px !important;
-                        min-height: 100px !important;
+                        padding: 16px 0 0 20px !important;
+                        min-height: 110px !important;
+                    }
+                    .banner-img {
+                        width: 110px;
                     }
                     .banner-title {
-                        font-size: 1.2rem;
+                        font-size: 1.1rem;
                     }
                     .banner-subtitle {
-                        font-size: 0.8rem;
-                    }
-                    .mobile-arrow svg {
-                        width: 24px;
-                        height: 24px;
+                        font-size: 0.78rem;
                     }
                 }
             `}</style>
@@ -152,7 +204,6 @@ const styles = {
         cursor: 'pointer',
         minHeight: '200px',
         position: 'relative',
-        overflow: 'hidden',
     },
     button: {
         marginTop: '24px',

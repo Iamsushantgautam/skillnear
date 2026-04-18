@@ -3,6 +3,7 @@ import api from '../utils/api';
 import { Search, MapPin, Shield, Star, Clock, ChevronRight, Zap, Target, Heart } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import CategoryBanners from '../components/CategoryBanners';
+import allCategoryLineup from '../assets/catg/allCategoryLineup.png';
 
 const Home = () => {
     const [servicesByCategory, setServicesByCategory] = useState({});
@@ -37,13 +38,25 @@ const Home = () => {
     };
 
     return (
-        <div style={{ backgroundColor: '#fff' }}>
+        <div style={{ backgroundColor: '#fff', overflowX: 'hidden' }}>
+            <style>{`
+                @media (max-width: 768px) {
+                    .hero-wrapper-mobile { padding: 20px 0 40px !important; }
+                    .hero-grid-mobile { grid-template-columns: 1fr !important; gap: 24px !important; }
+                    .hero-title-mobile { font-size: 2.2rem !important; margin-bottom: 24px !important; letter-spacing: -1px !important; }
+                    .hero-cat-grid-mobile { grid-template-columns: repeat(3, 1fr) !important; gap: 12px !important; }
+                    .ad-banner-mobile { flex-direction: column !important; height: auto !important; }
+                    .ad-banner-left { padding: 32px 24px !important; }
+                    .ad-banner-right { min-height: 250px !important; }
+                }
+            `}</style>
+
             {/* HERO SECTION - Urban Company Style */}
-            <section style={styles.heroWrapper}>
-                <div className="container" style={styles.heroContainer}>
+            <section className="hero-wrapper-mobile" style={styles.heroWrapper}>
+                <div className="container hero-grid-mobile" style={styles.heroContainer}>
                     {/* Hero Left - Search & Icons */}
                     <div style={styles.heroLeft}>
-                        <h1 style={styles.heroTitle}>Home services at your doorstep</h1>
+                        <h1 className="hero-title-mobile" style={styles.heroTitle}>Home services at your doorstep</h1>
                         
                         <div style={styles.searchBoxCard}>
                             <p style={{ fontWeight: '600', marginBottom: '16px', fontSize: '0.95rem', color: 'var(--text-muted)' }}>What are you looking for?</p>
@@ -58,7 +71,7 @@ const Home = () => {
                                 />
                             </form>
                             
-                                <div style={styles.heroCatGrid}>
+                                <div className="hero-cat-grid-mobile" style={styles.heroCatGrid}>
                                     {mainCategories.map((cat, i) => (
                                         <Link key={i} to={cat.link ? cat.link : `/services?category=${cat.name}`} style={styles.heroCatItem}>
                                             <div style={{ ...styles.heroCatIcon, backgroundColor: cat.bg, overflow: 'hidden' }}>
@@ -151,14 +164,20 @@ const Home = () => {
 
                 {/* AD BANNER */}
                 <section className="container" style={{ margin: '60px auto' }}>
-                    <div style={styles.adBanner}>
-                        <div style={{ flex: 1, padding: '48px' }}>
-                            <span style={{ backgroundColor: '#fff', color: '#000', padding: '4px 12px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase' }}>Native Brands</span>
-                            <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#fff', mt: '16px', mb: '16px' }}>Professional Home Cleaning</h2>
-                            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.1rem', marginBottom: '32px' }}>Get your home sanitised and spotlessly clean by our experts.</p>
-                            <button style={{ backgroundColor: '#fff', color: '#000', padding: '12px 32px', borderRadius: '8px', fontWeight: '700', fontSize: '1rem' }}>Book Now</button>
+                    <div className="ad-banner-mobile" style={styles.adBanner}>
+                        <div className="ad-banner-left" style={{ flex: 1, padding: '48px', zIndex: 1 }}>
+                            <span style={{ backgroundColor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', color: '#fff', padding: '6px 14px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>All Services</span>
+                            <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#fff', marginTop: '16px', marginBottom: '16px', lineHeight: 1.2 }}>Expert Professionals at Your Door</h2>
+                            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.1rem', marginBottom: '32px' }}>From repairs to cleaning — trusted experts for every home need.</p>
+                            <Link to="/services" style={{ display: 'inline-block', backgroundColor: '#fff', color: '#111', padding: '12px 32px', borderRadius: '8px', fontWeight: '700', fontSize: '1rem', textDecoration: 'none' }}>Explore All Services</Link>
                         </div>
-                        <div style={{ flex: 1, backgroundImage: 'url("https://images.unsplash.com/photo-1528740561666-dc2479dc08ab?q=80&w=1374&auto=format&fit=crop")', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                        <div className="ad-banner-right" style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                            <img 
+                                src={allCategoryLineup} 
+                                alt="All service professionals" 
+                                style={{ width: '100%', height: '120%', objectFit: 'cover', objectPosition: 'center top' }} 
+                            />
+                        </div>
                     </div>
                 </section>
             </div>
