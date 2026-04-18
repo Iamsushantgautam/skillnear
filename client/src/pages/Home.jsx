@@ -57,144 +57,137 @@ const Home = () => {
                     {/* Hero Left - Search & Icons */}
                     <div style={styles.heroLeft}>
                         <h1 className="hero-title-mobile" style={styles.heroTitle}>Home services at your doorstep</h1>
-                        
+
                         <div style={styles.searchBoxCard}>
                             <p style={{ fontWeight: '600', marginBottom: '16px', fontSize: '0.95rem', color: 'var(--text-muted)' }}>What are you looking for?</p>
                             <form onSubmit={handleSearch} style={styles.heroSearch}>
                                 <Search size={20} color="#94a3b8" />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search for 'AC Repair', 'Salon'..." 
+                                <input
+                                    type="text"
+                                    placeholder="Search for 'AC Repair', 'Salon'..."
                                     style={styles.heroSearchInput}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </form>
-                            
-                                <div className="hero-cat-grid-mobile" style={styles.heroCatGrid}>
-                                    {mainCategories.map((cat, i) => (
-                                        <Link key={i} to={cat.link ? cat.link : `/services?category=${cat.name}`} style={styles.heroCatItem}>
-                                            <div style={{ ...styles.heroCatIcon, backgroundColor: cat.bg, overflow: 'hidden' }}>
-                                                <img 
-                                                    src={cat.icon} 
-                                                    alt={cat.name} 
-                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                                />
-                                            </div>
-                                            <span style={styles.heroCatLabel}>{cat.name}</span>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
 
-                            <div style={{ display: 'flex', gap: '24px', marginTop: '32px' }}>
-                                <div className="flex-center" style={{ gap: '8px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                    <div style={styles.dot}></div> <span>4.8 Stars Rated</span>
-                                </div>
-                                <div className="flex-center" style={{ gap: '8px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                    <div style={styles.dot}></div> <span>1M+ Bookings</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Hero Right - Collage */}
-                        <div style={styles.heroRight} className="hide-on-mobile">
-                            <div style={styles.collageGrid}>
-                                <div style={{ ...styles.collageImg, gridArea: 'a', backgroundImage: 'url("/images/categories/technical.png")' }}></div>
-                                <div style={{ ...styles.collageImg, gridArea: 'b', backgroundImage: 'url("/images/categories/salon.png")' }}></div>
-                                <div style={{ ...styles.collageImg, gridArea: 'c', backgroundImage: 'url("/images/categories/ac_repair.png")' }}></div>
-                                <div style={{ ...styles.collageImg, gridArea: 'd', backgroundImage: 'url("/images/categories/cleaning.png")' }}></div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* CATEGORY BANNERS SECTION */}
-                <CategoryBanners />
-
-                {/* DYNAMIC CATEGORY SECTIONS */}
-                {loading ? (
-                    <div className="container" style={{ textAlign: 'center', padding: '100px 0' }}>
-                        <div className="dot-typing" style={{ margin: '0 4px' }}></div>
-                        <div className="dot-typing" style={{ margin: '0 4px' }}></div>
-                        <div className="dot-typing" style={{ margin: '0 4px' }}></div>
-                    </div>
-                ) : (
-                    Object.keys(servicesByCategory).slice(0, 4).map((category, idx) => (
-                        <section key={idx} style={{ padding: '40px 0', borderTop: '1px solid #f1f5f9' }}>
-                            <div className="container">
-                                <div className="flex-between" style={{ marginBottom: '24px' }}>
-                                    <div>
-                                        <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>{category}</h2>
-                                        <p style={{ color: 'var(--text-muted)' }}>Top rated providers in your area</p>
-                                    </div>
-                                    <Link to={`/services?category=${category}`} style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        View All <ChevronRight size={18} />
+                            <div className="hero-cat-grid-mobile" style={styles.heroCatGrid}>
+                                {mainCategories.map((cat, i) => (
+                                    <Link key={i} to={cat.link ? cat.link : `/services?category=${cat.name}`} style={styles.heroCatItem}>
+                                        <div style={{ ...styles.heroCatIcon, backgroundColor: cat.bg, overflow: 'hidden' }}>
+                                            <img
+                                                src={cat.icon}
+                                                alt={cat.name}
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                        </div>
+                                        <span style={styles.heroCatLabel}>{cat.name}</span>
                                     </Link>
-                                </div>
-                                
-                                <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '20px', scrollbarWidth: 'none' }}>
-                                    {servicesByCategory[category].map(service => (
-                                        <Link key={service._id} to={`/services/${service._id}`} style={styles.serviceCard}>
-                                            <div style={styles.serviceImgWrapper}>
-                                                <img 
-                                                    src={service.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(service.title)}&background=random`} 
-                                                    alt={service.title} 
-                                                    style={styles.serviceImg} 
-                                                />
-                                                <div style={styles.ratingBadge}>
-                                                    <Star size={12} fill="#fff" /> {service.rating?.toFixed(1) || '4.8'}
-                                                </div>
-                                            </div>
-                                            <div style={{ padding: '12px' }}>
-                                                <h4 style={{ fontWeight: '700', marginBottom: '4px', fontSize: '0.95rem' }}>{service.title}</h4>
-                                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px' }}>Starts at ₹{service.price}</p>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    <Zap size={14} color="#059669" fill="#059669" />
-                                                    <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '700' }}>QUICK BOOK</span>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
+                                ))}
                             </div>
-                        </section>
-                    ))
-                )}
-
-                {/* AD BANNER */}
-                <section className="container" style={{ margin: '60px auto' }}>
-                    <div className="ad-banner-mobile" style={styles.adBanner}>
-                        <div className="ad-banner-left" style={{ flex: 1, padding: '48px', zIndex: 1 }}>
-                            <span style={{ backgroundColor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', color: '#fff', padding: '6px 14px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>All Services</span>
-                            <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#fff', marginTop: '16px', marginBottom: '16px', lineHeight: 1.2 }}>Expert Professionals at Your Door</h2>
-                            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.1rem', marginBottom: '32px' }}>From repairs to cleaning — trusted experts for every home need.</p>
-                            <Link to="/services" style={{ display: 'inline-block', backgroundColor: '#fff', color: '#111', padding: '12px 32px', borderRadius: '8px', fontWeight: '700', fontSize: '1rem', textDecoration: 'none' }}>Explore All Services</Link>
                         </div>
-                        <div className="ad-banner-right" style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                            <img 
-                                src={allCategoryLineup} 
-                                alt="All service professionals" 
-                                style={{ width: '100%', height: '120%', objectFit: 'cover', objectPosition: 'center top' }} 
-                            />
+
+
+                    </div>
+
+                    {/* Hero Right - Collage */}
+                    <div style={styles.heroRight} className="hide-on-mobile">
+                        <div style={styles.collageGrid}>
+                            <div style={{ ...styles.collageImg, gridArea: 'a', backgroundImage: 'url("/images/categories/technical.png")' }}></div>
+                            <div style={{ ...styles.collageImg, gridArea: 'b', backgroundImage: 'url("/images/categories/salon.png")' }}></div>
+                            <div style={{ ...styles.collageImg, gridArea: 'c', backgroundImage: 'url("/images/categories/ac_repair.png")' }}></div>
+                            <div style={{ ...styles.collageImg, gridArea: 'd', backgroundImage: 'url("/images/categories/cleaning.png")' }}></div>
                         </div>
                     </div>
-                </section>
-            </div>
-        );
-    };
+                </div>
+            </section>
 
-    const mainCategories = [
-        { name: 'Salon', icon: '/images/categories/salon.png', bg: '#fee2e2' },
-        { name: 'Carpenters', icon: '/images/categories/carpenters.png', bg: '#fef3c7' },
-        { name: 'Plumbers', icon: '/images/categories/plumbers.png', bg: '#dcfce7' },
-        { name: 'Electricians', icon: '/images/categories/electricians.png', bg: '#e0f2fe' },
-        { name: 'Cleaning', icon: '/images/categories/cleaning.png', bg: '#f3e8ff' },
-        { name: 'AC Repair', icon: '/images/categories/ac_repair.png', bg: '#dff6f9' },
-        { name: 'Painters', icon: '/images/categories/painters.png', bg: '#ffedd5' },
-        { name: 'Local Shops', icon: '/images/categories/shops.png', bg: '#ecfdf5', link: '/shops' },
-        { name: 'Tutors', icon: '/images/categories/tutors.png', bg: '#f1f5f9' },
-    ];
+            {/* CATEGORY BANNERS SECTION */}
+            <CategoryBanners />
+
+            {/* DYNAMIC CATEGORY SECTIONS */}
+            {loading ? (
+                <div className="container" style={{ textAlign: 'center', padding: '100px 0' }}>
+                    <div className="dot-typing" style={{ margin: '0 4px' }}></div>
+                    <div className="dot-typing" style={{ margin: '0 4px' }}></div>
+                    <div className="dot-typing" style={{ margin: '0 4px' }}></div>
+                </div>
+            ) : (
+                Object.keys(servicesByCategory).slice(0, 4).map((category, idx) => (
+                    <section key={idx} style={{ padding: '40px 0', borderTop: '1px solid #f1f5f9' }}>
+                        <div className="container">
+                            <div className="flex-between" style={{ marginBottom: '24px' }}>
+                                <div>
+                                    <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>{category}</h2>
+                                    <p style={{ color: 'var(--text-muted)' }}>Top rated providers in your area</p>
+                                </div>
+                                <Link to={`/services?category=${category}`} style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    View All <ChevronRight size={18} />
+                                </Link>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '20px', scrollbarWidth: 'none' }}>
+                                {servicesByCategory[category].map(service => (
+                                    <Link key={service._id} to={`/services/${service._id}`} style={styles.serviceCard}>
+                                        <div style={styles.serviceImgWrapper}>
+                                            <img
+                                                src={service.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(service.title)}&background=random`}
+                                                alt={service.title}
+                                                style={styles.serviceImg}
+                                            />
+                                            <div style={styles.ratingBadge}>
+                                                <Star size={12} fill="#fff" /> {service.rating?.toFixed(1) || '4.8'}
+                                            </div>
+                                        </div>
+                                        <div style={{ padding: '12px' }}>
+                                            <h4 style={{ fontWeight: '700', marginBottom: '4px', fontSize: '0.95rem' }}>{service.title}</h4>
+                                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px' }}>Starts at ₹{service.price}</p>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <Zap size={14} color="#059669" fill="#059669" />
+                                                <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '700' }}>QUICK BOOK</span>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                ))
+            )}
+
+            {/* AD BANNER */}
+            <section className="container" style={{ margin: '60px auto' }}>
+                <div className="ad-banner-mobile" style={styles.adBanner}>
+                    <div className="ad-banner-left" style={{ flex: 1, padding: '48px', zIndex: 1 }}>
+                        <span style={{ backgroundColor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', color: '#fff', padding: '6px 14px', borderRadius: '100px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>All Services</span>
+                        <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#fff', marginTop: '16px', marginBottom: '16px', lineHeight: 1.2 }}>Expert Professionals at Your Door</h2>
+                        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.1rem', marginBottom: '32px' }}>From repairs to cleaning — trusted experts for every home need.</p>
+                        <Link to="/services" style={{ display: 'inline-block', backgroundColor: '#fff', color: '#111', padding: '12px 32px', borderRadius: '8px', fontWeight: '700', fontSize: '1rem', textDecoration: 'none' }}>Explore All Services</Link>
+                    </div>
+                    <div className="ad-banner-right" style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                        <img
+                            src={allCategoryLineup}
+                            alt="All service professionals"
+                            style={{ width: '100%', height: '120%', objectFit: 'cover', objectPosition: 'center top' }}
+                        />
+                    </div>
+                </div>
+            </section>
+        </div>
+    );
+};
+
+const mainCategories = [
+    { name: 'Salon', icon: '/images/categories/salon.png', bg: '#fee2e2' },
+    { name: 'Carpenters', icon: '/images/categories/carpenters.png', bg: '#fef3c7' },
+    { name: 'Plumbers', icon: '/images/categories/plumbers.png', bg: '#dcfce7' },
+    { name: 'Electricians', icon: '/images/categories/electricians.png', bg: '#e0f2fe' },
+    { name: 'Cleaning', icon: '/images/categories/cleaning.png', bg: '#f3e8ff' },
+    { name: 'AC Repair', icon: '/images/categories/ac_repair.png', bg: '#dff6f9' },
+    { name: 'Painters', icon: '/images/categories/painters.png', bg: '#ffedd5' },
+    { name: 'Local Shops', icon: '/images/categories/shops.png', bg: '#ecfdf5', link: '/shops' },
+    { name: 'Tutors', icon: '/images/categories/tutors.png', bg: '#f1f5f9' },
+];
 
 
 const styles = {

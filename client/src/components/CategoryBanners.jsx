@@ -26,7 +26,7 @@ const CategoryBanners = () => {
     ];
 
     return (
-        <section className="container" style={{ margin: '40px auto' }}>
+        <section className="container" style={{ margin: '10px auto' }}>
             <div className="banners-grid">
                 {banners.filter(b => b.show).map((item, i) => (
                     <div
@@ -127,23 +127,25 @@ const CategoryBanners = () => {
                 @media (max-width: 768px) {
                     .banners-grid {
                         grid-template-columns: 1fr;
-                        gap: 20px;
+                        gap: 55px 0;
+                        padding-top: 15px;
                     }
                     .banner-card {
                         flex-direction: row;
-                        align-items: stretch;
-                        justify-content: space-between;
-                        padding: 20px 0 0 24px !important;
-                        min-height: 130px !important;
-                        overflow: hidden;
+                        align-items: center;
+                        justify-content: flex-start;
+                        padding: 18px 0 18px 22px !important;
+                        min-height: 150px !important;
+                        overflow: visible;
+                        position: relative;
                     }
                     .card-content {
                         flex: 1;
                         display: flex;
                         flex-direction: column;
                         justify-content: center;
-                        padding-bottom: 20px;
                         z-index: 2;
+                        padding-right: 150px;
                     }
                     .desktop-btn {
                         display: none !important;
@@ -152,22 +154,20 @@ const CategoryBanners = () => {
                         display: none !important;
                     }
                     .banner-title {
-                        font-size: 1.3rem;
+                        font-size: 1.2rem;
                         margin-bottom: 4px;
                     }
                     .banner-subtitle {
                         font-size: 0.85rem;
                     }
                     .banner-img {
-                        position: relative;
+                        position: absolute;
                         bottom: 0;
-                        right: 0;
-                        height: 140%;
-                        width: 130px;
-                        flex-shrink: 0;
-                        align-self: flex-end;
-                        object-fit: contain;
-                        object-position: bottom right;
+                        right: -10px;
+                        height: 180px;
+                        width: 145px;
+                        object-fit: cover;
+                        object-position: top center;
                         border-bottom-right-radius: 24px;
                         opacity: 1;
                     }
@@ -175,20 +175,26 @@ const CategoryBanners = () => {
 
                 @media (max-width: 480px) {
                     .banners-grid {
-                        gap: 16px;
+                        gap: 50px 0;
+                        padding-top: 35px;
                     }
                     .banner-card {
-                        padding: 16px 0 0 20px !important;
-                        min-height: 110px !important;
+                        padding: 16px 0 16px 18px !important;
+                        min-height: 130px !important;
+                    }
+                    .card-content {
+                        padding-right: 130px;
                     }
                     .banner-img {
-                        width: 110px;
+                        height: 165px;
+                        width: 130px;
+                        right: -8px;
                     }
                     .banner-title {
-                        font-size: 1.1rem;
+                        font-size: 1.05rem;
                     }
                     .banner-subtitle {
-                        font-size: 0.78rem;
+                        font-size: 0.8rem;
                     }
                 }
             `}</style>
