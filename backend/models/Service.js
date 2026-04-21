@@ -108,11 +108,6 @@ const serviceSchema = new mongoose.Schema(
         isApproved: {
             type: Boolean,
             default: true,
-        },
-        targetGender: {
-            type: String,
-            enum: ['male', 'female', 'unisex'],
-            default: 'unisex',
         }
     },
     {
