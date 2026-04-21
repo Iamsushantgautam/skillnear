@@ -724,6 +724,13 @@ function ProfileScreen({ user, profileAvatar, getAvatar, profileName, setProfile
                     <input value={profileName} onChange={e => setProfileName(e.target.value)} style={inputStyle} placeholder="John Doe" />
                 </div>
                 <div>
+                    <label style={labelStyle}>Username</label>
+                    <input value={profileUsername} onChange={e => setProfileUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))} style={inputStyle} placeholder="Choose a unique username" />
+                    {profileUsername && (
+                        <p style={{ fontSize: 10, color: PC, fontWeight: 700, marginTop: 6, opacity: 0.8 }}>URL: {window.location.host}/u/{profileUsername}</p>
+                    )}
+                </div>
+                <div>
                     <label style={labelStyle}>Phone Number</label>
                     <input value={profilePhone} onChange={e => setProfilePhone(e.target.value)} style={inputStyle} placeholder="+91 00000 00000" />
                 </div>
@@ -837,6 +844,74 @@ function AdminScreen({ allUsers, usersLoading, handleUpdateUserRole, handleToggl
                     ))}
                 </div>
             </main>
+        </Shell>
+    );
+}
+
+/* ─── Payments Screen ─── */
+function PaymentsScreen({ stats, bookingRequests, setActiveTab, onMenuClick }) {
+    const transactions = (bookingRequests || []).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed');
+
+    return (
+        <Shell title="Wallet & Payments" onBack={() => setActiveTab('overview')} onMenuClick={onMenuClick}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 100 }}>
+                {/* Balance Card */}
+                <div style={{ background: PC, borderRadius: 28, padding: 28, color: 'white', position: 'relative', overflow: 'hidden', boxShadow: '0 15px 30px rgba(0,61,155,0.2)' }}>
+                    <div style={{ position: 'absolute', right: -20, bottom: -20, opacity: 0.1 }}>
+                        <Wallet size={120} color="white" />
+                    </div>
+                    <p style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8, marginBottom: 8 }}>Total Earned</p>
+                    <h2 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0 }}>₹{stats?.totalEarnings?.toLocaleString() || '0'}</h2>
+                    
+                    <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
+                        <div style={{ background: 'rgba(255,255,255,0.15)', padding: '12px 16px', borderRadius: 16, flex: 1 }}>
+                            <span style={{ display: 'block', fontSize: 10, fontWeight: 700, opacity: 0.8 }}>Available</span>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 900 }}>₹{(stats?.totalEarnings - (stats?.withdrawnAmount || 0)).toLocaleString()}</span>
+                        </div>
+                        <button style={{ background: 'white', color: PC, border: 'none', borderRadius: 16, padding: '0 20px', fontWeight: 900, fontSize: 12 }}>Withdraw</button>
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ background: 'white', borderRadius: 20, padding: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
+                        <p style={{ fontSize: 10, color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Last 30 Days</p>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e293b', marginTop: 4 }}>₹{Math.round((stats?.totalEarnings || 0) * 0.35).toLocaleString()}</h4>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: 20, padding: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
+                        <p style={{ fontSize: 10, color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>In Escrow</p>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e293b', marginTop: 4 }}>₹{Math.round((stats?.totalEarnings || 0) * 0.1).toLocaleString()}</h4>
+                    </div>
+                </div>
+
+                {/* Transactions */}
+                <div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e293b', marginBottom: 16, marginLeft: 4 }}>Recent Transactions</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {transactions.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '40px 20px', background: 'white', borderRadius: 24, border: '1px dashed #e2e8f0' }}>
+                                <Loader size={32} color="#cbd5e1" style={{ marginBottom: 12 }} />
+                                <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No successful transactions yet.</p>
+                            </div>
+                        ) : (
+                            transactions.map((tx, idx) => (
+                                <div key={idx} style={{ background: 'white', borderRadius: 24, padding: 16, display: 'flex', alignItems: 'center', gap: 14, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                                    <div style={{ width: 44, height: 44, borderRadius: 14, background: PL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        <CheckCircle size={20} color={PC} />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.service?.title || 'Service Payment'}</h4>
+                                        <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{new Date(tx.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} · {tx.user?.name || 'Customer'}</p>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <p style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#10b981' }}>+₹{tx.totalPrice?.toLocaleString()}</p>
+                                        <p style={{ margin: '2px 0 0', fontSize: 9, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase' }}>{tx.paymentStatus}</p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
         </Shell>
     );
 }
@@ -1325,6 +1400,7 @@ export default function DashboardMobile(props) {
             case 'requests': return <RequestsScreen bookingRequests={bookingRequests} bookingsLoading={bookingsLoading} updateBookingStatus={updateBookingStatus} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking} />;
             case 'bookings': return <OrdersScreen myBookings={myBookings} bookingsLoading={bookingsLoading} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking} />;
             case 'chat': return <InboxScreen user={user} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} />;
+            case 'payments': return <PaymentsScreen stats={stats} bookingRequests={bookingRequests} setActiveTab={setActiveTab} />;
             case 'profile': return <ProfileScreen user={user} profileAvatar={profileAvatar} getAvatar={getAvatar} profileName={profileName} setProfileName={setProfileName} profilePhone={profilePhone} setProfilePhone={setProfilePhone} profileUsername={profileUsername} setProfileUsername={setProfileUsername} providerTitle={providerTitle} providerAbout={providerAbout} providerTitleSetter={providerTitleSetter} providerAboutSetter={providerAboutSetter} handleSaveProfile={handleSaveProfile} savingProfile={savingProfile} uploadingAvatar={uploadingAvatar} handleAvatarUpload={handleAvatarUpload} role={role} setActiveTab={setActiveTab} />;
             default: return <OverviewScreen user={user} role={role} stats={stats} myGigs={myGigs} providerTitle={providerTitle} providerAbout={providerAbout} profileAvatar={profileAvatar} getAvatar={getAvatar} setActiveTab={setActiveTab} navigate={navigate} />;
         }

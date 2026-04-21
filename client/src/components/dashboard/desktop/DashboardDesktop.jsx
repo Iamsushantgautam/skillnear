@@ -558,7 +558,7 @@ const DashboardDesktop = ({
                                 </div>
 
                                 {gigCategory === 'Salon' && (
-                                    <div style={styles.formGroup} className="animate-fade-in shadow-sm" style={{ background: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                                    <div className="animate-fade-in shadow-sm" style={{ ...styles.formGroup, background: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
                                         <label style={{ ...styles.label, marginBottom: '12px', display: 'block' }}>Who is this service for?</label>
                                         <div style={{ display: 'flex', gap: '15px' }}>
                                             {['male', 'female', 'unisex'].map(gender => (
