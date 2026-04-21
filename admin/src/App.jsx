@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import AdminServices from './pages/AdminServices';
 import Bookings from './pages/Bookings';
+import Transactions from './pages/Transactions';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import useAuthStore from './store/useAuthStore';
@@ -32,6 +33,7 @@ function App() {
           <Route path="services" element={<AdminServices />} />
           <Route path="categories" element={<AdminServices />} />
           <Route path="activity" element={<Bookings />} />
+          <Route path="transactions" element={<Transactions />} />
           <Route path="reports" element={<div style={{ padding: '40px' }}><h2>Reports — coming soon</h2></div>} />
         </Route>
       </Routes>

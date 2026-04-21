@@ -8,6 +8,7 @@ import {
     MessageSquareWarning,
     LogOut,
     Bell,
+    CreditCard
 } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
 import api from '../utils/api';
@@ -41,6 +42,7 @@ const AdminLayout = () => {
         { name: 'User Management', path: '/users', icon: <Users size={20} />, badge: pendingCount },
         { name: 'Services & Gigs', path: '/services', icon: <Briefcase size={20} />, badge: pendingServices },
         { name: 'Bookings & Projects', path: '/activity', icon: <Calendar size={20} /> },
+        { name: 'Payments & Ledger', path: '/transactions', icon: <CreditCard size={20} /> },
         { name: 'Reports', path: '/reports', icon: <MessageSquareWarning size={20} /> },
     ];
 

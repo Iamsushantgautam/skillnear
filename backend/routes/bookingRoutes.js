@@ -5,7 +5,9 @@ import {
     getProviderBookings,
     updateBookingStatus,
     getAllBookings,
-    getProviderStats
+    getProviderStats,
+    deleteBooking,
+    updateBooking
 } from '../controllers/bookingController.js';
 import { protect, provider, admin } from '../middleware/authMiddleware.js';
 
@@ -18,6 +20,10 @@ router.get('/mybookings', protect, getMyBookings);
 router.get('/provider', protect, provider, getProviderBookings);
 router.get('/provider/stats', protect, provider, getProviderStats);
 router.get('/all', protect, admin, getAllBookings);
+
+router.route('/:id')
+    .put(protect, admin, updateBooking)
+    .delete(protect, admin, deleteBooking);
 
 router.route('/:id/status')
     .put(protect, updateBookingStatus);

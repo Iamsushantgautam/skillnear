@@ -3,7 +3,8 @@ import api from '../utils/api';
 import useAuthStore from '../store/useAuthStore';
 import {
     Search, Calendar, Clock, MapPin, User,
-    CheckCircle, XCircle, Loader, Filter, AlertCircle
+    CheckCircle, XCircle, Loader, Filter, AlertCircle,
+    Trash2, Edit, Save, X
 } from 'lucide-react';
 
 const Bookings = () => {
@@ -13,6 +14,16 @@ const Bookings = () => {
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    
+    // Edit Modal State
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingBooking, setEditingBooking] = useState(null);
+    const [editForm, setEditForm] = useState({
+        date: '',
+        timeSlot: '',
+        totalPrice: '',
+        status: ''
+    });
 
     const fetchBookings = async () => {
         setLoading(true);
@@ -30,6 +41,45 @@ const Bookings = () => {
     };
 
     useEffect(() => { if (user) fetchBookings(); }, [user]);
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this booking? This action cannot be undone.')) return;
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.delete(`/api/bookings/${id}`, config);
+            setBookingsList(bookingsList.filter(b => b._id !== id));
+            alert('Booking deleted successfully');
+        } catch (err) {
+            console.error('Failed to delete booking', err);
+            alert(err.response?.data?.message || 'Failed to delete booking');
+        }
+    };
+
+    const handleEditClick = (booking) => {
+        setEditingBooking(booking);
+        setEditForm({
+            date: booking.date ? new Date(booking.date).toISOString().split('T')[0] : '',
+            timeSlot: booking.timeSlot || '',
+            totalPrice: booking.totalPrice || '',
+            status: booking.status || ''
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.put(`/api/bookings/${editingBooking._id}`, editForm, config);
+            setBookingsList(bookingsList.map(b => b._id === data._id ? { ...b, ...data } : b));
+            setIsEditModalOpen(false);
+            alert('Booking updated successfully');
+            fetchBookings(); // Refresh to get populated data
+        } catch (err) {
+            console.error('Failed to update booking', err);
+            alert(err.response?.data?.message || 'Failed to update booking');
+        }
+    };
 
     const getList = () => {
         let list = activeTab === 'all' ? bookingsList : bookingsList.filter(b => b.status === activeTab);
@@ -141,6 +191,7 @@ const Bookings = () => {
                                 <th style={{ padding: '16px 20px', fontSize: '0.85rem', fontWeight: '700', color: '#64748b' }}>DATE & TIME</th>
                                 <th style={{ padding: '16px 20px', fontSize: '0.85rem', fontWeight: '700', color: '#64748b' }}>PRICE</th>
                                 <th style={{ padding: '16px 20px', fontSize: '0.85rem', fontWeight: '700', color: '#64748b' }}>STATUS</th>
+                                <th style={{ padding: '16px 20px', fontSize: '0.85rem', fontWeight: '700', color: '#64748b' }}>ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -203,6 +254,24 @@ const Bookings = () => {
                                             {b.status}
                                         </span>
                                     </td>
+                                    <td style={{ padding: '16px 20px' }}>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button 
+                                                onClick={() => handleEditClick(b)}
+                                                style={{ padding: '6px', borderRadius: '8px', border: 'none', backgroundColor: '#eff6ff', color: '#2563eb', cursor: 'pointer' }}
+                                                title="Edit Details"
+                                            >
+                                                <Edit size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDelete(b._id)}
+                                                style={{ padding: '6px', borderRadius: '8px', border: 'none', backgroundColor: '#fef2f2', color: '#ef4444', cursor: 'pointer' }}
+                                                title="Delete Booking"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -216,6 +285,85 @@ const Bookings = () => {
                     </div>
                 )}
             </div>
+
+            {/* Edit Modal */}
+            {isEditModalOpen && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 2000, padding: '20px'
+                }}>
+                    <div className="card animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '0', position: 'relative' }}>
+                        <div style={{ padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: '800' }}>Edit Booking Details</h2>
+                            <button onClick={() => setIsEditModalOpen(false)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleUpdate} style={{ padding: '24px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                                <div className="form-group">
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#1e293b' }}>Booking Date</label>
+                                    <input 
+                                        type="date" 
+                                        className="input-field" 
+                                        value={editForm.date} 
+                                        onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} 
+                                        required 
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#1e293b' }}>Time Slot</label>
+                                    <input 
+                                        type="text" 
+                                        className="input-field" 
+                                        placeholder="e.g. 09:00 AM - 11:00 AM"
+                                        value={editForm.timeSlot} 
+                                        onChange={(e) => setEditForm({ ...editForm, timeSlot: e.target.value })} 
+                                        required 
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                                <div className="form-group">
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#1e293b' }}>Total Price (₹)</label>
+                                    <input 
+                                        type="number" 
+                                        className="input-field" 
+                                        value={editForm.totalPrice} 
+                                        onChange={(e) => setEditForm({ ...editForm, totalPrice: e.target.value })} 
+                                        required 
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#1e293b' }}>Booking Status</label>
+                                    <select 
+                                        className="input-field" 
+                                        style={{ appearance: 'auto' }}
+                                        value={editForm.status} 
+                                        onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} 
+                                    >
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                        <option value="delivered">Delivered</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button type="button" onClick={() => setIsEditModalOpen(false)} className="btn" style={{ flex: 1, backgroundColor: '#f1f5f9', color: '#475569' }}>Cancel</button>
+                                <button type="submit" className="btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                    <Save size={18} />
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

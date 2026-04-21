@@ -202,3 +202,44 @@ export const getProviderStats = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+// @desc    Delete booking (Admin only)
+// @route   DELETE /api/bookings/:id
+// @access  Private/Admin
+export const deleteBooking = async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+
+        if (booking) {
+            await Booking.deleteOne({ _id: req.params.id });
+            res.json({ message: 'Booking removed' });
+        } else {
+            res.status(404).json({ message: 'Booking not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update booking details (Admin only)
+// @route   PUT /api/bookings/:id
+// @access  Private/Admin
+export const updateBooking = async (req, res) => {
+    try {
+        const { date, timeSlot, totalPrice, status } = req.body;
+        const booking = await Booking.findById(req.params.id);
+
+        if (booking) {
+            booking.date = date || booking.date;
+            booking.timeSlot = timeSlot || booking.timeSlot;
+            booking.totalPrice = totalPrice || booking.totalPrice;
+            booking.status = status || booking.status;
+
+            const updatedBooking = await booking.save();
+            res.json(updatedBooking);
+        } else {
+            res.status(404).json({ message: 'Booking not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
