@@ -20,7 +20,7 @@ const Home = () => {
                 // Fetch services filtered by current user city if available
                 const city = userLocation?.city || '';
                 const { data } = await api.get(`/api/services?location=${city}`);
-                
+
                 const grouped = data.reduce((acc, curr) => {
                     const cat = curr.category;
                     if (!acc[cat]) acc[cat] = [];
@@ -54,6 +54,25 @@ const Home = () => {
                     .ad-banner-mobile { flex-direction: column !important; height: auto !important; }
                     .ad-banner-left { padding: 32px 24px !important; }
                     .ad-banner-right { min-height: 250px !important; }
+                }
+
+                .services-scroll-container::-webkit-scrollbar {
+                    display: none;
+                }
+
+                .service-card-premium {
+                    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+
+                .service-card-premium:hover {
+                    transform: translateY(-10px);
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.12) !important;
+                }
+
+                .view-all-btn:hover {
+                    background-color: var(--primary) !important;
+                    color: #fff !important;
+                    border-color: var(--primary) !important;
                 }
             `}</style>
 
@@ -120,21 +139,21 @@ const Home = () => {
                 </div>
             ) : (
                 Object.keys(servicesByCategory).slice(0, 4).map((category, idx) => (
-                    <section key={idx} style={{ padding: '40px 0', borderTop: '1px solid #f1f5f9' }}>
+                    <section key={idx} style={{ padding: '60px 0', borderTop: '1px solid #f1f5f9' }}>
                         <div className="container">
-                            <div className="flex-between" style={{ marginBottom: '24px' }}>
+                            <div className="flex-between" style={{ marginBottom: '32px' }}>
                                 <div>
-                                    <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>{category}</h2>
-                                    <p style={{ color: 'var(--text-muted)' }}>Top rated providers in your area</p>
+                                    <h2 style={{ fontSize: '2rem', fontWeight: '900', letterSpacing: '-0.5px', color: '#111827' }}>{category}</h2>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>Handpicked experts for your {category.toLowerCase()} needs</p>
                                 </div>
-                                <Link to={`/services?category=${category}`} style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Link to={`/services?category=${category}`} className="view-all-btn" style={styles.viewAllBtn}>
                                     View All <ChevronRight size={18} />
                                 </Link>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '20px', scrollbarWidth: 'none' }}>
+                            <div className="services-scroll-container" style={styles.scrollContainer}>
                                 {servicesByCategory[category].map(service => (
-                                    <Link key={service._id} to={`/services/${service._id}`} style={styles.serviceCard}>
+                                    <Link key={service._id} to={`/services/${service._id}`} className="service-card-premium" style={styles.serviceCard}>
                                         <div style={styles.serviceImgWrapper}>
                                             <img
                                                 src={service.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(service.title)}&background=random`}
@@ -142,15 +161,33 @@ const Home = () => {
                                                 style={styles.serviceImg}
                                             />
                                             <div style={styles.ratingBadge}>
-                                                <Star size={12} fill="#fff" /> {service.rating?.toFixed(1) || '4.8'}
+                                                <Star size={12} fill="#FFB800" color="#FFB800" />
+                                                <span>{service.rating?.toFixed(1) || '4.8'}</span>
                                             </div>
+                                            <button style={styles.heartBtn} onClick={(e) => { e.preventDefault(); /* Save logic */ }}>
+                                                <Heart size={16} color="#fff" />
+                                            </button>
                                         </div>
-                                        <div style={{ padding: '12px' }}>
-                                            <h4 style={{ fontWeight: '700', marginBottom: '4px', fontSize: '0.95rem' }}>{service.title}</h4>
-                                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px' }}>Starts at ₹{service.price}</p>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                <Zap size={14} color="#059669" fill="#059669" />
-                                                <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '700' }}>QUICK BOOK</span>
+
+                                        <div style={styles.cardContent}>
+                                            <div style={styles.providerInfo}>
+                                                <div style={styles.providerAvatar}>
+                                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(service.providerName || 'P')}&background=6366f1&color=fff`} alt="Provider" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+                                                </div>
+                                                <span style={styles.providerName}>{service.providerName || 'Professional'}</span>
+                                            </div>
+
+                                            <h4 style={styles.cardTitle}>{service.title}</h4>
+
+                                            <div style={styles.cardFooter}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <Zap size={14} color="#059669" />
+                                                    <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '800', textTransform: 'uppercase' }}>Quick Book</span>
+                                                </div>
+                                                <div style={styles.priceTag}>
+                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '500' }}>Starting at</span>
+                                                    <span style={{ fontWeight: '800', color: '#111827' }}>₹{service.price}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </Link>
@@ -296,40 +333,124 @@ const styles = {
         borderRadius: '24px',
         boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
     },
+    scrollContainer: {
+        display: 'flex',
+        gap: '24px',
+        overflowX: 'auto',
+        paddingBottom: '32px',
+        paddingLeft: '4px',
+        scrollbarWidth: 'none',
+    },
+    viewAllBtn: {
+        color: 'var(--primary)',
+        fontWeight: '800',
+        fontSize: '0.95rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        textDecoration: 'none',
+        padding: '8px 16px',
+        borderRadius: '100px',
+        backgroundColor: '#f8fafc',
+        border: '1px solid #e2e8f0',
+        transition: 'all 0.2s',
+    },
     serviceCard: {
-        minWidth: '220px',
-        maxWidth: '220px',
-        borderRadius: '16px',
+        minWidth: '280px',
+        maxWidth: '280px',
+        borderRadius: '20px',
         border: '1px solid #f1f5f9',
         overflow: 'hidden',
         textDecoration: 'none',
         color: 'inherit',
         backgroundColor: '#fff',
-        transition: 'box-shadow 0.3s',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
     },
     serviceImgWrapper: {
         position: 'relative',
-        height: '150px',
+        height: '180px',
+        overflow: 'hidden',
     },
     serviceImg: {
         width: '100%',
         height: '100%',
         objectFit: 'cover',
+        transition: 'transform 0.6s ease',
     },
     ratingBadge: {
         position: 'absolute',
-        top: '10px',
-        left: '10px',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        color: '#fff',
-        padding: '4px 8px',
-        borderRadius: '6px',
-        fontSize: '0.7rem',
-        fontWeight: '700',
+        top: '12px',
+        left: '12px',
+        backgroundColor: '#fff',
+        color: '#111',
+        padding: '4px 10px',
+        borderRadius: '100px',
+        fontSize: '0.8rem',
+        fontWeight: '800',
         display: 'flex',
         alignItems: 'center',
-        gap: '4px',
+        gap: '5px',
+        boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+    },
+    heartBtn: {
+        position: 'absolute',
+        top: '12px',
+        right: '12px',
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        backdropFilter: 'blur(10px)',
+        border: 'none',
+        width: '32px',
+        height: '32px',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        transition: 'all 0.3s',
+    },
+    cardContent: {
+        padding: '16px',
+    },
+    providerInfo: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginBottom: '10px',
+    },
+    providerAvatar: {
+        width: '24px',
+        height: '24px',
+        borderRadius: '50%',
+        overflow: 'hidden',
+    },
+    providerName: {
+        fontSize: '0.85rem',
+        fontWeight: '600',
+        color: '#4b5563',
+    },
+    cardTitle: {
+        fontWeight: '700',
+        marginBottom: '16px',
+        fontSize: '1.05rem',
+        color: '#111827',
+        lineHeight: '1.4',
+        height: '2.8em',
+        overflow: 'hidden',
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+    },
+    cardFooter: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingTop: '16px',
+        borderTop: '1px solid #f1f5f9',
+    },
+    priceTag: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
     },
     adBanner: {
         height: '400px',
