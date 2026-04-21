@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import homeRepairImg from '../assets/catg/homeRepair.png';
 import womenSalonImg from '../assets/catg/womenSolon.png';
+import menSalonImg from '../assets/catg/menSalon.png';
 import acRepairImg from '../assets/catg/acRepair.png';
 import plumbingImg from '../assets/catg/plumbing.png';
 import paintersImg from '../assets/catg/painters.png';
@@ -16,6 +17,7 @@ const CategoryBanners = () => {
     const banners = [
         { title: 'Home Repairs', subtitle: 'Starting at ₹249', bg: 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)', cat: 'Carpenters', img: homeRepairImg, show: true },
         { title: 'Women Salon', subtitle: 'Flat 30% OFF', bg: 'linear-gradient(135deg, #db2777 0%, #9d174d 100%)', cat: 'Salon', img: womenSalonImg, show: true },
+        { title: "Men's Salon", subtitle: 'Expert Grooming', bg: 'linear-gradient(135deg, #475569 0%, #1e293b 100%)', cat: 'Salon', img: menSalonImg, show: true },
         { title: 'AC Servicing', subtitle: 'Instant 2hr Booking', bg: 'linear-gradient(135deg, #059669 0%, #064e3b 100%)', cat: 'AC Repair', img: acRepairImg, show: true },
         { title: 'Plumbing', subtitle: 'Expert Fixes ₹199', bg: 'linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)', cat: 'Plumbers', img: plumbingImg, show: true },
         { title: 'Carpenters', subtitle: 'Safety First · Fast', bg: 'linear-gradient(135deg, #f59e0b 0%, #b45309 100%)', cat: 'Carpenters', img: carpenterImg, show: true },

@@ -25,7 +25,9 @@ export const getServices = async (req, res) => {
                 }
             } : {};
 
-        const services = await Service.find({ ...keyword, ...category, ...businessType, ...locFilter, isActive: true, isApproved: true })
+        const genderFilter = req.query.gender ? { targetGender: req.query.gender } : {};
+
+        const services = await Service.find({ ...keyword, ...category, ...businessType, ...locFilter, ...genderFilter, isActive: true, isApproved: true })
             .populate('provider', 'name username avatar');
 
         res.json(services);
@@ -62,21 +64,30 @@ export const createService = async (req, res) => {
             return res.status(403).json({ message: 'Only providers can create services' });
         }
 
-        const { title, category, subCategory, description, businessType, plans, shopDetails, price, priceType, images, location, geoCoordinates } = req.body;
+        const { 
+            businessType, plans, shopDetails, price, priceType, images, 
+            location, geoCoordinates, coveragePincodes, experience, jobsCompleted,
+            targetGender
+        } = req.body;
 
         const service = new Service({
             title,
             category,
             subCategory,
             description,
+            servicesIncluded: servicesIncluded || [],
             businessType,
-            plans,
+            plans: plans || [],
             shopDetails,
             price,
             priceType,
             images,
             location,
             geoCoordinates: geoCoordinates || { type: 'Point', coordinates: [0, 0] },
+            coveragePincodes: coveragePincodes || [],
+            experience: experience !== undefined ? Number(experience) : 0,
+            jobsCompleted: jobsCompleted !== undefined ? Number(jobsCompleted) : 0,
+            targetGender: targetGender || 'unisex',
             provider: req.user._id,
             isApproved: false, // Now requires admin approval
             isActive: true,
@@ -107,10 +118,10 @@ export const getMyServices = async (req, res) => {
 export const updateService = async (req, res) => {
     try {
         const { 
-            title, category, subCategory, description, businessType, 
+            title, category, subCategory, description, servicesIncluded, businessType, 
             price, priceType, plans, shopDetails, location, 
             geoCoordinates, coveragePincodes, experience, jobsCompleted, 
-            images, isActive 
+            images, isActive, targetGender 
         } = req.body;
 
         const service = await Service.findById(req.params.id);
@@ -125,6 +136,10 @@ export const updateService = async (req, res) => {
             service.subCategory = subCategory || service.subCategory;
             service.description = description || service.description;
             
+            if (servicesIncluded !== undefined) {
+                service.servicesIncluded = servicesIncluded;
+            }
+            
             if (businessType) {
                 service.businessType = businessType;
             }
@@ -135,6 +150,7 @@ export const updateService = async (req, res) => {
             service.images = images || service.images;
             service.experience = experience !== undefined ? experience : service.experience;
             service.jobsCompleted = jobsCompleted !== undefined ? jobsCompleted : service.jobsCompleted;
+            service.targetGender = targetGender || service.targetGender;
 
             if (shopDetails) {
                 service.shopDetails = { ...service.shopDetails, ...shopDetails };

@@ -890,7 +890,7 @@ function BecomeProviderScreen({ handleApplyProvider, isSubmitting, setActiveTab 
 function ServicesScreen(props) {
     const {
         gigStep, setGigStep, gigTitle, setGigTitle, gigCategory, setGigCategory,
-        gigDesc, setGigDesc, gigPrice, setGigPrice, gigPriceType, setGigPriceType,
+        gigDesc, setGigDesc, gigServicesIncluded, setGigServicesIncluded, gigPrice, setGigPrice, gigPriceType, setGigPriceType,
         gigBusinessType, setGigBusinessType, gigCustomCategory, setGigCustomCategory,
         gigExperience, setGigExperience, gigJobsCompleted, setGigJobsCompleted,
         shopAge, setShopAge, usePlans, setUsePlans, gigPlans, setGigPlans,
@@ -902,7 +902,7 @@ function ServicesScreen(props) {
         gigZipCode, setGigZipCode, gigCoveragePincodes, setGigCoveragePincodes,
         gigImages, setGigImages, handleGigImageUpload, handleCreateGig,
         creatingGig, uploadingGigImages, indianStates, MapPicker, editingGigId,
-        setActiveTab
+        setActiveTab, gigTargetGender, setGigTargetGender
     } = props;
 
     const inputStyle = {
@@ -955,6 +955,28 @@ function ServicesScreen(props) {
                             <input value={gigCustomCategory} onChange={e => setGigCustomCategory(e.target.value)} style={inputStyle} placeholder="Your category" />
                         )}
 
+                        {gigCategory === 'Salon' && (
+                            <div className="animate-fade-in" style={{ padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #f1f5f9', marginBottom: 16 }}>
+                                <label style={{ ...labelStyle, marginBottom: 10 }}>Service For</label>
+                                <div style={{ display: 'flex', gap: 10 }}>
+                                    {['male', 'female', 'unisex'].map(gender => (
+                                        <button
+                                            key={gender}
+                                            onClick={() => setGigTargetGender(gender)}
+                                            style={{
+                                                flex: 1, padding: '10px 0', borderRadius: 12, border: `2px solid ${gigTargetGender === gender ? PC : '#e2e8f0'}`,
+                                                background: gigTargetGender === gender ? PL : '#fff',
+                                                color: gigTargetGender === gender ? PC : '#64748b',
+                                                fontWeight: 800, fontSize: 12, textTransform: 'capitalize'
+                                            }}
+                                        >
+                                            {gender}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             {gigBusinessType === 'service' ? (
                                 <>
@@ -977,6 +999,9 @@ function ServicesScreen(props) {
 
                         <label style={labelStyle}>Description</label>
                         <textarea value={gigDesc} onChange={e => setGigDesc(e.target.value)} rows={4} style={{ ...inputStyle, resize: 'none' }} placeholder="Describe your service..." />
+
+                        <label style={labelStyle}>Services Included</label>
+                        <input value={gigServicesIncluded} onChange={e => setGigServicesIncluded(e.target.value)} style={inputStyle} placeholder="e.g. Warranty, Parts, Cleaning" />
                     </div>
                 )}
 

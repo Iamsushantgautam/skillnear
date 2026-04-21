@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
-import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, MapPin, Edit, Trash2, X, Plus, Inbox, Loader, Star, CheckCircle, Home, Send, LogOut } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, MapPin, Edit, Trash2, X, Plus, Inbox, Loader, Star, CheckCircle, Home, Send, LogOut, Wallet } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/useAuthStore';
@@ -60,6 +60,7 @@ const Dashboard = () => {
     const [gigTitle, setGigTitle] = useState('');
     const [gigCategory, setGigCategory] = useState('');
     const [gigDesc, setGigDesc] = useState('');
+    const [gigServicesIncluded, setGigServicesIncluded] = useState('');
     const [gigPrice, setGigPrice] = useState(''); // Default/Basic price
     const [gigPriceType, setGigPriceType] = useState('fixed');
     const [gigState, setGigState] = useState('');
@@ -94,6 +95,7 @@ const Dashboard = () => {
     const [shopAge, setShopAge] = useState('');
 
     const [gigImages, setGigImages] = useState([]);
+    const [gigTargetGender, setGigTargetGender] = useState('unisex');
     const [uploadingGigImages, setUploadingGigImages] = useState(false);
     const [creatingGig, setCreatingGig] = useState(false);
 
@@ -356,6 +358,13 @@ const Dashboard = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Shared Reset logic for both Desktop and Mobile
+    useEffect(() => {
+        if (activeTab === 'services' && !editingGigId) {
+            resetGigForm();
+        }
+    }, [activeTab]);
+
     const fetchMyBookings = async () => {
         if (!user) return;
         setBookingsLoading(true);
@@ -442,6 +451,36 @@ const Dashboard = () => {
             setUploadingGigImages(false);
             e.target.value = '';
         }
+    };
+
+    const resetGigForm = () => {
+        setGigStep(1);
+        setGigTitle('');
+        setGigCategory('');
+        setGigCustomCategory('');
+        setGigDesc('');
+        setGigServicesIncluded('');
+        setGigPrice('');
+        setGigCity('');
+        setGigState('');
+        setGigAddress('');
+        setGigZipCode('');
+        setGigImages([]);
+        setGigExperience('');
+        setGigJobsCompleted('');
+        setGigTargetGender('unisex');
+        setEditingGigId(null);
+        setGigPlans([
+            { name: 'Basic', price: '', description: '', features: '', deliveryTime: '2 Days' },
+            { name: 'Standard', price: '', description: '', features: '', deliveryTime: '5 Days' },
+            { name: 'Premium', price: '', description: '', features: '', deliveryTime: '10 Days' }
+        ]);
+        setUsePlans(true);
+        setShopAge('');
+        setGigLat('');
+        setGigLng('');
+        setGigStateCode('');
+        setGigCoveragePincodes('');
     };
 
     /* ── Upload profile avatar ── */
@@ -546,6 +585,7 @@ const Dashboard = () => {
                 title: gigTitle,
                 category: gigCategory === 'Other' ? gigCustomCategory : gigCategory,
                 description: gigDesc,
+                servicesIncluded: gigServicesIncluded ? gigServicesIncluded.split(',').map(s => s.trim()).filter(Boolean) : [],
                 businessType: gigBusinessType,
                 price: Number(gigPrice),
                 priceType: gigPriceType,
@@ -564,6 +604,8 @@ const Dashboard = () => {
                 plans: usePlans ? gigPlans.map(p => ({ ...p, price: Number(p.price) })) : [],
                 experience: gigBusinessType === 'service' ? (Number(gigExperience) || 0) : 0,
                 jobsCompleted: gigBusinessType === 'service' ? (Number(gigJobsCompleted) || 0) : 0,
+                targetGender: gigTargetGender,
+                isActive: true,
                 shopDetails: gigBusinessType === 'shop' ? {
                     openingTime: shopOpeningTime,
                     closingTime: shopClosingTime,
@@ -578,29 +620,14 @@ const Dashboard = () => {
 
             if (editingGigId) {
                 await api.put(`/api/services/${editingGigId}`, payload, config);
-                toast.success("Gig updated successfully!");
             } else {
                 await api.post('/api/services', payload, config);
-                toast.success("Gig published successfully!");
             }
+            
+            const createdOrUpdated = editingGigId ? "Gig updated successfully!" : "Gig published successfully!";
+            toast.success(createdOrUpdated);
 
             // Reset form
-            setGigStep(1);
-            setGigTitle('');
-            setGigCategory('');
-            setGigDesc('');
-            setGigPrice('');
-            setGigCity('');
-            setGigState('');
-            setGigAddress('');
-            setGigZipCode('');
-            setGigImages([]);
-            setGigExperience('');
-            setGigJobsCompleted('');
-            setGigCustomCategory('');
-            setShopAge('');
-            setShopIsHomeService(false);
-            setShopHomeServiceFee('');
             setGigCoveragePincodes('');
             setGigLat(null);
             setGigLng(null);
@@ -634,6 +661,7 @@ const Dashboard = () => {
         setGigTitle(gig.title || '');
         setGigCategory(gig.category || '');
         setGigDesc(gig.description || '');
+        setGigServicesIncluded(gig.servicesIncluded ? gig.servicesIncluded.join(', ') : '');
         setGigPrice(gig.price || '');
         setGigPriceType(gig.priceType || 'fixed');
         setGigBusinessType(gig.businessType || 'service');
@@ -651,13 +679,14 @@ const Dashboard = () => {
             if (foundState) setGigStateCode(foundState.isoCode);
         }
 
-        setGigExperience(gig.experience || '');
-        setGigJobsCompleted(gig.jobsCompleted || '');
+        setGigExperience(gig.experience ?? '');
+        setGigJobsCompleted(gig.jobsCompleted ?? '');
         setGigCoveragePincodes(gig.coveragePincodes || []);
+        setGigTargetGender(gig.targetGender || 'unisex');
 
         if (gig.geoCoordinates?.coordinates) {
-            setGigLng(gig.geoCoordinates.coordinates[0]);
-            setGigLat(gig.geoCoordinates.coordinates[1]);
+            setGigLat(gig.geoCoordinates?.coordinates?.[1] || null);
+            setGigLng(gig.geoCoordinates?.coordinates?.[0] || null);
         }
 
         if (gig.shopDetails) {
@@ -665,8 +694,8 @@ const Dashboard = () => {
             setShopClosingTime(gig.shopDetails.closingTime || '09:00 PM');
             setShopIsHomeDelivery(gig.shopDetails.isHomeDelivery || false);
             setShopIsHomeService(gig.shopDetails.isHomeService || false);
-            setShopHomeServiceFee(gig.shopDetails.homeServiceFee || '');
-            setShopAge(gig.shopDetails.shopAge || '');
+            setShopHomeServiceFee(gig.shopDetails.homeServiceFee ?? '');
+            setShopAge(gig.shopDetails.shopAge ?? '');
             setShopGoogleMapsLink(gig.shopDetails.googleMapsLink || '');
         }
 
@@ -746,7 +775,7 @@ const Dashboard = () => {
             <button style={getTabStyle('mygigs')} onClick={() => setActiveTab('mygigs')}>
                 <Briefcase size={22} strokeWidth={1.5} /> My Gigs
             </button>
-            <button style={getTabStyle('services')} onClick={() => setActiveTab('services')}>
+            <button style={getTabStyle('services')} onClick={() => { resetGigForm(); setActiveTab('services'); }}>
                 <Settings size={22} strokeWidth={1.5} /> Add New Gig
             </button>
             <button style={getTabStyle('profile')} onClick={() => setActiveTab('profile')}>
@@ -760,6 +789,11 @@ const Dashboard = () => {
                     </span>
                 )}
             </button>
+            {user?.role === 'provider' && (
+                <button style={getTabStyle('payments')} onClick={() => setActiveTab('payments')}>
+                    <Wallet size={22} strokeWidth={1.5} /> Payments
+                </button>
+            )}
             <button style={getTabStyle('bookings')} onClick={() => setActiveTab('bookings')}>
                 <CalendarIcon size={22} strokeWidth={1.5} /> My Orders (Purchased)
             </button>
@@ -839,6 +873,8 @@ const Dashboard = () => {
                     setShopAge={setShopAge}
                     gigDesc={gigDesc}
                     setGigDesc={setGigDesc}
+                    gigServicesIncluded={gigServicesIncluded}
+                    setGigServicesIncluded={setGigServicesIncluded}
                     usePlans={usePlans}
                     setUsePlans={setUsePlans}
                     gigPrice={gigPrice}
@@ -1035,6 +1071,8 @@ const Dashboard = () => {
                             setGigCategory={setGigCategory}
                             gigCustomCategory={gigCustomCategory}
                             setGigCustomCategory={setGigCustomCategory}
+                            gigTargetGender={gigTargetGender}
+                            setGigTargetGender={setGigTargetGender}
                             gigExperience={gigExperience}
                             setGigExperience={setGigExperience}
                             gigJobsCompleted={gigJobsCompleted}
@@ -1043,6 +1081,8 @@ const Dashboard = () => {
                             setShopAge={setShopAge}
                             gigDesc={gigDesc}
                             setGigDesc={setGigDesc}
+                            gigServicesIncluded={gigServicesIncluded}
+                            setGigServicesIncluded={setGigServicesIncluded}
                             usePlans={usePlans}
                             setUsePlans={setUsePlans}
                             gigPrice={gigPrice}
@@ -1061,6 +1101,8 @@ const Dashboard = () => {
                             setShopIsHomeService={setShopIsHomeService}
                             shopHomeServiceFee={shopHomeServiceFee}
                             setShopHomeServiceFee={setShopHomeServiceFee}
+                            gigTargetGender={gigTargetGender}
+                            setGigTargetGender={setGigTargetGender}
                             gigLat={gigLat}
                             gigLng={gigLng}
                             setGigLat={setGigLat}

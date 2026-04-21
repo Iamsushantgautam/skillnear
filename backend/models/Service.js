@@ -23,6 +23,11 @@ const serviceSchema = new mongoose.Schema(
             enum: ['service', 'shop'],
             default: 'service'
         },
+        targetGender: {
+            type: String,
+            enum: ['male', 'female', 'unisex'],
+            default: 'unisex'
+        },
         experience: {
             type: Number,
             default: 0
@@ -35,6 +40,7 @@ const serviceSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        servicesIncluded: [String],
         // Single price field (used if plans are not provided)
         price: {
             type: Number,
@@ -94,18 +100,19 @@ const serviceSchema = new mongoose.Schema(
                 default: [0, 0]
             }
         },
-        coveragePincodes: [
-            {
-                type: String,
-            }
-        ],
+        coveragePincodes: [String],
         isActive: {
             type: Boolean,
             default: true,
         },
         isApproved: {
             type: Boolean,
-            default: true, // Default to true for faster testing/demo
+            default: true,
+        },
+        targetGender: {
+            type: String,
+            enum: ['male', 'female', 'unisex'],
+            default: 'unisex',
         }
     },
     {

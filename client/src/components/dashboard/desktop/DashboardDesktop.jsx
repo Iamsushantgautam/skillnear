@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import ChatList from '../../ChatList';
 import { City } from 'country-state-city';
 import api from '../../../utils/api';
@@ -60,6 +60,8 @@ const DashboardDesktop = ({
     setShopAge,
     gigDesc,
     setGigDesc,
+    gigServicesIncluded,
+    setGigServicesIncluded,
     usePlans,
     setUsePlans,
     gigPrice,
@@ -131,6 +133,8 @@ const DashboardDesktop = ({
     servicesLoading,
     handleUpdateUserRole,
     handleToggleUserBan,
+    gigTargetGender,
+    setGigTargetGender
 }) => {
     const [activeService, setActiveService] = React.useState(null);
 
@@ -553,6 +557,29 @@ const DashboardDesktop = ({
                                     </select>
                                 </div>
 
+                                {gigCategory === 'Salon' && (
+                                    <div style={styles.formGroup} className="animate-fade-in shadow-sm" style={{ background: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                                        <label style={{ ...styles.label, marginBottom: '12px', display: 'block' }}>Who is this service for?</label>
+                                        <div style={{ display: 'flex', gap: '15px' }}>
+                                            {['male', 'female', 'unisex'].map(gender => (
+                                                <div 
+                                                    key={gender}
+                                                    onClick={() => setGigTargetGender(gender)}
+                                                    style={{
+                                                        flex: 1, padding: '12px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center',
+                                                        border: `2px solid ${gigTargetGender === gender ? 'var(--primary)' : '#e2e8f0'}`,
+                                                        backgroundColor: gigTargetGender === gender ? '#f5f3ff' : '#fff',
+                                                        fontWeight: '700', fontSize: '0.9rem', color: gigTargetGender === gender ? 'var(--primary)' : '#64748b',
+                                                        textTransform: 'capitalize', transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {gender}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {gigCategory === 'Other' && (
                                     <div style={styles.formGroup} className="animate-fade-in">
                                         <label style={styles.label}>Custom Category Name</label>
@@ -583,6 +610,12 @@ const DashboardDesktop = ({
                                 <div style={styles.formGroup}>
                                     <label style={styles.label}>Detailed Description</label>
                                     <textarea className="input-field" rows="6" placeholder="Describe what you offer in detail..." value={gigDesc} onChange={e => setGigDesc(e.target.value)}></textarea>
+                                </div>
+
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>Services Included (Listed as features)</label>
+                                    <input type="text" className="input-field" placeholder="e.g. Parts replacement, Professional cleanup, 6-month warranty" value={gigServicesIncluded} onChange={e => setGigServicesIncluded(e.target.value)} />
+                                    <p className="text-small" style={{ marginTop: '6px', color: 'var(--text-muted)' }}>Enter items separated by commas.</p>
                                 </div>
                             </div>
                         )}
@@ -1244,6 +1277,129 @@ const DashboardDesktop = ({
                 </div>
             )}
 
+
+            {activeTab === 'payments' && (
+                <div className="animate-fade-in" style={{ maxWidth: '1200px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px', marginBottom: '32px' }}>
+                        {/* Balance Overview */}
+                        <div style={{ gridColumn: 'span 4', backgroundColor: '#003d9b', borderRadius: '24px', padding: '32px', color: 'white', position: 'relative', overflow: 'hidden' }}>
+                            <div style={{ position: 'absolute', right: -20, bottom: -20, opacity: 0.1 }}>
+                                <Wallet size={120} />
+                            </div>
+                            <p style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8, marginBottom: '8px' }}>Total Earnings</p>
+                            <h2 style={{ fontSize: '2.5rem', fontWeight: '900', margin: 0 }}>₹{stats.totalEarnings?.toLocaleString() || '0'}</h2>
+                            <div style={{ marginTop: '24px', display: 'flex', gap: '16px' }}>
+                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1 }}>
+                                    <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', opacity: 0.7 }}>Available</span>
+                                    <span style={{ fontSize: '1.25rem', fontWeight: '800' }}>₹{(stats.totalEarnings - (stats.withdrawnAmount || 0)).toLocaleString()}</span>
+                                </div>
+                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <button className="btn-primary" style={{ background: 'white', color: '#003d9b', padding: '8px 16px', borderRadius: '12px', fontSize: '10px', fontWeight: '900', border: 'none' }}>WITHDRAW</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Stats Cards */}
+                        <div style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                            <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <ArrowDownLeft size={24} />
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: '12px', color: '#737685', fontWeight: '600' }}>Last 30 Days</p>
+                                    <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>₹{Math.round((stats.totalEarnings || 0) * 0.35).toLocaleString()}</h4>
+                                </div>
+                            </div>
+                            <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <CreditCard size={24} />
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: '12px', color: '#737685', fontWeight: '600' }}>Active Orders Value</p>
+                                    <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>₹{bookingRequests.filter(b => b.status === 'confirmed' || b.status === 'in_progress').reduce((acc, b) => acc + (b.totalPrice || 0), 0).toLocaleString()}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Transaction History */}
+                    <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: '800' }}>Payment Transactions</h3>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button style={{ padding: '6px 16px', borderRadius: '100px', border: '1px solid #f1f5f9', background: '#f8fafc', fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Export CSV</button>
+                                <button style={{ padding: '6px 16px', borderRadius: '100px', border: '1px solid #f1f5f9', background: '#f8fafc', fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Filters</button>
+                            </div>
+                        </div>
+
+                        <div className="no-scrollbar" style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
+                                <thead>
+                                    <tr style={{ textAlign: 'left', borderBottom: '1px solid #f1f5f9' }}>
+                                        <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Transaction / ID</th>
+                                        <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Date</th>
+                                        <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>User / Service</th>
+                                        <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Amount</th>
+                                        <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(bookingRequests || []).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed').length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                                                    <CreditCard size={40} style={{ opacity: 0.1 }} />
+                                                    <p>No successful transactions yet.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        (bookingRequests || []).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed').map((tx, idx) => (
+                                            <tr key={idx} style={{ borderBottom: '1px solid #f8fafc', transition: 'all 0.2s ease' }} className="hover-bg-light">
+                                                <td style={{ padding: '20px 8px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: tx.paymentStatus === 'paid' ? '#ecfdf5' : '#fff7ed', color: tx.paymentStatus === 'paid' ? '#10b981' : '#f97316', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                            {tx.paymentStatus === 'paid' ? <CheckCircle size={20} /> : <ArrowDownLeft size={20} />}
+                                                        </div>
+                                                        <div style={{ overflow: 'hidden' }}>
+                                                            <span style={{ display: 'block', fontSize: '14px', fontWeight: '800', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.paymentStatus === 'paid' ? 'Payment Completed' : 'Incoming Transfer'}</span>
+                                                            <span style={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'monospace', letterSpacing: '0.5px' }}>ID: {tx._id?.toString()?.toUpperCase() || 'TXN'}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td style={{ padding: '20px 8px' }}>
+                                                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#475569' }}>
+                                                        {new Date(tx.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                                        <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8', fontWeight: '500' }}>{new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    </div>
+                                                </td>
+                                                <td style={{ padding: '20px 8px' }}>
+                                                    <div>
+                                                        <span style={{ display: 'block', fontSize: '14px', fontWeight: '800', color: '#1e293b' }}>{tx.user?.name || 'Community Member'}</span>
+                                                        <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>{tx.service?.title?.split(' ')?.slice(0, 3)?.join(' ') || 'Service Details'}...</span>
+                                                    </div>
+                                                </td>
+                                                <td style={{ padding: '20px 8px' }}>
+                                                    <div style={{ fontSize: '15px', fontWeight: '900', color: '#059669' }}>+₹{tx.totalPrice?.toLocaleString()}</div>
+                                                </td>
+                                                <td style={{ padding: '20px 8px' }}>
+                                                    <span style={{ 
+                                                        backgroundColor: tx.paymentStatus === 'paid' ? '#d1fae5' : '#fef3c7', 
+                                                        color: tx.paymentStatus === 'paid' ? '#065f46' : '#92400e', 
+                                                        fontSize: '10px', fontWeight: '900', padding: '6px 12px', borderRadius: '100px', textTransform: 'uppercase', letterSpacing: '0.5px'
+                                                    }}>
+                                                        {tx.paymentStatus || 'Pending'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {['bids'].includes(activeTab) && (
                 <div className="animate-fade-in flex-center" style={{ height: '300px' }}>

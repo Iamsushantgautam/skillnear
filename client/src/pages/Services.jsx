@@ -14,6 +14,7 @@ const Services = () => {
     const [searchTerm, setSearchTerm] = useState(urlKeyword);
     const [category, setCategory] = useState(urlCategory);
     const [businessType, setBusinessType] = useState('');
+    const [gender, setGender] = useState('');
     const [location, setLocation] = useState(userLocation?.city && userLocation.city !== 'All of India' ? userLocation.city : '');
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
 
@@ -37,7 +38,7 @@ const Services = () => {
     useEffect(() => {
         const fetchServices = async () => {
             try {
-                const { data } = await api.get(`/api/services?category=${category}&keyword=${searchTerm}&location=${location}&businessType=${businessType}`);
+                const { data } = await api.get(`/api/services?category=${category}&keyword=${searchTerm}&location=${location}&businessType=${businessType}&gender=${gender}`);
                 setServicesList(data);
                 setLoading(false);
             } catch (error) {
@@ -46,7 +47,7 @@ const Services = () => {
             }
         };
         fetchServices();
-    }, [category, searchTerm, location, businessType]);
+    }, [category, searchTerm, location, businessType, gender]);
 
     return (
         <div className="container" style={{ padding: '40px 20px', display: 'flex', gap: '32px' }}>
@@ -101,6 +102,26 @@ const Services = () => {
                         </div>
                         <p className="text-small" style={{ marginTop: '4px', color: 'var(--text-muted)' }}>Change location in header (India only)</p>
                     </div>
+
+                    {category === 'Salon' && (
+                        <div style={styles.filterGroup}>
+                            <label style={styles.label}>Service For</label>
+                            <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
+                                    <input type="radio" name="gender" value="" checked={gender === ''} onChange={() => setGender('')} /> Any
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
+                                    <input type="radio" name="gender" value="male" checked={gender === 'male'} onChange={() => setGender('male')} /> Men
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
+                                    <input type="radio" name="gender" value="female" checked={gender === 'female'} onChange={() => setGender('female')} /> Women
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
+                                    <input type="radio" name="gender" value="unisex" checked={gender === 'unisex'} onChange={() => setGender('unisex')} /> Unisex
+                                </label>
+                            </div>
+                        </div>
+                    )}
 
                     <div style={styles.filterGroup}>
                         <label style={styles.label}>Price Range</label>

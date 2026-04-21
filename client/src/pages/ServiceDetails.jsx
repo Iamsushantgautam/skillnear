@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useParams, Link } from 'react-router-dom';
-import { Star, MapPin, CheckCircle, Clock, MessageSquare, Navigation } from 'lucide-react';
+import { Star, MapPin, CheckCircle, Clock, MessageSquare, Navigation, Trash2, Edit3, User as UserIcon } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const ServiceDetails = () => {
     const { id } = useParams();
@@ -11,20 +12,97 @@ const ServiceDetails = () => {
     const [loading, setLoading] = useState(true);
     const [activePlanIdx, setActivePlanIdx] = useState(0);
 
-    useEffect(() => {
-        const fetchService = async () => {
-            try {
-                const { data } = await api.get(`/api/services/${id}`);
-                setService(data);
-                setMainImage(data.images && data.images.length > 0 ? data.images[0] : (data.provider?.avatar && data.provider.avatar.startsWith('http') ? data.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.provider?.name || data.title || 'S')}&background=f3f4f6&color=4f46e5&size=600`));
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching service details", error);
-                setLoading(false);
+    const [reviews, setReviews] = useState([]);
+    const [userReview, setUserReview] = useState(null);
+    const [isEligible, setIsEligible] = useState(false);
+    const [alreadyReviewed, setAlreadyReviewed] = useState(false);
+    const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
+    const [isEditing, setIsEditing] = useState(false);
+    const [submittingReview, setSubmittingReview] = useState(false);
+
+    const fetchService = async () => {
+        try {
+            const { data } = await api.get(`/api/services/${id}`);
+            setService(data);
+            setMainImage(data.images && data.images.length > 0 ? data.images[0] : (data.provider?.avatar && data.provider.avatar.startsWith('http') ? data.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.provider?.name || data.title || 'S')}&background=f3f4f6&color=4f46e5&size=600`));
+        } catch (error) {
+            console.error("Error fetching service details", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchReviews = async () => {
+        try {
+            const { data } = await api.get(`/api/reviews/service/${id}`);
+            setReviews(data);
+        } catch (error) {
+            console.error("Error fetching reviews", error);
+        }
+    };
+
+    const checkReviewEligibility = async () => {
+        try {
+            const { data } = await api.get(`/api/reviews/check-eligibility/${id}`);
+            setIsEligible(data.isEligible);
+            setAlreadyReviewed(data.alreadyReviewed);
+            if (data.alreadyReviewed) {
+                // Find the user's review in the list
+                const { data: allReviews } = await api.get(`/api/reviews/service/${id}`);
+                const myReview = allReviews.find(r => r._id === data.reviewId);
+                if (myReview) {
+                    setUserReview(myReview);
+                    setReviewForm({ rating: myReview.rating, comment: myReview.comment });
+                }
             }
-        };
+        } catch (error) {
+            console.log("Not logged in or error checking eligibility");
+        }
+    };
+
+    useEffect(() => {
         fetchService();
+        fetchReviews();
+        checkReviewEligibility();
     }, [id]);
+
+    const handleReviewSubmit = async (e) => {
+        e.preventDefault();
+        setSubmittingReview(true);
+        try {
+            if (isEditing || alreadyReviewed) {
+                await api.put(`/api/reviews/${userReview._id}`, reviewForm);
+                toast.success("Review updated!");
+            } else {
+                await api.post('/api/reviews', { ...reviewForm, serviceId: id });
+                toast.success("Review posted!");
+            }
+            setIsEditing(false);
+            fetchReviews();
+            checkReviewEligibility();
+            fetchService(); // To update the rating/numReviews in header
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to save review");
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
+
+    const handleDeleteReview = async (reviewId) => {
+        if (!window.confirm("Are you sure you want to delete your review?")) return;
+        try {
+            await api.delete(`/api/reviews/${reviewId}`);
+            toast.success("Review deleted");
+            fetchReviews();
+            checkReviewEligibility();
+            fetchService();
+            setReviewForm({ rating: 5, comment: '' });
+            setUserReview(null);
+            setAlreadyReviewed(false);
+        } catch (error) {
+            toast.error("Failed to delete review");
+        }
+    };
 
     if (loading) {
         return <div className="container" style={{ padding: '40px 20px' }}><p>Loading...</p></div>;
@@ -54,14 +132,73 @@ const ServiceDetails = () => {
                 }
                 .sd-main-image {
                     width: 100%;
-                    height: 300px;
+                    height: 450px;
                     border-radius: 24px;
-                    object-fit: cover;
-                    background-color: #f3f4f6;
+                    object-fit: contain;
+                    background-color: #f8fafc;
+                    border: 1px solid #f1f5f9;
                 }
                 .sd-sticky-card {
                     position: sticky;
                     top: 100px;
+                }
+
+                /* Review System Responsiveness */
+                .reviews-container {
+                    margin-top: 80px;
+                    max-width: 1000px;
+                }
+                .reviews-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 40px;
+                }
+                .rating-badge {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    background: #f8fafc;
+                    padding: 10px 20px;
+                    border-radius: 16px;
+                    border: 1px solid #e2e8f0;
+                }
+                .review-form-card {
+                    background: #fff;
+                    padding: 32px;
+                    border-radius: 24px;
+                    border: 2px solid #f1f5f9;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+                }
+                .review-card {
+                    background: #fff;
+                    padding: 32px;
+                    border-radius: 24px;
+                    border: 1px solid #f1f5f9;
+                    transition: transform 0.2s;
+                }
+                .review-card-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 20px;
+                }
+                .review-user-info {
+                    display: flex;
+                    gap: 16px;
+                    align-items: center;
+                }
+                .review-meta {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .review-actions {
+                    display: flex;
+                    gap: 8px;
+                    margin-left: 12px;
+                    border-left: 1px solid #f1f5f9;
+                    padding-left: 12px;
                 }
 
                 @media (max-width: 1024px) {
@@ -74,6 +211,30 @@ const ServiceDetails = () => {
                     }
                     .sd-sticky-card {
                         position: static;
+                    }
+                }
+
+                @media (max-width: 768px) {
+                    .reviews-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 20px;
+                    }
+                    .review-card {
+                        padding: 24px;
+                    }
+                    .review-card-top {
+                        flex-direction: column;
+                        gap: 16px;
+                    }
+                    .review-meta {
+                        justify-content: space-between;
+                        width: 100%;
+                    }
+                    .review-actions {
+                        margin-left: 0;
+                        padding-left: 0;
+                        border-left: none;
                     }
                 }
 
@@ -93,13 +254,19 @@ const ServiceDetails = () => {
                         align-items: flex-start !important;
                         gap: 8px !important;
                     }
+                    .review-form-card {
+                        padding: 20px;
+                    }
+                    .reviews-container {
+                        margin-top: 50px;
+                    }
                 }
             `}</style>
 
             {/* Breadcrumb */}
             <nav style={{ marginBottom: '24px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                <Link to="/">Home</Link> / 
-                { isShop ? (
+                <Link to="/">Home</Link> /
+                {isShop ? (
                     <> <Link to="/shops">Shops</Link> / {service.shopDetails?.shopName || service.title} </>
                 ) : (
                     <> <Link to="/services">Services</Link> / {service.title} </>
@@ -124,13 +291,13 @@ const ServiceDetails = () => {
 
                     {/* Gallery */}
                     <div style={styles.gallery}>
-                        <img 
-                            src={mainImage} 
-                            alt={service.title} 
-                            className="sd-main-image animate-fade-in" 
-                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || service.title || 'S')}&background=f3f4f6&color=4f46e5&size=600`; }} 
+                        <img
+                            src={mainImage}
+                            alt={service.title}
+                            className="sd-main-image animate-fade-in"
+                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || service.title || 'S')}&background=f3f4f6&color=4f46e5&size=600`; }}
                         />
-                        
+
                         {service.images && service.images.length > 1 && (
                             <div style={styles.thumbnailList}>
                                 {service.images.map((img, idx) => (
@@ -153,20 +320,36 @@ const ServiceDetails = () => {
                         <p className="text-body" style={{ lineHeight: '1.8', fontSize: '1.1rem', color: '#4b5563', marginBottom: '32px' }}>
                             {service.description}
                         </p>
+
+                        {service.servicesIncluded && service.servicesIncluded.length > 0 && (
+                            <div style={{ marginTop: '40px', padding: '32px', background: '#fff', borderRadius: '24px', border: '1px solid #f1f5f9' }}>
+                                <h3 className="text-h3" style={{ marginBottom: '24px', fontSize: '1.4rem', fontWeight: 800, color: '#1e293b' }}>Services Included</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                                    {service.servicesIncluded.map((item, idx) => (
+                                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#475569', fontWeight: 600 }}>
+                                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                <CheckCircle size={14} color="#16a34a" />
+                                            </div>
+                                            {item}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Right Column: Pricing & Booking Card */}
                 <div className="sd-sticky-card">
                     <div className="card" style={{ padding: 0, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.08)' }}>
-                        
+
                         {hasPlans ? (
                             <div>
                                 {/* Plans Tabs */}
                                 <div style={{ display: 'grid', gridTemplateColumns: `repeat(${service.plans.length}, 1fr)`, backgroundColor: '#f8fafc' }}>
                                     {service.plans.map((p, i) => (
-                                        <button 
-                                            key={i} 
+                                        <button
+                                            key={i}
                                             onClick={() => setActivePlanIdx(i)}
                                             style={{
                                                 padding: '20px 8px',
@@ -187,7 +370,7 @@ const ServiceDetails = () => {
                                         </button>
                                     ))}
                                 </div>
-                                
+
                                 <div style={{ padding: '32px' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                                         <h2 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0 }}>₹{currentPlan.price}</h2>
@@ -200,7 +383,7 @@ const ServiceDetails = () => {
 
                                     <h4 style={{ marginBottom: '16px', fontWeight: '800', fontSize: '1.2rem', color: '#1e293b' }}>{currentPlan.name} Package</h4>
                                     <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '24px', lineHeight: 1.5 }}>{currentPlan.description}</p>
-                                    
+
                                     <div style={{ marginBottom: '32px', borderTop: '1px solid #f1f5f9', paddingTop: '24px' }}>
                                         {currentPlan && typeof currentPlan.features === 'string' && currentPlan.features.split(',').filter(f => f.trim()).map((f, i) => (
                                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
@@ -241,7 +424,7 @@ const ServiceDetails = () => {
                                                 Book Home Service
                                             </Link>
                                         )}
-                                        <a 
+                                        <a
                                             href={service.shopDetails?.googleMapsLink || `https://www.google.com/maps/dir/?api=1&destination=${service.geoCoordinates?.coordinates?.[1]},${service.geoCoordinates?.coordinates?.[0]}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
@@ -262,7 +445,7 @@ const ServiceDetails = () => {
                         {/* Provider Profile Section */}
                         <div style={{ background: '#f8fafc', padding: '32px', borderTop: '1px solid #f1f5f9' }}>
                             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748b' }}>
-                                { isShop ? 'Shop Curator' : 'Expert Provider' }
+                                {isShop ? 'Shop Curator' : 'Expert Provider'}
                             </h3>
                             {service.provider ? (
                                 <>
@@ -279,6 +462,11 @@ const ServiceDetails = () => {
                                                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e' }}></div>
                                                 <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#22c55e' }}>Online Now</span>
                                             </div>
+                                            {service.provider?.createdAt && (
+                                                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px', fontWeight: 600 }}>
+                                                    Member since {new Date(service.provider.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                                                </div>
+                                            )}
                                         </div>
                                     </Link>
 
@@ -293,9 +481,9 @@ const ServiceDetails = () => {
                                         </div>
                                     </div>
 
-                                    <Link 
-                                        to={`/dashboard?tab=chat&provider=${service.provider._id}&service=${service._id}`} 
-                                        className="btn-outline" 
+                                    <Link
+                                        to={`/dashboard?tab=chat&provider=${service.provider._id}&service=${service._id}`}
+                                        className="btn-outline"
                                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', width: '100%', padding: '16px', borderRadius: '16px', fontWeight: '800', backgroundColor: '#fff', color: '#1e293b' }}
                                     >
                                         <MessageSquare size={18} /> Chat with Me
@@ -306,6 +494,129 @@ const ServiceDetails = () => {
                             )}
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Reviews Section */}
+            <div className="reviews-container">
+                <div className="reviews-header">
+                    <h2 className="text-h2" style={{ fontSize: '2rem', fontWeight: 900 }}>Customer Reviews</h2>
+                    <div className="rating-badge">
+                        <Star size={24} color="#f59e0b" fill="#f59e0b" />
+                        <span style={{ fontSize: '1.2rem', fontWeight: 900 }}>{service.rating.toFixed(1)}</span>
+                        <span style={{ color: '#94a3b8', fontWeight: 600 }}>({service.numReviews} active reviews)</span>
+                    </div>
+                </div>
+
+                {/* Eligibility Notice / Add Review Form */}
+                {isEligible && !alreadyReviewed && (
+                    <div className="review-form-card" style={{ marginBottom: '48px' }}>
+                        <h3 style={{ marginBottom: '20px', fontWeight: 800, fontSize: '1.25rem' }}>Write a Review</h3>
+                        <form onSubmit={handleReviewSubmit}>
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>Rating</label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    {[1, 2, 3, 4, 5].map(star => (
+                                        <button 
+                                            key={star} 
+                                            type="button"
+                                            onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                        >
+                                            <Star size={28} color={star <= reviewForm.rating ? "#f59e0b" : "#e2e8f0"} fill={star <= reviewForm.rating ? "#f59e0b" : "none"} />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div style={{ marginBottom: '24px' }}>
+                                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>Your Feedback</label>
+                                <textarea 
+                                    value={reviewForm.comment}
+                                    onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                                    style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: '1rem', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
+                                    rows={4}
+                                    placeholder="Share your experience with this service..."
+                                    required
+                                />
+                            </div>
+                            <button className="btn-primary" disabled={submittingReview} style={{ padding: '14px 32px', borderRadius: '14px', fontWeight: 800 }}>
+                                {submittingReview ? 'Posting...' : 'Post Review'}
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {/* Reviews List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {reviews.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8' }}>
+                            <Star size={48} style={{ opacity: 0.1, marginBottom: '16px' }} />
+                            <p style={{ fontSize: '1.1rem', fontWeight: 600 }}>No reviews yet. Be the first to try this service!</p>
+                        </div>
+                    ) : (
+                        reviews.map(review => (
+                            <div key={review._id} className="review-card">
+                                <div className="review-card-top">
+                                    <div className="review-user-info">
+                                        <img 
+                                            src={review.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'U')}&background=ede9fe&color=4f46e5`}
+                                            style={{ width: '48px', height: '48px', borderRadius: '16px', objectFit: 'cover' }}
+                                        />
+                                        <div>
+                                            <h4 style={{ margin: 0, fontWeight: 800, fontSize: '1.05rem', color: '#1e293b' }}>{review.user?.name}</h4>
+                                            <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Star key={i} size={14} color={i < review.rating ? "#f59e0b" : "#e2e8f0"} fill={i < review.rating ? "#f59e0b" : "none"} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="review-meta">
+                                        <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>
+                                            {new Date(review.createdAt).toLocaleDateString()}
+                                        </span>
+                                        {alreadyReviewed && userReview?._id === review._id && (
+                                            <div className="review-actions">
+                                                <button onClick={() => { setIsEditing(true); window.scrollTo({ top: document.querySelector('form')?.offsetTop - 200, behavior: 'smooth' }); }} style={{ background: '#f8fafc', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer', color: '#6366f1' }} title="Edit Review">
+                                                    <Edit3 size={16} />
+                                                </button>
+                                                <button onClick={() => handleDeleteReview(review._id)} style={{ background: '#f8fafc', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer', color: '#ef4444' }} title="Delete Review">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                {isEditing && userReview?._id === review._id ? (
+                                    <form onSubmit={handleReviewSubmit} style={{ marginTop: '16px' }}>
+                                        <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                                <button key={star} type="button" onClick={() => setReviewForm({ ...reviewForm, rating: star })} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                                                    <Star size={20} color={star <= reviewForm.rating ? "#f59e0b" : "#e2e8f0"} fill={star <= reviewForm.rating ? "#f59e0b" : "none"} />
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <textarea 
+                                            value={reviewForm.comment}
+                                            onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                                            style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1.5px solid var(--primary)', background: '#fff', fontSize: '0.95rem', outline: 'none', resize: 'none', fontFamily: 'inherit', marginBottom: '12px' }}
+                                            rows={3}
+                                            required
+                                        />
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button className="btn-primary" style={{ padding: '8px 24px', fontSize: '0.9rem' }}>Save Changes</button>
+                                            <button type="button" onClick={() => setIsEditing(false)} className="btn-outline" style={{ padding: '8px 24px', fontSize: '0.9rem' }}>Cancel</button>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <p style={{ margin: 0, lineHeight: 1.6, color: '#4b5563', fontSize: '1rem', fontWeight: 500 }}>
+                                        {review.comment}
+                                    </p>
+                                )}
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 

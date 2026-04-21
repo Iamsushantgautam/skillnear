@@ -5,7 +5,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import CategoryBanners from '../components/CategoryBanners';
 import allCategoryLineup from '../assets/catg/allCategoryLineup.png';
 
+import useAuthStore from '../store/useAuthStore';
+
 const Home = () => {
+    const { userLocation } = useAuthStore();
     const [servicesByCategory, setServicesByCategory] = useState({});
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -14,7 +17,10 @@ const Home = () => {
     useEffect(() => {
         const fetchServices = async () => {
             try {
-                const { data } = await api.get('/api/services');
+                // Fetch services filtered by current user city if available
+                const city = userLocation?.city || '';
+                const { data } = await api.get(`/api/services?location=${city}`);
+                
                 const grouped = data.reduce((acc, curr) => {
                     const cat = curr.category;
                     if (!acc[cat]) acc[cat] = [];
@@ -29,7 +35,7 @@ const Home = () => {
             }
         };
         fetchServices();
-    }, []);
+    }, [userLocation]);
 
     const handleSearch = (e) => {
         e.preventDefault();

@@ -1,5 +1,5 @@
 import { 
-    LayoutDashboard, Briefcase, MessageSquare, Wallet, User, LogOut 
+    LayoutDashboard, Briefcase, MessageSquare, Wallet, User, LogOut, ShoppingBag 
 } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
 
@@ -8,8 +8,9 @@ const PC = '#003d9b';
 const NAV_TABS = [
     { id: 'overview',  icon: LayoutDashboard, label: 'Home' },
     { id: 'chat',      icon: MessageSquare,   label: 'Inbox' },
-    { id: 'requests',  icon: Wallet,          label: 'Requests', providerOnly: true },
-    { id: 'bookings',  icon: Wallet,          label: 'Orders',   customerOnly: true },
+    { id: 'requests',  icon: Briefcase,       label: 'Jobs',     providerOnly: true },
+    { id: 'bookings',  icon: ShoppingBag,     label: 'Orders',   customerOnly: true },
+    { id: 'payments',  icon: Wallet,          label: 'Wallet',   providerOnly: true },
     { id: 'profile',   icon: User,            label: 'Profile' },
     { id: 'exit',      icon: LogOut,          label: 'Exit' },
 ];
