@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, Menu, MapPin, ChevronDown, X, LocateFixed, Info, Mail, Shield, FileText, LogOut } from 'lucide-react';
+import { Search, User, Menu, MapPin, ChevronDown, X, LocateFixed, Info, Mail, Shield, FileText, LogOut, Zap, Award } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
 import { State, City } from 'country-state-city';
 import api from '../utils/api';
@@ -153,6 +153,8 @@ const Navbar = () => {
                     <div className="nav-links-desktop hide-on-mobile hide-on-tablet">
                         <Link to="/shops" style={styles.link}>Local Shops</Link>
                         <Link to="/services" style={styles.link}>Services</Link>
+                        <Link to="/how-it-works" style={styles.link}>How it Works</Link>
+                        <Link to="/success-stories" style={styles.link}>Stories</Link>
                         <div style={styles.divider}></div>
                     </div>
 
@@ -225,6 +227,8 @@ const Navbar = () => {
                                 { label: 'Home', link: '/', icon: LocateFixed },
                                 { label: 'Local Shops', link: '/shops', icon: MapPin },
                                 { label: 'Browse Services', link: '/services', icon: Search },
+                                { label: 'How it Works', link: '/how-it-works', icon: Zap },
+                                { label: 'Success Stories', link: '/success-stories', icon: Award },
                                 { divider: true },
                                 { label: 'About Us', link: '/about', icon: Info },
                                 { label: 'Connect With Us', link: '/contact', icon: Mail },
