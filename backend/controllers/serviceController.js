@@ -65,6 +65,7 @@ export const createService = async (req, res) => {
         }
 
         const { 
+            title, category, subCategory, description, servicesIncluded,
             businessType, plans, shopDetails, price, priceType, images, 
             location, geoCoordinates, coveragePincodes, experience, jobsCompleted,
             targetGender

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
-import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, MapPin, Edit, Trash2, X, Plus, Inbox, Loader, Star, CheckCircle, Home, Send, LogOut, Wallet } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, Loader, Home, LogOut, Wallet, Inbox } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/useAuthStore';
@@ -33,26 +33,10 @@ const Dashboard = () => {
     const [gigsLoading, setGigsLoading] = useState(false);
 
     // Form states
-    const [providerType, setProviderType] = useState('Services');
-    const [providerTitle, setProviderTitle] = useState('');
-    const [providerExp, setProviderExp] = useState('');
-    const [providerAbout, setProviderAbout] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [providerStatus, setProviderStatus] = useState(user?.providerDetails?.isApproved ? 'approved' : user?.role === 'provider' ? 'pending' : 'none');
-
-    // Detailed form states
-    const [shopName, setShopName] = useState('');
-    const [ownerName, setOwnerName] = useState('');
-    const [location, setLocation] = useState('');
-    const [serviceName, setServiceName] = useState('');
-    const [serviceProviderName, setServiceProviderName] = useState('');
-    const [liveLocation, setLiveLocation] = useState('');
-    const [shopDetails, setShopDetails] = useState('');
-    const [shopAddress, setShopAddress] = useState('');
-
-    // Uploaded URLs
-    const [shopImages, setShopImages] = useState([]);
-    const [uploadingImage, setUploadingImage] = useState(false);
+    const [providerTitle, setProviderTitle] = useState('');
+    const [providerAbout, setProviderAbout] = useState('');
 
     // Expanded Gig Registration States (3-Page Flow)
     const [gigStep, setGigStep] = useState(1);
@@ -104,17 +88,7 @@ const Dashboard = () => {
         navigate('/');
     };
 
-    // Edit Gig State
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [editingGig, setEditingGig] = useState(null);
-    const [editForm, setEditForm] = useState({
-        title: '',
-        category: '',
-        description: '',
-        price: '',
-        priceType: 'fixed',
-        city: ''
-    });
+
 
     const [profileAvatar, setProfileAvatar] = useState(user?.avatar || '');
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -926,6 +900,12 @@ const Dashboard = () => {
                     servicesLoading={servicesLoading}
                     handleUpdateUserRole={handleUpdateUserRole}
                     handleToggleUserBan={handleToggleUserBan}
+                    gigTargetGender={gigTargetGender}
+                    setGigTargetGender={setGigTargetGender}
+                    bookingForRevision={bookingForRevision}
+                    setBookingForRevision={setBookingForRevision}
+                    revisionNote={revisionNote}
+                    setRevisionNote={setRevisionNote}
                 />
             </div>
 
@@ -1101,8 +1081,7 @@ const Dashboard = () => {
                             setShopIsHomeService={setShopIsHomeService}
                             shopHomeServiceFee={shopHomeServiceFee}
                             setShopHomeServiceFee={setShopHomeServiceFee}
-                            gigTargetGender={gigTargetGender}
-                            setGigTargetGender={setGigTargetGender}
+
                             gigLat={gigLat}
                             gigLng={gigLng}
                             setGigLat={setGigLat}
