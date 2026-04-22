@@ -87,7 +87,13 @@ const userSchema = new mongoose.Schema(
             liveLocation: String,
             shopDetails: String,
             shopAddress: String,
-        }
+        },
+        favorites: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Service',
+            },
+        ],
     },
     {
         timestamps: true,

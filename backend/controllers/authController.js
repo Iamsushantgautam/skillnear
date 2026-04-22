@@ -41,6 +41,7 @@ export const registerUser = async (req, res) => {
                 phone: user.phone,
                 role: user.role,
                 providerDetails: user.providerDetails,
+                favorites: user.favorites || [],
                 token
             });
         } else {
@@ -77,6 +78,7 @@ export const loginUser = async (req, res) => {
                 phone: user.phone,
                 role: user.role,
                 providerDetails: user.providerDetails,
+                favorites: user.favorites || [],
                 token
             });
         } else {
@@ -145,7 +147,8 @@ export const applyToBeProvider = async (req, res) => {
                 email: updatedUser.email,
                 avatar: updatedUser.avatar,
                 role: updatedUser.role,
-                providerDetails: updatedUser.providerDetails
+                providerDetails: updatedUser.providerDetails,
+                favorites: updatedUser.favorites || []
             });
         } else {
             res.status(404).json({ message: 'User not found' });

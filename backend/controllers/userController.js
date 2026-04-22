@@ -134,6 +134,7 @@ export const updateUserProfile = async (req, res) => {
                 username: updatedUser.username,
                 role: updatedUser.role,
                 providerDetails: updatedUser.providerDetails,
+                favorites: updatedUser.favorites || [],
                 token: req.headers.authorization?.split(' ')[1], // return same token
             });
         } else {
@@ -259,6 +260,66 @@ export const getPublicProfileByUsername = async (req, res) => {
             user,
             services
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Toggle favorite service
+// @route   POST /api/users/favorites/:serviceId
+// @access  Private
+export const toggleFavorite = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        const serviceId = req.params.serviceId;
+
+        // Check if service exists
+        const serviceExists = await Service.findById(serviceId);
+        if (!serviceExists) {
+            return res.status(404).json({ message: 'Service not found' });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!user.favorites) {
+            user.favorites = [];
+        }
+
+        const isFavorite = user.favorites.some(id => id.toString() === serviceId);
+
+        if (isFavorite) {
+            user.favorites = user.favorites.filter(id => id.toString() !== serviceId);
+        } else {
+            user.favorites.push(serviceId);
+        }
+
+        await user.save();
+        res.json({ message: isFavorite ? 'Removed from favorites' : 'Added to favorites', favorites: user.favorites });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get user favorite services
+// @route   GET /api/users/favorites
+// @access  Private
+export const getFavorites = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate({
+            path: 'favorites',
+            populate: {
+                path: 'provider',
+                select: 'name avatar'
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user.favorites);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

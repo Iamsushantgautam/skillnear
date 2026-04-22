@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
-import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, Loader, Home, LogOut, Wallet, Inbox } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, Loader, Home, LogOut, Wallet, Inbox, Heart } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/useAuthStore';
@@ -131,6 +131,10 @@ const Dashboard = () => {
     const [adminServices, setAdminServices] = useState([]);
     const [servicesLoading, setServicesLoading] = useState(false);
 
+    // Favorites state
+    const [favorites, setFavorites] = useState([]);
+    const [favoritesLoading, setFavoritesLoading] = useState(false);
+
     const fetchAdminData = async () => {
         if (user?.role !== 'admin') return;
         try {
@@ -151,6 +155,26 @@ const Dashboard = () => {
             setServicesLoading(false);
         }
     };
+
+    const fetchFavorites = async () => {
+        if (!user) return;
+        setFavoritesLoading(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.get('/api/users/favorites', config);
+            setFavorites(data);
+        } catch (err) {
+            console.error('Error fetching favorites', err);
+        } finally {
+            setFavoritesLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'favorites') {
+            fetchFavorites();
+        }
+    }, [activeTab]);
 
     const handleUpdateUserRole = async (userId, newRole) => {
         try {
@@ -754,6 +778,9 @@ const Dashboard = () => {
             <button style={getTabStyle('become_provider')} onClick={() => setActiveTab('become_provider')}>
                 <Briefcase size={22} strokeWidth={1.5} /> Become a Seller
             </button>
+            <button style={getTabStyle('favorites')} onClick={() => setActiveTab('favorites')}>
+                <Heart size={22} strokeWidth={1.5} /> Favorites
+            </button>
             {user?.role === 'admin' && (
                 <button style={getTabStyle('admin')} onClick={() => setActiveTab('admin')}>
                     <Settings size={22} strokeWidth={1.5} /> Admin Panel
@@ -799,6 +826,9 @@ const Dashboard = () => {
             )}
             <button style={getTabStyle('bookings')} onClick={() => setActiveTab('bookings')}>
                 <CalendarIcon size={22} strokeWidth={1.5} /> My Orders (Purchased)
+            </button>
+            <button style={getTabStyle('favorites')} onClick={() => setActiveTab('favorites')}>
+                <Heart size={22} strokeWidth={1.5} /> Favorites
             </button>
             <button style={getTabStyle('chat')} onClick={() => setActiveTab('chat')}>
                 <MessageSquare size={22} strokeWidth={1.5} /> Messages
@@ -935,6 +965,9 @@ const Dashboard = () => {
                     setBookingForRevision={setBookingForRevision}
                     revisionNote={revisionNote}
                     setRevisionNote={setRevisionNote}
+                    favorites={favorites}
+                    favoritesLoading={favoritesLoading}
+                    fetchFavorites={fetchFavorites}
                 />
             </div>
 
@@ -1154,6 +1187,9 @@ const Dashboard = () => {
                             servicesLoading={servicesLoading}
                             handleUpdateUserRole={handleUpdateUserRole}
                             handleToggleUserBan={handleToggleUserBan}
+                            favorites={favorites}
+                            favoritesLoading={favoritesLoading}
+                            fetchFavorites={fetchFavorites}
                         />
                     </main>
 

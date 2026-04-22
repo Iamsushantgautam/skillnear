@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Search, MapPin, Star, Filter, Map, List, X } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Search, MapPin, Star, Filter, Map, List, X, Heart } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
 import ServiceMap from '../components/ServiceMap';
 
 const Services = () => {
-    const { userLocation } = useAuthStore();
+    const { user, userLocation, toggleFavorite } = useAuthStore();
+    const navigate = useNavigate();
     const query = new URLSearchParams(useLocation().search);
     const urlKeyword = query.get('keyword') || '';
     const urlCategory = query.get('category') || '';
@@ -238,6 +239,31 @@ const Services = () => {
                                             {srv.category}
                                         </span>
                                     </div>
+                                    <button 
+                                        style={{ 
+                                            position: 'absolute', 
+                                            top: '12px', 
+                                            right: '12px', 
+                                            width: '32px', 
+                                            height: '32px', 
+                                            borderRadius: '50%', 
+                                            backgroundColor: user?.favorites?.includes(srv._id) ? '#ef4444' : 'rgba(255,255,255,0.9)', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center', 
+                                            border: 'none', 
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
+                                            cursor: 'pointer',
+                                            zIndex: 10
+                                        }} 
+                                        onClick={(e) => { 
+                                            e.preventDefault(); 
+                                            if(!user) return navigate('/login'); 
+                                            toggleFavorite(srv._id);
+                                        }}
+                                    >
+                                        <Heart size={16} fill={user?.favorites?.includes(srv._id) ? "#fff" : "none"} color={user?.favorites?.includes(srv._id) ? "#fff" : "#ef4444"} />
+                                    </button>
                                 </div>
                                 <div style={styles.cardContent}>
                                     <h3 className="text-h3" style={{ fontSize: '1.05rem', margin: '4px 0 8px 0', color: 'var(--text-main)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.4', height: '2.8rem' }}>

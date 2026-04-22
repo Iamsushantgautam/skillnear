@@ -8,7 +8,9 @@ import {
     deleteUser,
     getShops,
     getPublicProfileByUsername,
-    updateLocation
+    updateLocation,
+    toggleFavorite,
+    getFavorites
 } from '../controllers/userController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -16,6 +18,12 @@ const router = express.Router();
 
 router.route('/location')
     .put(protect, updateLocation);
+
+router.route('/favorites')
+    .get(protect, getFavorites);
+
+router.route('/favorites/:serviceId')
+    .post(protect, toggleFavorite);
 
 router.route('/')
     .get(protect, admin, getUsers);

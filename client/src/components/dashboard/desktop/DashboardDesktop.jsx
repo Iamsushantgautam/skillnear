@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight, Heart } from 'lucide-react';
 import ChatList from '../../ChatList';
 import { City } from 'country-state-city';
 import api from '../../../utils/api';
@@ -134,7 +134,10 @@ const DashboardDesktop = ({
     handleUpdateUserRole,
     handleToggleUserBan,
     gigTargetGender,
-    setGigTargetGender
+    setGigTargetGender,
+    favorites,
+    favoritesLoading,
+    fetchFavorites
 }) => {
     const [activeService, setActiveService] = React.useState(null);
 
@@ -961,10 +964,37 @@ const DashboardDesktop = ({
                                             }}>{req.status.replace('_', ' ').toUpperCase()}</span>
                                             <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginTop: '8px' }}>{req.service?.title}</h3>
                                         </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <div style={{ fontWeight: '800', fontSize: '1.2rem', color: 'var(--primary)' }}>₹{req.totalPrice}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{req.paymentMethod}</div>
-                                        </div>
+                                        {req.service?.businessType === 'shop' ? (
+                                            <button 
+                                                style={{ 
+                                                    backgroundColor: 'var(--primary)', 
+                                                    color: '#fff', 
+                                                    padding: '8px 16px', 
+                                                    borderRadius: '100px', 
+                                                    fontSize: '0.8rem', 
+                                                    fontWeight: '700',
+                                                    border: 'none',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    cursor: 'pointer'
+                                                }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const lat = req.service.geoCoordinates?.coordinates?.[1];
+                                                    const lng = req.service.geoCoordinates?.coordinates?.[0];
+                                                    const link = req.service.shopDetails?.googleMapsLink || (lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : null);
+                                                    if (link) window.open(link, '_blank');
+                                                }}
+                                            >
+                                                <MapPin size={14} /> Direction
+                                            </button>
+                                        ) : (
+                                            <div style={{ textAlign: 'right' }}>
+                                                <div style={{ fontWeight: '800', fontSize: '1.2rem', color: 'var(--primary)' }}>₹{req.totalPrice}</div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{req.paymentMethod}</div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
@@ -1428,6 +1458,155 @@ const DashboardDesktop = ({
                 </div>
             )}
 
+            {activeTab === 'favorites' && (
+                <div className="animate-fade-in">
+                    {favoritesLoading ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><Loader className="animate-spin" /></div>
+                    ) : (!favorites || favorites.length === 0) ? (
+                        <div style={{ textAlign: 'center', padding: '100px', background: '#fff', borderRadius: '24px' }}>
+                            <Heart size={48} color="#cbd5e1" style={{ marginBottom: '16px' }} />
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1e293b' }}>No favorites yet</h3>
+                            <p style={{ color: '#64748b' }}>Start exploring and save services you like!</p>
+                            <button className="btn-primary" style={{ marginTop: '24px', borderRadius: '100px' }} onClick={() => navigate('/services')}>Browse Services</button>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                            {favorites.map(srv => (
+                                <div 
+                                    key={srv._id} 
+                                    className="card service-card-premium" 
+                                    onClick={() => navigate(`/services/${srv._id}`)}
+                                    style={{ 
+                                        padding: 0,
+                                        overflow: 'hidden',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        textDecoration: 'none',
+                                        color: 'inherit',
+                                        height: '100%',
+                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        border: '1px solid #edf2f7',
+                                        backgroundColor: '#fff',
+                                        borderRadius: '16px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <div style={{ position: 'relative', overflow: 'hidden' }}>
+                                        <img 
+                                            src={srv.images && srv.images.length > 0 ? srv.images[0] : (srv.provider?.avatar && srv.provider.avatar.startsWith('http') ? srv.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`)} 
+                                            alt={srv.title} 
+                                            style={{ 
+                                                width: '100%',
+                                                height: '200px',
+                                                objectFit: 'cover',
+                                                backgroundColor: '#f8fafc',
+                                                display: 'block'
+                                            }} 
+                                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`; }} 
+                                        />
+                                        <div style={{ position: 'absolute', top: '12px', left: '12px' }}>
+                                            <span style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '700', color: 'var(--primary)', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                                                {srv.category}
+                                            </span>
+                                        </div>
+                                        <button 
+                                            style={{ 
+                                                position: 'absolute', 
+                                                top: '12px', 
+                                                right: '12px', 
+                                                width: '32px', 
+                                                height: '32px', 
+                                                borderRadius: '50%', 
+                                                backgroundColor: '#ef4444', 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                justifyContent: 'center', 
+                                                border: 'none', 
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
+                                                cursor: 'pointer',
+                                                zIndex: 10
+                                            }} 
+                                            onClick={async (e) => { 
+                                                e.stopPropagation(); 
+                                                if (user?.token) {
+                                                    await api.post(`/api/users/favorites/${srv._id}`, {}, { headers: { Authorization: `Bearer ${user.token}` } });
+                                                    fetchFavorites();
+                                                }
+                                            }}
+                                        >
+                                            <Heart size={16} fill="#fff" color="#fff" />
+                                        </button>
+                                    </div>
+                                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                                        <h3 style={{ fontSize: '1.05rem', fontWeight: '700', margin: '4px 0 8px 0', color: '#1e293b', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.4', minHeight: '2.8rem' }}>
+                                            {srv.title}
+                                        </h3>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
+                                            <Star size={14} color="#f59e0b" fill="#f59e0b" />
+                                            <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.85rem' }}>{srv.rating || '4.8'}</span>
+                                            <span style={{ color: '#64748b', fontSize: '0.85rem' }}>({srv.numReviews || '0'})</span>
+                                            <span style={{ margin: '0 4px', color: '#cbd5e0' }}>•</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#64748b', fontSize: '0.8rem' }}>
+                                                <MapPin size={12} />
+                                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>
+                                                    {srv.location?.city || 'Remote'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: '12px', marginTop: 'auto' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <img
+                                                    src={srv.provider?.avatar && srv.provider.avatar.startsWith('http') ? srv.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || 'P')}&background=ede9fe&color=4f46e5&size=30`}
+                                                    alt="Avatar"
+                                                    style={{ borderRadius: '50%', width: '28px', height: '28px', objectFit: 'cover', border: '1.5px solid #fff', boxShadow: '0 0 0 1px #e2e8f0' }}
+                                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || 'P')}&background=ede9fe&color=4f46e5&size=30`; }}
+                                                />
+                                                <span style={{ fontWeight: '500', color: '#1e293b', fontSize: '0.85rem' }}>{srv.provider ? srv.provider.name : 'Professional'}</span>
+                                            </div>
+                                            
+                                            {srv.businessType === 'shop' ? (
+                                                <button 
+                                                    style={{ 
+                                                        backgroundColor: 'var(--primary)', 
+                                                        color: '#fff', 
+                                                        padding: '8px 16px', 
+                                                        borderRadius: '8px', 
+                                                        fontSize: '0.8rem', 
+                                                        fontWeight: '700',
+                                                        border: 'none',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const lat = srv.geoCoordinates?.coordinates?.[1];
+                                                        const lng = srv.geoCoordinates?.coordinates?.[0];
+                                                        const link = srv.shopDetails?.googleMapsLink || (lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : null);
+                                                        if (link) window.open(link, '_blank');
+                                                    }}
+                                                >
+                                                    <MapPin size={14} /> Direction
+                                                </button>
+                                            ) : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                                    <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting at</span>
+                                                    <div style={{ fontWeight: '800', color: 'var(--primary)', fontSize: '1.1rem' }}>
+                                                        ₹{srv.price}<span style={{ fontSize: '0.8rem', fontWeight: '400' }}>{srv.priceType === 'hourly' ? '/hr' : ''}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

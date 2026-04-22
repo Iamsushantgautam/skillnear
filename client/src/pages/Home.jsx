@@ -20,7 +20,7 @@ const mainCategories = [
 ];
 
 const Home = () => {
-    const { userLocation } = useAuthStore();
+    const { user, userLocation, toggleFavorite } = useAuthStore();
     const [servicesByCategory, setServicesByCategory] = useState({});
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -76,6 +76,17 @@ const Home = () => {
                     .ad-banner-mobile { flex-direction: column !important; height: auto !important; }
                     .ad-banner-left { padding: 32px 24px !important; }
                     .ad-banner-right { min-height: 250px !important; }
+                    .view-all-btn { 
+                        padding: 0 !important; 
+                        background: transparent !important;
+                        border: none !important;
+                        font-size: 0.85rem !important; 
+                        gap: 4px !important;
+                        white-space: nowrap !important;
+                    }
+                    .view-all-btn svg { width: 16px !important; height: 16px !important; }
+                    .section-title-mobile { font-size: 1.4rem !important; }
+                    .section-desc-mobile { font-size: 0.8rem !important; }
                 }
 
                 .services-scroll-container::-webkit-scrollbar {
@@ -175,8 +186,8 @@ const Home = () => {
                         <div className="container">
                             <div className="flex-between" style={{ marginBottom: '16px' }}>
                                 <div>
-                                    <h2 style={{ fontSize: '1.75rem', fontWeight: '900', letterSpacing: '-0.5px', color: '#111827' }}>{category}</h2>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Handpicked experts for your {category.toLowerCase()} needs</p>
+                                    <h2 className="section-title-mobile" style={{ fontSize: '1.75rem', fontWeight: '900', letterSpacing: '-0.5px', color: '#111827' }}>{category}</h2>
+                                    <p className="section-desc-mobile" style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Handpicked experts for your {category.toLowerCase()} needs</p>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     <div style={{ display: 'flex', gap: '8px' }} className="hide-on-mobile">
@@ -206,8 +217,19 @@ const Home = () => {
                                                 <Star size={12} fill="#FFB800" color="#FFB800" />
                                                 <span>{service.rating?.toFixed(1) || '4.8'}</span>
                                             </div>
-                                            <button style={styles.heartBtn} onClick={(e) => { e.preventDefault(); /* Save logic */ }}>
-                                                <Heart size={16} color="#fff" />
+                                            <button 
+                                                style={{ 
+                                                    ...styles.heartBtn, 
+                                                    backgroundColor: user?.favorites?.includes(service._id) ? '#ef4444' : 'rgba(0,0,0,0.3)',
+                                                    border: user?.favorites?.includes(service._id) ? 'none' : '1px solid rgba(255,255,255,0.5)'
+                                                }} 
+                                                onClick={(e) => { 
+                                                    e.preventDefault(); 
+                                                    if(!user) return navigate('/login');
+                                                    toggleFavorite(service._id);
+                                                }}
+                                            >
+                                                <Heart size={16} fill={user?.favorites?.includes(service._id) ? "#fff" : "none"} color="#fff" />
                                             </button>
                                         </div>
 
