@@ -30,7 +30,7 @@ const Footer = () => {
                     <div style={styles.col}>
                         <h4 style={styles.heading}>For Professionals</h4>
                         <Link to="/register" style={styles.link}>Join as Professional</Link>
-                        <Link to="/services" style={styles.link}>Provider Guidelines</Link>
+                        <Link to="/provider-guidelines" style={styles.link}>Provider Guidelines</Link>
                         <Link to="/success-stories" style={styles.link}>Success Stories</Link>
                     </div>
 

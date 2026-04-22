@@ -12,7 +12,7 @@ const SuccessStories = () => {
             role: "Professional Plumber",
             story: "Before SkillNear, I was struggling to find consistent work in Lucknow. Within 3 months of joining, my monthly income doubled. The direct chat feature helps me build trust with clients even before I visit them.",
             impact: "200% Income Growth",
-            img: "https://images.unsplash.com/photo-1595841696662-54093756264d?w=400&h=400&fit=crop"
+            img: "https://plus.unsplash.com/premium_photo-1689539137236-b68e436248de?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
         },
         {
             name: "Priya Sharma",
@@ -41,17 +41,17 @@ const SuccessStories = () => {
         <div style={{ backgroundColor: '#fff', minHeight: '100vh' }}>
             {/* Hero Section */}
             <div style={{ position: 'relative', height: '500px', overflow: 'hidden' }}>
-                <img 
-                    src={heroImg} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    alt="Success Stories" 
+                <img
+                    src={heroImg}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    alt="Success Stories"
                 />
-                <div style={{ 
-                    position: 'absolute', 
-                    top: 0, 
-                    left: 0, 
-                    right: 0, 
-                    bottom: 0, 
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
                     background: 'linear-gradient(to right, rgba(0,61,155,0.9), rgba(0,0,0,0.4))',
                     display: 'flex',
                     alignItems: 'center',
@@ -101,13 +101,13 @@ const SuccessStories = () => {
             <div style={{ padding: '100px 20px' }}>
                 <div className="container">
                     <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#1e293b', textAlign: 'center', marginBottom: '60px' }}>Featured Stories</h2>
-                    
+
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '40px' }}>
                         {stories.map((story, idx) => (
-                            <div key={idx} style={{ 
-                                background: '#fff', 
-                                borderRadius: '32px', 
-                                padding: '40px', 
+                            <div key={idx} style={{
+                                background: '#fff',
+                                borderRadius: '32px',
+                                padding: '40px',
                                 boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
                                 border: '1px solid #f1f5f9',
                                 display: 'flex',

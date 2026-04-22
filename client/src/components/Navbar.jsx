@@ -45,7 +45,7 @@ const Navbar = () => {
             city: selectedCity || 'All of India',
             pincode: selectedPincode || ''
         };
-        
+
         setLocation(locData);
 
         if (user) {
@@ -56,7 +56,7 @@ const Navbar = () => {
                 console.error("Error saving location to DB", error);
             }
         }
-        
+
         setShowLocationModal(false);
     };
 
@@ -72,27 +72,27 @@ const Navbar = () => {
             try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
                 const data = await res.json();
-                
+
                 if (data.address) {
                     const city = data.address.city || data.address.town || data.address.village || '';
                     const state = data.address.state || '';
                     const pincode = data.address.postcode || '';
-                    
+
                     setSelectedCity(city);
                     setSelectedPincode(pincode);
-                    
+
                     const stateMatch = indianStates.find(s => s.name.toLowerCase() === state.toLowerCase());
                     if (stateMatch) {
                         setSelectedStateCode(stateMatch.isoCode);
                     }
-                    
+
                     toast.success(`Detected: ${city}, ${pincode}`);
-                    
+
                     if (user) {
                         const config = { headers: { Authorization: `Bearer ${user.token}` } };
                         await api.put('/api/users/location', { lat: latitude, lng: longitude, city, state, pincode }, config);
                     }
-                    
+
                     setLocation({ city, state, pincode });
                     setShowLocationModal(false);
                 }
@@ -124,10 +124,10 @@ const Navbar = () => {
                             <span className="text-small">LOCATION</span>
                         </div>
                         <div className="location-value">
-                             <MapPin size={16} color="var(--primary)" />
+                            <MapPin size={16} color="var(--primary)" />
                             <span className="loc-text truncate">
-                                {userLocation?.city && userLocation?.city !== 'All of India' 
-                                    ? `${userLocation.city}${userLocation.pincode ? `, ${userLocation.pincode}` : ''}` 
+                                {userLocation?.city && userLocation?.city !== 'All of India'
+                                    ? `${userLocation.city}${userLocation.pincode ? `, ${userLocation.pincode}` : ''}`
                                     : (userLocation?.pincode || 'Select Area')}
                             </span>
                             <ChevronDown size={14} color="var(--text-muted)" />
@@ -153,8 +153,7 @@ const Navbar = () => {
                     <div className="nav-links-desktop hide-on-mobile hide-on-tablet">
                         <Link to="/shops" style={styles.link}>Local Shops</Link>
                         <Link to="/services" style={styles.link}>Services</Link>
-                        <Link to="/how-it-works" style={styles.link}>How it Works</Link>
-                        <Link to="/success-stories" style={styles.link}>Stories</Link>
+
                         <div style={styles.divider}></div>
                     </div>
 
@@ -178,9 +177,9 @@ const Navbar = () => {
                     )}
 
                     {/* Mobile Hamburger Logic */}
-                    <button 
-                        onClick={() => setIsDrawerOpen(true)} 
-                        className="show-on-mobile" 
+                    <button
+                        onClick={() => setIsDrawerOpen(true)}
+                        className="show-on-mobile"
                         style={{ background: 'none', border: 'none', color: 'var(--text-main)', padding: '4px' }}
                     >
                         <Menu size={24} />
@@ -194,14 +193,14 @@ const Navbar = () => {
                     <div onClick={() => setIsDrawerOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
                     <div className="animate-slide-in-left no-scrollbar" style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '280px', background: 'white', padding: '64px 24px 100px', overflowY: 'auto' }}>
                         <button onClick={() => setIsDrawerOpen(false)} style={{ position: 'absolute', top: 24, right: 20, background: 'none', border: 'none' }}><X size={24} color="#64748b" /></button>
-                        
+
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
                             {user ? (
                                 <>
-                                    <img 
-                                        src={getAvatar(user)} 
-                                        style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} 
-                                        alt="" 
+                                    <img
+                                        src={getAvatar(user)}
+                                        style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }}
+                                        alt=""
                                         onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=ede9fe&color=4f46e5&size=80`; }}
                                     />
                                     <div>
@@ -246,7 +245,7 @@ const Navbar = () => {
                                 ])
                             ].map((item, idx) => (
                                 item.divider ? <div key={idx} style={{ height: '1px', background: '#f1f5f9', margin: '8px 0' }} /> : (
-                                    <button key={item.label} onClick={() => { item.action ? item.action() : navigate(item.link); setIsDrawerOpen(false); }} 
+                                    <button key={item.label} onClick={() => { item.action ? item.action() : navigate(item.link); setIsDrawerOpen(false); }}
                                         style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'none', border: 'none', borderRadius: 12, width: '100%', textAlign: 'left', fontWeight: 600, color: item.color || '#64748b' }}>
                                         <item.icon size={20} /> {item.label}
                                     </button>
@@ -377,8 +376,8 @@ const Navbar = () => {
                         </div>
 
                         <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '12px', marginBottom: '24px', textAlign: 'center', border: '1.5px dashed var(--primary)' }}>
-                            <button 
-                                onClick={handleAutoDetect} 
+                            <button
+                                onClick={handleAutoDetect}
                                 disabled={isDetecting}
                                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', color: 'var(--primary)', fontWeight: '600', cursor: 'pointer', background: 'none', border: 'none' }}
                             >
@@ -401,7 +400,7 @@ const Navbar = () => {
                                 value={selectedStateCode}
                                 onChange={(e) => {
                                     setSelectedStateCode(e.target.value);
-                                    setSelectedCity(''); 
+                                    setSelectedCity('');
                                 }}
                             >
                                 <option value="">Select a State</option>
@@ -418,7 +417,7 @@ const Navbar = () => {
                                 value={selectedCity}
                                 onChange={(e) => {
                                     setSelectedCity(e.target.value);
-                                    setSelectedPincode(''); 
+                                    setSelectedPincode('');
                                 }}
                             >
                                 <option value="">{selectedStateCode ? 'Select City' : 'State First'}</option>
@@ -430,12 +429,12 @@ const Navbar = () => {
 
                         <div style={{ marginBottom: '24px' }}>
                             <label style={styles.label}>Pincode / Zip Code</label>
-                            <input 
-                                type="text" 
-                                className="input-field" 
-                                placeholder="e.g. 226001" 
-                                value={selectedPincode} 
-                                onChange={(e) => setSelectedPincode(e.target.value)} 
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder="e.g. 226001"
+                                value={selectedPincode}
+                                onChange={(e) => setSelectedPincode(e.target.value)}
                             />
                         </div>
 
