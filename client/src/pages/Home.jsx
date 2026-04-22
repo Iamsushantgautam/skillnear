@@ -232,10 +232,37 @@ const Home = () => {
                                                     </div>
                                                     <span style={styles.providerName}>{service.provider?.name || 'Professional'}</span>
                                                 </div>
-                                                <div style={styles.priceTag}>
-                                                    <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Starting at</span>
-                                                    <span style={{ fontWeight: '800', color: '#111827', fontSize: '1.1rem' }}>₹{service.price || (service.plans?.[0]?.price) || '0'}</span>
-                                                </div>
+                                                {service.businessType === 'shop' ? (
+                                                    <button 
+                                                        style={{ 
+                                                            backgroundColor: 'var(--primary)', 
+                                                            color: '#fff', 
+                                                            padding: '8px 16px', 
+                                                            borderRadius: '8px', 
+                                                            fontSize: '0.8rem', 
+                                                            fontWeight: '700',
+                                                            border: 'none',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            const lat = service.geoCoordinates?.coordinates?.[1];
+                                                            const lng = service.geoCoordinates?.coordinates?.[0];
+                                                            const link = service.shopDetails?.googleMapsLink || (lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : null);
+                                                            if (link) window.open(link, '_blank');
+                                                        }}
+                                                    >
+                                                        <MapPin size={14} /> Direction
+                                                    </button>
+                                                ) : (
+                                                    <div style={styles.priceTag}>
+                                                        <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Starting at</span>
+                                                        <span style={{ fontWeight: '800', color: '#111827', fontSize: '1.1rem' }}>₹{service.price || (service.plans?.[0]?.price) || '0'}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </Link>

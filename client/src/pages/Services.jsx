@@ -267,12 +267,39 @@ const Services = () => {
                                             />
                                             <span className="text-small" style={{ fontWeight: '500', color: 'var(--text-main)' }}>{srv.provider ? srv.provider.name : 'Unknown'}</span>
                                         </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                            <span className="text-small" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting at</span>
-                                            <div style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '1.1rem' }}>
-                                                ${srv.price}<span style={{ fontSize: '0.8rem', fontWeight: '400' }}>{srv.priceType === 'hourly' ? '/hr' : ''}</span>
+                                        {srv.businessType === 'shop' ? (
+                                            <button 
+                                                style={{ 
+                                                    backgroundColor: 'var(--primary)', 
+                                                    color: '#fff', 
+                                                    padding: '8px 16px', 
+                                                    borderRadius: '8px', 
+                                                    fontSize: '0.8rem', 
+                                                    fontWeight: '700',
+                                                    border: 'none',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    cursor: 'pointer'
+                                                }}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    const lat = srv.geoCoordinates?.coordinates?.[1];
+                                                    const lng = srv.geoCoordinates?.coordinates?.[0];
+                                                    const link = srv.shopDetails?.googleMapsLink || (lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : null);
+                                                    if (link) window.open(link, '_blank');
+                                                }}
+                                            >
+                                                <MapPin size={14} /> Direction
+                                            </button>
+                                        ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                                <span className="text-small" style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Starting at</span>
+                                                <div style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '1.1rem' }}>
+                                                    ₹{srv.price}<span style={{ fontSize: '0.8rem', fontWeight: '400' }}>{srv.priceType === 'hourly' ? '/hr' : ''}</span>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </Link>
