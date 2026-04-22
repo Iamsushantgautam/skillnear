@@ -170,23 +170,29 @@ const Home = () => {
                                         </div>
 
                                         <div style={styles.cardContent}>
-                                            <div style={styles.providerInfo}>
-                                                <div style={styles.providerAvatar}>
-                                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(service.providerName || 'P')}&background=6366f1&color=fff`} alt="Provider" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
-                                                </div>
-                                                <span style={styles.providerName}>{service.providerName || 'Professional'}</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                                <span style={{ backgroundColor: '#e0f2fe', color: 'var(--primary)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase' }}>
+                                                    {service.category}
+                                                </span>
                                             </div>
-
                                             <h4 style={styles.cardTitle}>{service.title}</h4>
 
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '16px' }}>
+                                                <Star size={14} color="#f59e0b" fill="#f59e0b" />
+                                                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#111827' }}>{service.rating?.toFixed(1) || '4.8'}</span>
+                                                <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>({service.numReviews || '0'})</span>
+                                            </div>
+
                                             <div style={styles.cardFooter}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    <Zap size={14} color="#059669" />
-                                                    <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '800', textTransform: 'uppercase' }}>Quick Book</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <div style={styles.providerAvatar}>
+                                                        <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(service.providerName || 'P')}&background=6366f1&color=fff`} alt="Provider" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+                                                    </div>
+                                                    <span style={styles.providerName}>{service.providerName || 'Professional'}</span>
                                                 </div>
                                                 <div style={styles.priceTag}>
-                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '500' }}>Starting at</span>
-                                                    <span style={{ fontWeight: '800', color: '#111827' }}>₹{service.price}</span>
+                                                    <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Starting at</span>
+                                                    <span style={{ fontWeight: '800', color: '#111827', fontSize: '1.1rem' }}>₹{service.price}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -365,16 +371,18 @@ const styles = {
         color: 'inherit',
         backgroundColor: '#fff',
         boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+        transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
     },
     serviceImgWrapper: {
         position: 'relative',
         height: '180px',
         overflow: 'hidden',
+        backgroundColor: '#f8fafc',
     },
     serviceImg: {
         width: '100%',
         height: '100%',
-        objectFit: 'cover',
+        objectFit: 'contain',
         transition: 'transform 0.6s ease',
     },
     ratingBadge: {
