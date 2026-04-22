@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader, MessageSquare } from 'lucide-react';
+import { Loader, MessageSquare, Trash2 } from 'lucide-react';
 import io from 'socket.io-client';
 import api, { API_URL } from '../utils/api';
 import useAuthStore from '../store/useAuthStore';
@@ -83,8 +83,26 @@ const ChatList = ({ limit, onSelect }) => {
                         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: '2px 0' }}>
                             {room.lastMessage}
                         </p>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: '700', textTransform: 'uppercase' }}>
-                            {room.type}: {room.title}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: '700', textTransform: 'uppercase' }}>
+                                {room.type}: {room.title}
+                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm('Delete this chat history?')) {
+                                        api.delete(`/api/messages/${room.roomId}`)
+                                            .then(() => fetchRooms())
+                                            .catch(err => {
+                                                const errorMsg = err.response?.data?.message || err.message || 'Failed to delete';
+                                                alert(`Delete failed: ${errorMsg}`);
+                                            });
+                                    }
+                                }}
+                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                            >
+                                <Trash2 size={14} />
+                            </button>
                         </div>
                     </div>
                 </div>

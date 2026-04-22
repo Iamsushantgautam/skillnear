@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 
 // Helper to validate room access and get room info
 const validateRoom = async (roomId, userId) => {
+    console.log(`[DEBUG] Validating room: ${roomId} for user: ${userId}`);
     let type = null;
     let title = '';
     let otherUser = null;
@@ -195,16 +196,36 @@ export const markMessagesAsRead = async (req, res) => {
 export const deleteRoom = async (req, res) => {
     try {
         const { roomId } = req.params;
-        const myId = req.user._id.toString();
+        const myId = req.user._id;
+        const myIdStr = myId.toString();
 
-        const roomValid = await validateRoom(roomId, myId);
+        // 1. Try formal validation (checks Booking or Direct room logic)
+        const roomValid = await validateRoom(roomId, myIdStr);
+        
         if (!roomValid) {
-            return res.status(403).json({ message: 'Not authorized or room does not exist' });
+            console.log(`[DEBUG] Formal validation failed for room ${roomId}. Checking message participants fallback...`);
+            
+            // 2. Fallback: If room validation fails (e.g. booking was deleted), 
+            // allow deletion if the user is either the sender or receiver of ANY message in this roomId.
+            const messageExists = await Message.findOne({
+                roomId,
+                $or: [{ senderId: myId }, { receiverId: myId }]
+            });
+
+            if (!messageExists) {
+                console.log(`[DEBUG] Fallback failed. User ${myIdStr} is not part of any messages in room ${roomId}.`);
+                return res.status(403).json({ message: 'Not authorized or room does not exist' });
+            }
+            console.log(`[DEBUG] Fallback success. User found in message history for room ${roomId}.`);
         }
 
-        await Message.deleteMany({ roomId });
-        res.json({ message: 'Chat history deleted successfully' });
+        // Proceed with deletion
+        const result = await Message.deleteMany({ roomId });
+        console.log(`[DEBUG] Deleted ${result.deletedCount} messages from room ${roomId}`);
+        
+        res.json({ message: 'Chat history deleted successfully', deletedCount: result.deletedCount });
     } catch (error) {
+        console.error(`[ERROR] Delete room failed: ${error.message}`);
         res.status(500).json({ message: error.message });
     }
 };

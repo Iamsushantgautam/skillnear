@@ -165,7 +165,7 @@ const Navbar = () => {
                         </div>
                     ) : (
                         <div className="nav-auth-container">
-                            <div className="auth-btns hide-on-mobile">
+                            <div className="auth-btns hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                                 <Link to="/login" style={styles.link}>Login</Link>
                                 <Link to="/register" className="btn-primary">Sign Up</Link>
                             </div>

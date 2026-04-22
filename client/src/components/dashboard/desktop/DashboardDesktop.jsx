@@ -1184,6 +1184,27 @@ const DashboardDesktop = ({
                                         <h4 style={{ fontSize: '14px', fontWeight: '800' }}>{dashActiveRoom.otherUser?.name || 'User'}</h4>
                                         <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: '700' }}>Active Conversation</span>
                                     </div>
+                                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px' }}>
+                                        <button 
+                                            onClick={() => {
+                                                if (window.confirm('Are you sure you want to delete this chat history?')) {
+                                                    api.delete(`/api/messages/${dashActiveRoom.roomId}`)
+                                                        .then(() => {
+                                                            setDashMessages([]);
+                                                            alert('Chat history deleted');
+                                                        })
+                                                        .catch(err => {
+                                                            const errorMsg = err.response?.data?.message || err.message || 'Failed to delete chat';
+                                                            alert(`Delete failed: ${errorMsg}`);
+                                                        });
+                                                }
+                                            }}
+                                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                            title="Delete Chat"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Service Context Card */}

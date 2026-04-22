@@ -4,7 +4,7 @@ import {
     Briefcase, MessageSquare, Wallet, User,
     Star, PlusCircle, ArrowLeft, Loader, CheckCircle,
     ChevronRight, Edit3, Send, Search, ShoppingBag, MapPin, ChevronLeft, Plus as PlusIcon,
-    ShoppingCart, Video
+    ShoppingCart, Video, Trash2
 } from 'lucide-react';
 import io from 'socket.io-client';
 import api, { API_URL } from '../utils/api';
@@ -226,12 +226,23 @@ function ChatRoom({ user, room, onBack }) {
         };
         fetchMessages();
 
-        const newSocket = io(API_URL);
+        const newSocket = io(API_URL, {
+            withCredentials: true,
+            transports: ['websocket', 'polling']
+        });
         newSocket.emit('setup', user._id);
         newSocket.emit('joinRoom', room.roomId);
         newSocket.on('receiveMessage', (msg) => {
             if (msg.roomId === room.roomId) {
                 setMessages(prev => {
+                    if (msg.tempId) {
+                        const exists = prev.findIndex(m => m._id === msg.tempId || m.tempId === msg.tempId);
+                        if (exists !== -1) {
+                            const newMsgs = [...prev];
+                            newMsgs[exists] = { ...msg, optimistic: false };
+                            return newMsgs;
+                        }
+                    }
                     if (prev.find(m => m._id === msg._id)) return prev;
                     return [...prev, msg];
                 });
@@ -248,13 +259,29 @@ function ChatRoom({ user, room, onBack }) {
 
     const handleSend = () => {
         if (!input.trim() || !socket) return;
-        const msg = {
+        
+        const tempId = Date.now().toString();
+        const msgData = {
+            _id: tempId,
             senderId: user._id,
             receiverId: room.otherUser._id,
             roomId: room.roomId,
-            message: input
+            message: input,
+            createdAt: new Date().toISOString(),
+            optimistic: true
         };
-        socket.emit('sendMessage', msg);
+
+        // Optimistic update
+        setMessages(prev => [...prev, msgData]);
+
+        socket.emit('sendMessage', {
+            senderId: user._id,
+            receiverId: room.otherUser._id,
+            roomId: room.roomId,
+            message: input,
+            tempId: tempId
+        });
+        
         setInput('');
     };
 
@@ -285,9 +312,29 @@ function ChatRoom({ user, room, onBack }) {
                     <h4 style={{ color: 'white', margin: 0, fontSize: '1rem', fontWeight: 800, letterSpacing: '-0.01em' }}>{room.otherUser?.name}</h4>
                     <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: 500 }}>● Online</span>
                 </div>
-                <button style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Video size={18} />
-                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button 
+                        onClick={() => {
+                                if (window.confirm('Are you sure you want to delete this chat history?')) {
+                                    api.delete(`/api/messages/${room.roomId}`)
+                                        .then(() => {
+                                            setMessages([]);
+                                            alert('Chat history deleted');
+                                        })
+                                        .catch(err => {
+                                            const errorMsg = err.response?.data?.message || err.message || 'Failed to delete chat';
+                                            alert(`Delete failed: ${errorMsg}`);
+                                        });
+                                }
+                        }}
+                        style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#ff4d4d', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                    <button style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Video size={18} />
+                    </button>
+                </div>
             </div>
 
             {/* ── Service Context Card ── */}
@@ -1218,7 +1265,7 @@ function ServicesScreen(props) {
         </Shell>
     );
 }
-function OverviewScreen({ user, role, stats, myGigs, profileAvatar, getAvatar, setActiveTab, navigate, providerTitle, providerAbout, onMenuClick }) {
+function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, getAvatar, setActiveTab, navigate, providerTitle, providerAbout, onMenuClick }) {
     return (
         <>
             <section style={{ background: `linear-gradient(135deg, ${PC} 0%, #1e40af 100%)`, padding: '64px 24px 100px', borderRadius: '0 0 32px 32px' }}>
@@ -1301,6 +1348,25 @@ function OverviewScreen({ user, role, stats, myGigs, profileAvatar, getAvatar, s
                         <ChevronRight size={20} color="white" />
                     </div>
                 )}
+
+                {/* Account Details Card */}
+                <div style={{ background: 'white', borderRadius: 28, padding: 24, boxShadow: '0 4px 15px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: '0 0 20px', color: '#1e293b' }}>Account Information</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <p style={{ fontSize: 10, color: '#64748b', fontWeight: 700, margin: '0 0 6px', textTransform: 'uppercase' }}>Member Since</p>
+                            <p style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>{user?.createdAt ? new Date(user.createdAt).getFullYear() : 2026}</p>
+                        </div>
+                        <div style={{ textAlign: 'center', borderLeft: '1px solid #f1f5f9', borderRight: '1px solid #f1f5f9' }}>
+                            <p style={{ fontSize: 10, color: '#64748b', fontWeight: 700, margin: '0 0 6px', textTransform: 'uppercase' }}>Total Bookings</p>
+                            <p style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>{myBookings?.length || 0}</p>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <p style={{ fontSize: 10, color: '#64748b', fontWeight: 700, margin: '0 0 6px', textTransform: 'uppercase' }}>Account Status</p>
+                            <p style={{ fontSize: '1.1rem', fontWeight: 900, color: '#22c55e', margin: 0 }}>Active</p>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Quick Actions */}
                 <div>
@@ -1402,7 +1468,7 @@ export default function DashboardMobile(props) {
             case 'chat': return <InboxScreen user={user} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} />;
             case 'payments': return <PaymentsScreen stats={stats} bookingRequests={bookingRequests} setActiveTab={setActiveTab} />;
             case 'profile': return <ProfileScreen user={user} profileAvatar={profileAvatar} getAvatar={getAvatar} profileName={profileName} setProfileName={setProfileName} profilePhone={profilePhone} setProfilePhone={setProfilePhone} profileUsername={profileUsername} setProfileUsername={setProfileUsername} providerTitle={providerTitle} providerAbout={providerAbout} providerTitleSetter={providerTitleSetter} providerAboutSetter={providerAboutSetter} handleSaveProfile={handleSaveProfile} savingProfile={savingProfile} uploadingAvatar={uploadingAvatar} handleAvatarUpload={handleAvatarUpload} role={role} setActiveTab={setActiveTab} />;
-            default: return <OverviewScreen user={user} role={role} stats={stats} myGigs={myGigs} providerTitle={providerTitle} providerAbout={providerAbout} profileAvatar={profileAvatar} getAvatar={getAvatar} setActiveTab={setActiveTab} navigate={navigate} />;
+            default: return <OverviewScreen user={user} role={role} stats={stats} myGigs={myGigs} myBookings={myBookings} providerTitle={providerTitle} providerAbout={providerAbout} profileAvatar={profileAvatar} getAvatar={getAvatar} setActiveTab={setActiveTab} navigate={navigate} />;
         }
     };
 

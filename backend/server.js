@@ -33,6 +33,7 @@ const allowedOrigins = [
     'http://localhost:5174',
     'https://skillnear.sushant.online',
     'https://skillnear-admin.sushant.online',
+    'https://extrospective-hemihedrally-cathryn.ngrok-free.dev',
     process.env.FRONTEND_URL,
     process.env.ADMIN_FRONTEND_URL,
 ].filter(Boolean);
@@ -40,7 +41,7 @@ const allowedOrigins = [
 const corsOptions = {
     origin: (origin, callback) => {
         // Allow requests with no origin (e.g. curl, Postman, mobile apps)
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || allowedOrigins.includes(origin) || origin.includes('ngrok')) {
             callback(null, true);
         } else {
             callback(new Error(`CORS: Origin '${origin}' is not allowed`));
@@ -57,9 +58,14 @@ app.use(express.urlencoded({ extended: true }));
 // Initialize Socket.io (must be after corsOptions is defined)
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins,
-        methods: ['GET', 'POST'],
-        credentials: true,
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin) || (origin && origin.includes('ngrok'))) {
+                callback(null, true);
+            } else {
+                callback(null, false);
+            }
+        },
+        credentials: true
     }
 });
 
@@ -90,9 +96,10 @@ io.on('connection', (socket) => {
             });
 
             // Emit to the specific room
-            io.to(roomId).emit('receiveMessage', newMessage);
-            // Also emit to the receiver personally (to update their room list if they aren't in this room)
-            io.to(receiverId).emit('receiveMessage', newMessage);
+            const messageToEmit = { ...newMessage._doc, tempId: data.tempId };
+            io.to(roomId).emit('receiveMessage', messageToEmit);
+            // Also emit to the receiver personally
+            io.to(receiverId).emit('receiveMessage', messageToEmit);
 
             // Fetch the receiver to check if they are offline and a provider
             if (!activeUsers.has(receiverId)) {

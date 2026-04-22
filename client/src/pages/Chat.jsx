@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Phone, Video, MoreVertical, ArrowLeft, Paperclip, Loader, Check, CheckCheck } from 'lucide-react';
+import { Send, Phone, Video, MoreVertical, ArrowLeft, Paperclip, Loader, Check, CheckCheck, Trash2 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import api, { API_URL } from '../utils/api';
@@ -75,7 +75,10 @@ const Chat = () => {
     useEffect(() => {
         if (!user) return;
         
-        const newSocket = io(API_URL);
+        const newSocket = io(API_URL, {
+            withCredentials: true,
+            transports: ['websocket', 'polling']
+        });
         socketRef.current = newSocket;
         setSocket(newSocket);
 
@@ -85,34 +88,48 @@ const Chat = () => {
             setOnlineUsers(users);
         });
 
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .group:hover .delete-btn-hover {
+                opacity: 1 !important;
+            }
+            @media (max-width: 768px) {
+                .delete-btn-hover {
+                    opacity: 1 !important;
+                }
+            }
+            .hover-primary:hover {
+                color: var(--primary) !important;
+            }
+            .spin {
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+
         newSocket.on('receiveMessage', async (data) => {
+            // Check if this message is for the currently viewed room
             const currentRoom = activeRoomRef.current;
-            
-            // If message is for the active room, add to messages list
             if (currentRoom && currentRoom.roomId === data.roomId) {
                 setMessages((prev) => {
+                    // Deduplicate using tempId
+                    if (data.tempId) {
+                        const exists = prev.findIndex(m => m._id === data.tempId || m.tempId === data.tempId);
+                        if (exists !== -1) {
+                            const newMsgs = [...prev];
+                            newMsgs[exists] = { ...data, optimistic: false };
+                            return newMsgs;
+                        }
+                    }
                     if (prev.find(m => m._id === data._id)) return prev;
                     return [...prev, data];
                 });
             }
-
-            // Always update rooms list for last message preview
-            setRooms((prev) => {
-                const exists = prev.find(r => r.roomId === data.roomId);
-                if (exists) {
-                    return prev.map(r =>
-                        r.roomId === data.roomId
-                            ? { ...r, lastMessage: data.message, updatedAt: new Date() }
-                            : r
-                    ).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-                } else {
-                    // Trigger refresh for new room
-                    api.get('/api/messages/rooms', { headers: { Authorization: `Bearer ${user.token}` } })
-                        .then(({ data: updatedRooms }) => setRooms(updatedRooms))
-                        .catch(() => {});
-                    return prev;
-                }
-            });
+            fetchRooms(); // Refresh sidebar to show latest message and update unread count
         });
 
         newSocket.on('typing', (roomId) => {
@@ -125,6 +142,19 @@ const Chat = () => {
         return () => newSocket.disconnect();
     }, [user?._id]);
 
+    const fetchRooms = async () => {
+        if (!user) return;
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.get('/api/messages/rooms', config);
+            setRooms(data);
+            return data;
+        } catch (error) {
+            console.error("Error fetching rooms", error);
+            return [];
+        }
+    };
+
     // Fetch Rooms & Handle initial room
     useEffect(() => {
         const initChat = async () => {
@@ -133,23 +163,18 @@ const Chat = () => {
                 return;
             }
             try {
-                const config = { headers: { Authorization: `Bearer ${user.token}` } };
-                const { data } = await api.get('/api/messages/rooms', config);
-                let fetchedRooms = data;
-                setRooms(fetchedRooms);
+                const fetchedRooms = await fetchRooms();
 
                 // If explicit provider chat requested
                 if (initialProviderId && initialProviderId !== user._id) {
-                    // direct_id1_id2 (sorted IDs for consistency)
                     const ids = [user._id, initialProviderId].sort();
                     const directRoomId = `direct_${ids[0]}_${ids[1]}`;
-
                     const existing = fetchedRooms.find(r => r.roomId === directRoomId);
+                    
                     if (existing) {
                         setActiveRoom(existing);
                         if (isMobile) setShowChatArea(true);
                     } else {
-                        // Create virtual room for new direct chat
                         try {
                             const { data: providerUser } = await api.get(`/api/users/${initialProviderId}`);
                             const virtualRoom = {
@@ -177,13 +202,13 @@ const Chat = () => {
                     setActiveRoom(fetchedRooms[0]);
                 }
             } catch (error) {
-                console.error("Error fetching rooms", error);
+                console.error("Error initializing chat", error);
             } finally {
                 setLoadingRooms(false);
             }
         };
         initChat();
-    }, [user, initialProviderId]);
+    }, [user?._id, initialProviderId, initialRoomId]);
 
     // Handle joining room 
     useEffect(() => {
@@ -216,18 +241,31 @@ const Chat = () => {
     const handleSendMessage = () => {
         if (!message.trim() || !activeRoom || !user || !socket) return;
 
+        const messageText = message;
+        const tempId = Date.now().toString();
         const newMsgData = {
+            _id: tempId,
             senderId: user._id,
             receiverId: activeRoom.otherUser._id,
             roomId: activeRoom.roomId,
-            message: message
+            message: messageText,
+            createdAt: new Date().toISOString(),
+            optimistic: true,
+            tempId: tempId
         };
 
-        socket.emit('sendMessage', newMsgData);
-        socket.emit('stopTyping', activeRoom.roomId);
+        // Optimistic update
+        setMessages(prev => [...prev, newMsgData]);
 
-        // Optimistic update for UI if using sockets effectively or wait for receiveMessage
-        // We'll wait for receiveMessage to ensure it's in DB
+        socket.emit('sendMessage', {
+            senderId: user._id,
+            receiverId: activeRoom.otherUser._id,
+            roomId: activeRoom.roomId,
+            message: messageText,
+            tempId: tempId
+        });
+        
+        socket.emit('stopTyping', activeRoom.roomId);
 
         setMessage('');
         setIsTyping(false);
@@ -253,18 +291,21 @@ const Chat = () => {
         }, 3000);
     };
 
-    const handleDeleteChat = async () => {
-        if (!activeRoom || !window.confirm('Are you sure you want to delete this chat history?')) return;
-        try {
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await api.delete(`/api/messages/${activeRoom.roomId}`, config);
-            setMessages([]);
-            // Update rooms list to show "No messages yet" or remove virtual room
-            setRooms(prev => prev.map(r => r.roomId === activeRoom.roomId ? { ...r, lastMessage: 'Chat history deleted', updatedAt: new Date() } : r));
-            setShowOptions(false);
-            alert('Chat history deleted');
-        } catch (error) {
-            alert('Failed to delete chat');
+    const handleDeleteChat = async (rId) => {
+        const idToDelete = rId || activeRoom?.roomId;
+        if (!idToDelete) return;
+        
+        if (window.confirm('Are you sure you want to delete this chat history?')) {
+            try {
+                await api.delete(`/api/messages/${idToDelete}`);
+                if (activeRoom && activeRoom.roomId === idToDelete) {
+                    setMessages([]);
+                }
+                toast.success('Chat history deleted');
+            } catch (error) {
+                const errorMsg = error.response?.data?.message || error.message || 'Failed to delete chat';
+                toast.error(`Delete failed: ${errorMsg}`);
+            }
         }
     };
 
@@ -286,6 +327,7 @@ const Chat = () => {
                                 key={room.roomId}
                                 style={{ ...styles.contactItem, backgroundColor: activeRoom?.roomId === room.roomId ? '#f1f5f9' : 'transparent', borderLeft: activeRoom?.roomId === room.roomId ? '4px solid var(--primary)' : '4px solid transparent' }}
                                 onClick={() => { setActiveRoom(room); if (isMobile) setShowChatArea(true); }}
+                                className="group"
                             >
                                 <div style={{ position: 'relative' }}>
                                     <img
@@ -301,12 +343,28 @@ const Chat = () => {
                                 <div style={{ flex: 1, overflow: 'hidden' }}>
                                     <div className="flex-between">
                                         <span style={{ fontWeight: '700', fontSize: '0.95rem', color: '#1e293b' }}>{room.otherUser?.name || 'User'}</span>
-                                        <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{room.updatedAt ? new Date(room.updatedAt).toLocaleDateString() : ''}</span>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                                            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{room.updatedAt ? new Date(room.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                                            {room.unreadCount > 0 && (
+                                                <span style={{ backgroundColor: 'var(--primary)', color: 'white', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 800 }}>
+                                                    {room.unreadCount}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     <p style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#64748b', fontSize: '0.82rem', marginTop: 2 }}>
                                         {room.lastMessage}
                                     </p>
-                                    <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{room.type}: {room.title}</span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                                        <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{room.type}: {room.title}</span>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteChat(room.roomId); }}
+                                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0, transition: 'opacity 0.2s' }}
+                                            className="delete-btn-hover"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -347,22 +405,16 @@ const Chat = () => {
                                         </p>
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', gap: '20px', color: '#94a3b8', position: 'relative' }} ref={optionsRef}>
+                                <div style={{ display: 'flex', gap: '20px', color: '#94a3b8', alignItems: 'center' }}>
                                     <Phone size={20} className="hover-primary" style={{ cursor: 'pointer' }} />
                                     <Video size={20} className="hover-primary" style={{ cursor: 'pointer' }} />
-                                    <MoreVertical size={20} className="hover-primary" style={{ cursor: 'pointer' }} onClick={() => setShowOptions(!showOptions)} />
-                                    {showOptions && (
-                                        <div style={{ position: 'absolute', top: '100%', right: 0, backgroundColor: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderRadius: '8px', padding: '8px', zIndex: 100, minWidth: '150px' }}>
-                                            <button
-                                                onClick={handleDeleteChat}
-                                                style={{ width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', color: '#ef4444', fontSize: '0.9rem', cursor: 'pointer', borderRadius: '4px' }}
-                                                onMouseOver={(e) => e.target.style.backgroundColor = '#fef2f2'}
-                                                onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
-                                            >
-                                                Delete Chat
-                                            </button>
-                                        </div>
-                                    )}
+                                    <button 
+                                        onClick={() => handleDeleteChat()}
+                                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                        title="Delete Chat"
+                                    >
+                                        <Trash2 size={20} />
+                                    </button>
                                 </div>
                             </div>
 

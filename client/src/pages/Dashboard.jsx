@@ -216,7 +216,10 @@ const Dashboard = () => {
             }
 
             // Setup Dashboard Socket for Real-time chat
-            const socket = io(API_URL);
+            const socket = io(API_URL, {
+                withCredentials: true,
+                transports: ['websocket', 'polling']
+            });
             socket.emit('setup', user._id);
             setDashSocket(socket);
 
@@ -225,6 +228,16 @@ const Dashboard = () => {
                 const activeRoom = activeRoomRef.current;
                 if (activeRoom && activeRoom.roomId === data.roomId) {
                     setDashMessages(prev => {
+                        // If we have a tempId match, replace the optimistic message
+                        if (data.tempId) {
+                            const exists = prev.findIndex(m => m._id === data.tempId || m.tempId === data.tempId);
+                            if (exists !== -1) {
+                                const newMsgs = [...prev];
+                                newMsgs[exists] = { ...data, optimistic: false };
+                                return newMsgs;
+                            }
+                        }
+                        // Fallback to ID check
                         if (prev.find(m => m._id === data._id)) return prev;
                         return [...prev, data];
                     });
@@ -284,13 +297,29 @@ const Dashboard = () => {
 
     const handleSendMessageDash = () => {
         if (!dashMessageInput.trim() || !dashActiveRoom || !user || !dashSocket) return;
-        const msg = {
+        
+        const tempId = Date.now().toString();
+        const msgData = {
+            _id: tempId,
             senderId: user._id,
             receiverId: dashActiveRoom.otherUser._id,
             roomId: dashActiveRoom.roomId,
-            message: dashMessageInput
+            message: dashMessageInput,
+            createdAt: new Date().toISOString(),
+            optimistic: true
         };
-        dashSocket.emit('sendMessage', msg);
+
+        // Optimistic update
+        setDashMessages(prev => [...prev, msgData]);
+
+        dashSocket.emit('sendMessage', {
+            senderId: user._id,
+            receiverId: dashActiveRoom.otherUser._id,
+            roomId: dashActiveRoom.roomId,
+            message: dashMessageInput,
+            tempId: tempId
+        });
+        
         setDashMessageInput('');
     };
 
@@ -929,18 +958,6 @@ const Dashboard = () => {
                         </nav>
 
                         <div style={{ marginTop: 'auto', padding: '0 24px' }}>
-                            <button
-                                onClick={() => setActiveTab('services')}
-                                style={{
-                                    width: '100%', background: 'linear-gradient(135deg, #003d9b 0%, #0052cc 100%)',
-                                    color: '#fff', borderRadius: '14px', padding: '16px',
-                                    fontWeight: '700', fontSize: '0.95rem', boxShadow: '0 10px 20px rgba(0, 61, 155, 0.2)',
-                                    border: 'none', cursor: 'pointer', marginBottom: '32px', transition: 'all 0.3s'
-                                }}
-                            >
-                                Post a Gig
-                            </button>
-
                             <div style={{ paddingTop: '24px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '12px' }}>
                                 <img
                                     src={getAvatar(user)}
