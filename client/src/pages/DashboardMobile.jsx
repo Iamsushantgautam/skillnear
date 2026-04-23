@@ -4,8 +4,9 @@ import {
     Briefcase, MessageSquare, Wallet, User,
     Star, PlusCircle, ArrowLeft, Loader, CheckCircle, Calendar as CalendarIcon,
     ChevronRight, Edit3, Send, Search, ShoppingBag, MapPin, ChevronLeft, Plus as PlusIcon,
-    ShoppingCart, Video, Trash2, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, X, Phone, MoreVertical, CreditCard
+    ShoppingCart, Video, Trash2, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, X, Phone, MoreVertical, CreditCard, RotateCw
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import io from 'socket.io-client';
 import api, { API_URL } from '../utils/api';
 import DashboardMobileNav from '../components/DashboardMobileNav';
@@ -154,6 +155,9 @@ function InboxScreen({ user, setActiveTab, onSelectRoom, onMenuClick }) {
             socket.on('receiveMessage', () => {
                 fetchRooms();
             });
+            socket.on('roomDeleted', () => {
+                fetchRooms();
+            });
             return () => socket.disconnect();
         }
     }, [user?._id]);
@@ -164,6 +168,18 @@ function InboxScreen({ user, setActiveTab, onSelectRoom, onMenuClick }) {
         r.otherUser?.name?.toLowerCase().includes(search.toLowerCase()) ||
         r.lastMessage?.toLowerCase().includes(search.toLowerCase())
     );
+
+    const handleDeleteRoom = async (e, roomId) => {
+        e.stopPropagation();
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.delete(`/api/messages/${roomId}`, config);
+            toast.success('Chat deleted');
+            fetchRooms();
+        } catch (err) {
+            toast.error('Failed to delete chat');
+        }
+    };
 
     return (
         <Shell title="Messages" onBack={() => setActiveTab('overview')} onMenuClick={onMenuClick}>
@@ -241,12 +257,20 @@ function InboxScreen({ user, setActiveTab, onSelectRoom, onMenuClick }) {
                                         {room.lastMessage}
                                     </p>
                                 </div>
-                                <ChevronRight size={18} color="#cbd5e1" />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+                                    <button 
+                                        onClick={(e) => handleDeleteRoom(e, room.roomId)}
+                                        style={{ background: 'transparent', border: 'none', color: '#94a3b8', padding: 4 }}
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                    <ChevronRight size={18} color="#cbd5e1" />
+                                </div>
                             </div>
                         );
                     })}
                 </div>
-            )}
+            ) }
         </Shell>
     );
 }
@@ -287,6 +311,9 @@ function ChatRoom({ user, room, onBack }) {
             } catch (err) { console.error(err); }
             finally { setLoading(false); }
         };
+        // Expose fetchMessages to the component scope if needed, 
+        // but here we just need it for the button below.
+        window.refreshMobileChat = fetchMessages;
         fetchMessages();
 
         const newSocket = io(API_URL, {
@@ -319,8 +346,22 @@ function ChatRoom({ user, room, onBack }) {
             if (roomId === room.roomId) setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
         });
 
+        newSocket.on('roomDeleted', (data) => {
+            if (data.roomId === room.roomId) {
+                toast.success('Conversation removed');
+                onBack();
+            }
+        });
+
         setSocket(newSocket);
-        return () => newSocket.disconnect();
+        
+        // Auto-refresh (polling fallback) every 1 second
+        const interval = setInterval(fetchMessages, 1000);
+        
+        return () => {
+            newSocket.disconnect();
+            clearInterval(interval);
+        };
     }, [room.roomId, user]);
 
     useEffect(() => {
@@ -407,12 +448,14 @@ function ChatRoom({ user, room, onBack }) {
         } catch (err) { console.error(err); }
     };
 
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
-            clearInterval(timerRef.current);
-            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    const handleDeleteRoom = async () => {
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.delete(`/api/messages/${room.roomId}`, config);
+            toast.success('Chat deleted');
+            onBack();
+        } catch (err) {
+            toast.error('Failed to delete chat');
         }
     };
 
@@ -442,15 +485,26 @@ function ChatRoom({ user, room, onBack }) {
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     <h4 style={{ color: '#0f172a', margin: 0, fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.01em' }}>{room.otherUser?.name}</h4>
                     <span style={{ color: '#22c55e', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        ACTIVE NOW
+                         ACTIVE NOW
                     </span>
                 </div>
-                <div style={{ display: 'flex', gap: 16 }}>
-                    <button style={{ background: 'transparent', border: 'none', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Phone size={22} />
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <button 
+                        onClick={() => {
+                            if (window.refreshMobileChat) {
+                                toast.promise(window.refreshMobileChat(), {
+                                    loading: 'Refreshing...',
+                                    success: 'Chat updated',
+                                    error: 'Refresh failed'
+                                });
+                            }
+                        }}
+                        style={{ background: 'transparent', border: 'none', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        <RotateCw size={20} />
                     </button>
-                    <button style={{ background: 'transparent', border: 'none', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <MoreVertical size={22} />
+                    <button onClick={handleDeleteRoom} style={{ background: 'transparent', border: 'none', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Trash2 size={22} />
                     </button>
                 </div>
             </div>

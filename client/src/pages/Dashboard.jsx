@@ -289,11 +289,20 @@ const Dashboard = () => {
                 }
             });
 
+            socket.on('roomDeleted', ({ roomId }) => {
+                if (activeRoomRef.current?.roomId === roomId) {
+                    setDashActiveRoom(null);
+                    setDashMessages([]);
+                    toast.success('Conversation removed');
+                }
+            });
+
             return () => {
                 socket.off('receiveMessage');
                 socket.off('typing');
                 socket.off('stopTyping');
                 socket.off('messagesRead');
+                socket.off('roomDeleted');
                 socket.disconnect();
             };
         }
@@ -306,21 +315,29 @@ const Dashboard = () => {
     }, [dashMessages]);
 
     // Fetch messages when dashboard room changes
+    const fetchDashMessages = React.useCallback(async () => {
+        if (!dashActiveRoom || !user) return;
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.get(`/api/messages/${dashActiveRoom.roomId}`, config);
+            setDashMessages(data);
+            // Join socket room
+            if (dashSocket) dashSocket.emit('joinRoom', dashActiveRoom.roomId);
+            // Mark as read
+            await api.put(`/api/messages/${dashActiveRoom.roomId}/read`, {}, config);
+        } catch (err) { console.error(err); }
+    }, [dashActiveRoom?.roomId, dashSocket, user]);
+
     useEffect(() => {
-        const fetchDashMessages = async () => {
-            if (!dashActiveRoom || !user) return;
-            try {
-                const config = { headers: { Authorization: `Bearer ${user.token}` } };
-                const { data } = await api.get(`/api/messages/${dashActiveRoom.roomId}`, config);
-                setDashMessages(data);
-                // Join socket room
-                if (dashSocket) dashSocket.emit('joinRoom', dashActiveRoom.roomId);
-                // Mark as read
-                await api.put(`/api/messages/${dashActiveRoom.roomId}/read`, {}, config);
-            } catch (err) { console.error(err); }
-        };
         fetchDashMessages();
-    }, [dashActiveRoom?.roomId, dashSocket]);
+    }, [fetchDashMessages]);
+
+    // Auto-refresh (polling fallback) every 1 second
+    useEffect(() => {
+        if (!dashActiveRoom || !user) return;
+        const interval = setInterval(fetchDashMessages, 1000);
+        return () => clearInterval(interval);
+    }, [fetchDashMessages, dashActiveRoom, user]);
 
     // Auto-open chat if provider in URL
     useEffect(() => {
@@ -1330,6 +1347,8 @@ const Dashboard = () => {
                                 dashActiveRoom={dashActiveRoom}
                                 setDashActiveRoom={setDashActiveRoom}
                                 dashMessages={dashMessages}
+                                setDashMessages={setDashMessages}
+                                fetchDashMessages={fetchDashMessages}
                                 userLocation={userLocation}
                                 dashMessageInput={dashMessageInput}
                                 handleSendMessageDash={handleSendMessageDash}

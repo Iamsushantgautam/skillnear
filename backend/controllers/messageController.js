@@ -20,10 +20,25 @@ const validateRoom = async (roomId, userId) => {
         } catch (e) { }
 
         if (booking) {
-            if (booking.user._id.toString() !== userId && booking.provider._id.toString() !== userId) return null;
+            const userExists = booking.user && (booking.user._id || booking.user);
+            const providerExists = booking.provider && (booking.provider._id || booking.provider);
+
+            if (!userExists || !providerExists) {
+                console.log(`[DEBUG] Booking ${roomId} has missing user or provider`);
+                return null;
+            }
+
+            const bUserId = booking.user._id ? booking.user._id.toString() : booking.user.toString();
+            const bProvId = booking.provider._id ? booking.provider._id.toString() : booking.provider.toString();
+
+            if (bUserId !== userId && bProvId !== userId) {
+                console.log(`[DEBUG] User ${userId} is not participant in booking ${roomId}`);
+                return null;
+            }
+
             type = 'Booking';
             title = `Booking #${roomId.slice(-6).toUpperCase()}`;
-            otherUser = booking.user._id.toString() === userId ? booking.provider : booking.user;
+            otherUser = bUserId === userId ? booking.provider : booking.user;
             return { type, title, otherUser };
         }
     }
@@ -122,17 +137,21 @@ export const getRooms = async (req, res) => {
             const otherUser = bookingUserId === myId ? booking.provider : booking.user;
             
             const latestMsg = await Message.findOne({ roomId: booking._id.toString() }).sort({ createdAt: -1 });
-            const unreadCount = await Message.countDocuments({ roomId: booking._id.toString(), receiverId: myId, read: false });
+            
+            // Only show booking rooms that have at least one message
+            if (latestMsg) {
+                const unreadCount = await Message.countDocuments({ roomId: booking._id.toString(), receiverId: myId, read: false });
 
-            roomsMap.set(booking._id.toString(), {
-                roomId: booking._id.toString(),
-                title: `Booking #${booking._id.toString().slice(-6).toUpperCase()}`,
-                type: 'Booking',
-                otherUser,
-                lastMessage: latestMsg ? latestMsg.message : 'No messages yet',
-                updatedAt: latestMsg ? latestMsg.createdAt : booking.createdAt,
-                unreadCount
-            });
+                roomsMap.set(booking._id.toString(), {
+                    roomId: booking._id.toString(),
+                    title: `Booking #${booking._id.toString().slice(-6).toUpperCase()}`,
+                    type: 'Booking',
+                    otherUser,
+                    lastMessage: latestMsg.message || 'Media Content',
+                    updatedAt: latestMsg.createdAt,
+                    unreadCount
+                });
+            }
         }
 
         // 2. Find Direct Rooms from Message history (where not linked to a booking)
@@ -154,7 +173,7 @@ export const getRooms = async (req, res) => {
                         title: 'General Chat',
                         type: 'Direct',
                         otherUser,
-                        lastMessage: msg.message,
+                        lastMessage: msg.message || (msg.messageType === 'voice' ? 'Voice Message' : 'Media Content'),
                         updatedAt: msg.createdAt,
                         unreadCount
                     });
@@ -163,13 +182,15 @@ export const getRooms = async (req, res) => {
                 // If room exists, check if this message is newer
                 const existing = roomsMap.get(msg.roomId);
                 if (new Date(msg.createdAt) > new Date(existing.updatedAt)) {
-                    existing.lastMessage = msg.message;
+                    existing.lastMessage = msg.message || (msg.messageType === 'voice' ? 'Voice Message' : 'Media Content');
                     existing.updatedAt = msg.createdAt;
                 }
             }
         }
 
-        const rooms = Array.from(roomsMap.values()).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        const rooms = Array.from(roomsMap.values())
+            .filter(r => r.lastMessage) // Ensure we only return rooms that have a last message (i.e. conversation history)
+            .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         res.json(rooms);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -222,12 +243,28 @@ export const deleteRoom = async (req, res) => {
         }
 
         // Proceed with deletion
+        console.log(`[DEBUG] Deleting all messages for room ${roomId} requested by user ${myIdStr}`);
         const result = await Message.deleteMany({ roomId });
-        console.log(`[DEBUG] Deleted ${result.deletedCount} messages from room ${roomId}`);
+        console.log(`[DEBUG] Successfully deleted ${result.deletedCount} messages from room ${roomId}`);
         
-        res.json({ message: 'Chat history deleted successfully', deletedCount: result.deletedCount });
+        // Emit socket event to notify other participants and refresh lists
+        if (req.io) {
+            // Notify the specific room channel
+            req.io.to(roomId).emit('roomDeleted', { roomId });
+            
+            // Notify current user's other sessions
+            req.io.to(myIdStr).emit('roomDeleted', { roomId });
+
+            // Attempt to notify the other participant
+            if (roomValid && roomValid.otherUser) {
+                const otherId = roomValid.otherUser._id ? roomValid.otherUser._id.toString() : roomValid.otherUser.toString();
+                req.io.to(otherId).emit('roomDeleted', { roomId });
+            }
+        }
+        
+        res.json({ message: 'Chat history deleted successfully' });
     } catch (error) {
-        console.error(`[ERROR] Delete room failed: ${error.message}`);
-        res.status(500).json({ message: error.message });
+        console.error('Delete room error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 };

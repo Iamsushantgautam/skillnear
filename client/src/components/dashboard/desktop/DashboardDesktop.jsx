@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, Search, Phone, Video, Lock, PlusCircle, ZoomIn } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, Search, Phone, Video, Lock, PlusCircle, ZoomIn, RotateCw } from 'lucide-react';
 import ChatList from '../../ChatList';
 import { City } from 'country-state-city';
 import api from '../../../utils/api';
+import toast from 'react-hot-toast';
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -164,6 +165,8 @@ const DashboardDesktop = ({
     dashActiveRoom,
     setDashActiveRoom,
     dashMessages,
+    setDashMessages,
+    fetchDashMessages,
     userLocation,
     dashMessageInput,
     handleSendMessageDash,
@@ -1426,11 +1429,11 @@ const DashboardDesktop = ({
                 }}>
                     {/* 2. Conversation List Pane */}
                     <div style={{
-                        width: '384px',
+                        width: '360px',
                         display: 'flex',
                         flexDirection: 'column',
-                        backgroundColor: '#f3f3fd',
-                        borderRight: '1px solid rgba(195, 198, 214, 0.2)'
+                        backgroundColor: '#ffffff',
+                        borderRight: '1px solid #f1f5f9'
                     }}>
                         <div style={{ padding: '32px 32px 16px' }}>
                             <h2 style={{ fontSize: '1.875rem', fontWeight: 900, color: '#191b23', marginBottom: '24px', letterSpacing: '-0.025em', fontFamily: 'Manrope, sans-serif' }}>Messages</h2>
@@ -1439,8 +1442,8 @@ const DashboardDesktop = ({
                                     <Search size={20} color="#737685" />
                                 </div>
                                 <input
-                                    style={{ width: '100%', backgroundColor: '#ffffff', border: 'none', borderRadius: '12px', padding: '16px 16px 16px 48px', fontSize: '14px', outline: 'none', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)' }}
-                                    placeholder="Search conversations..." type="text"
+                                    style={{ width: '100%', backgroundColor: '#f1f5f9', border: 'none', borderRadius: '12px', padding: '12px 16px 12px 48px', fontSize: '14px', outline: 'none', color: '#1e293b' }}
+                                    placeholder="Search messages..." type="text"
                                 />
                             </div>
                             <div style={{ display: 'flex', gap: '8px', padding: '4px', backgroundColor: '#ededf8', borderRadius: '9999px' }}>
@@ -1462,42 +1465,55 @@ const DashboardDesktop = ({
                         {dashActiveRoom ? (
                             <>
                                 {/* Chat Header */}
-                                <div style={{ height: '96px', padding: '0 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(250, 248, 255, 0.8)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #ededf8', zIndex: 40 }}>
+                                <div style={{ height: '72px', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(195, 198, 214, 0.1)', zIndex: 40 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                                         <div style={{ position: 'relative' }}>
                                             <img
                                                 alt={dashActiveRoom.otherUser?.name || 'User'}
-                                                style={{ width: '48px', height: '48px', borderRadius: '50%', border: '2px solid #e1e2ec', objectFit: 'cover' }}
+                                                style={{ width: '40px', height: '40px', borderRadius: '50%', border: '2px solid #fff', objectFit: 'cover', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
                                                 src={getAvatar(dashActiveRoom.otherUser)}
                                                 onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(dashActiveRoom.otherUser?.name || 'U')}&background=ede9fe&color=4f46e5`; }}
                                             />
-                                            <span style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '16px', height: '16px', backgroundColor: '#22c55e', border: '3px solid #faf8ff', borderRadius: '50%' }}></span>
+                                            <span style={{ position: 'absolute', bottom: '0', right: '0', width: '12px', height: '12px', backgroundColor: '#22c55e', border: '2px solid #fff', borderRadius: '50%' }}></span>
                                         </div>
                                         <div>
-                                            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#191b23', fontFamily: 'Manrope, sans-serif', margin: 0 }}>{dashActiveRoom.otherUser?.name || 'User'}</h2>
+                                            <h2 style={{ fontSize: '1rem', fontWeight: 800, color: '#191b23', fontFamily: 'Manrope, sans-serif', margin: 0 }}>{dashActiveRoom.otherUser?.name || 'User'}</h2>
                                             <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px', letterSpacing: '0.025em' }}>
                                                 <span className="animate-pulse" style={{ width: '6px', height: '6px', backgroundColor: '#22c55e', borderRadius: '50%' }}></span>
                                                 ACTIVE NOW
                                             </span>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                        <button style={{ padding: '12px', color: '#434654', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Phone size={20} />
-                                        </button>
-                                        <button style={{ padding: '12px', color: '#434654', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Video size={20} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <button 
+                                            onClick={() => {
+                                                toast.promise(fetchDashMessages(), {
+                                                    loading: 'Refreshing...',
+                                                    success: 'Chat updated',
+                                                    error: 'Refresh failed'
+                                                });
+                                            }}
+                                            style={{ padding: '10px', color: '#434654', borderRadius: '12px', border: '1px solid #f1f5f9', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                                        >
+                                            <RotateCw size={18} />
                                         </button>
                                         <button
                                             onClick={() => {
-                                                if (window.confirm('Are you sure you want to delete this chat history?')) {
-                                                    api.delete(`/api/messages/${dashActiveRoom.roomId}`)
-                                                        .then(() => {
-                                                            setDashMessages([]);
-                                                            alert('Chat history deleted');
-                                                        })
-                                                        .catch(err => alert('Failed to delete chat'));
-                                                }
+                                                if (!dashActiveRoom?.roomId) return;
+                                                const config = { headers: { Authorization: `Bearer ${user.token}` } };
+                                                console.log(`[DEBUG] Attempting to delete room: ${dashActiveRoom.roomId}`);
+                                                api.delete(`/api/messages/${dashActiveRoom.roomId}`, config)
+                                                    .then(() => {
+                                                        console.log(`[DEBUG] Room deleted successfully: ${dashActiveRoom.roomId}`);
+                                                        setDashMessages([]);
+                                                        setDashActiveRoom(null);
+                                                        toast.success('Chat history deleted');
+                                                    })
+                                                    .catch(err => {
+                                                        console.error('Delete chat error:', err);
+                                                        const msg = err.response?.data?.message || err.message || 'Failed to delete chat';
+                                                        toast.error(msg);
+                                                    });
                                             }}
                                             style={{ padding: '12px', color: '#ef4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                             title="Delete Chat"
@@ -1529,7 +1545,7 @@ const DashboardDesktop = ({
                                 )}
 
                                 {/* Chat History */}
-                                <div style={{ flex: 1, overflowY: 'auto', padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px', scrollBehavior: 'smooth' }}>
+                                <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px', scrollBehavior: 'smooth', backgroundColor: '#fdfdff' }}>
                                     <div style={{ display: 'flex', justifyContent: 'center' }}>
                                         <span style={{ fontSize: '10px', fontWeight: 700, color: '#737685', backgroundColor: '#ededf8', padding: '4px 12px', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                                             {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -1551,7 +1567,7 @@ const DashboardDesktop = ({
                                                         </span>
                                                         <span style={{ fontSize: '10px', fontWeight: 700, color: '#003d9b', fontFamily: 'Manrope, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>You</span>
                                                     </div>
-                                                    <div style={{ backgroundColor: '#0052cc', color: '#ffffff', padding: '20px', borderRadius: '16px 16px 0 16px', boxShadow: '0 4px 6px -1px rgba(0,61,155,0.1)', fontSize: '14px', lineHeight: 1.6 }}>
+                                                    <div style={{ backgroundColor: '#4f46e5', color: '#ffffff', padding: '12px 16px', borderRadius: '18px 18px 2px 18px', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.15)', fontSize: '14px', lineHeight: 1.5, position: 'relative' }}>
                                                         {(!msg.messageType || msg.messageType === 'text') && msg.message}
                                                         {msg.messageType === 'image' && (
                                                             <div style={{ marginTop: '8px', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer' }}>
@@ -1582,7 +1598,7 @@ const DashboardDesktop = ({
                                                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                     </div>
-                                                    <div style={{ backgroundColor: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.4)', padding: '20px', borderRadius: '16px 16px 16px 0', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)', fontSize: '14px', color: '#191b23', lineHeight: 1.6 }}>
+                                                    <div style={{ backgroundColor: '#ffffff', border: '1px solid #f1f5f9', padding: '12px 16px', borderRadius: '18px 18px 18px 2px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', fontSize: '14px', color: '#1e293b', lineHeight: 1.5 }}>
                                                         {(!msg.messageType || msg.messageType === 'text') && msg.message}
                                                         {msg.messageType === 'image' && (
                                                             <div style={{ marginTop: '8px', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer' }}>
@@ -1621,19 +1637,19 @@ const DashboardDesktop = ({
                                 </div>
 
                                 {/* Chat Input */}
-                                <div style={{ padding: '0 32px 32px' }}>
+                                <div style={{ padding: '20px 24px 24px', backgroundColor: '#fff', borderTop: '1px solid #f1f5f9' }}>
                                     {isRecording ? (
-                                        <div style={{ backgroundColor: '#ffffff', boxShadow: '0 -10px 30px rgba(25,27,35,0.02)', borderRadius: '24px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid #fecaca' }}>
-                                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '16px', padding: '0 16px', color: '#ef4444' }}>
-                                                <div className="animate-pulse" style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ef4444' }}></div>
-                                                <span style={{ fontWeight: 700 }}>Recording: {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
+                                        <div style={{ backgroundColor: '#fff1f2', borderRadius: '20px', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid #fecaca' }}>
+                                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px', color: '#e11d48' }}>
+                                                <div className="animate-pulse" style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e11d48' }}></div>
+                                                <span style={{ fontWeight: 700, fontSize: '14px' }}>Recording: {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
                                             </div>
-                                            <button onClick={stopRecordingDash} style={{ backgroundColor: '#fef2f2', color: '#ef4444', padding: '12px 24px', borderRadius: '16px', fontWeight: 700, fontSize: '14px' }}>
+                                            <button onClick={stopRecordingDash} style={{ backgroundColor: '#e11d48', color: '#fff', padding: '8px 16px', borderRadius: '12px', fontWeight: 700, fontSize: '13px' }}>
                                                 Stop & Send
                                             </button>
                                         </div>
                                     ) : (
-                                        <div style={{ backgroundColor: '#ffffff', boxShadow: '0 -10px 30px rgba(25,27,35,0.02)', borderRadius: '24px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(195,198,214,0.1)' }}>
+                                        <div style={{ backgroundColor: '#f8fafc', borderRadius: '20px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #f1f5f9', transition: 'all 0.2s' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                 <button onClick={() => fileInputRef.current?.click()} style={{ padding: '12px', color: '#737685', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Attach Image">
                                                     <PlusCircle size={20} />
@@ -1660,7 +1676,7 @@ const DashboardDesktop = ({
                                                 <button
                                                     onClick={() => handleSendMessageDash()}
                                                     disabled={!dashMessageInput.trim() || uploadingFile}
-                                                    style={{ backgroundColor: '#0052cc', color: '#ffffff', padding: '12px 24px', borderRadius: '16px', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 10px 15px -3px rgba(0,82,204,0.2)', opacity: (!dashMessageInput.trim() || uploadingFile) ? 0.5 : 1, cursor: (!dashMessageInput.trim() || uploadingFile) ? 'not-allowed' : 'pointer' }}
+                                                    style={{ backgroundColor: '#4f46e5', color: '#ffffff', height: '40px', padding: '0 20px', borderRadius: '14px', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 10px rgba(79, 70, 229, 0.2)', opacity: (!dashMessageInput.trim() || uploadingFile) ? 0.5 : 1, cursor: (!dashMessageInput.trim() || uploadingFile) ? 'not-allowed' : 'pointer', border: 'none' }}
                                                 >
                                                     {uploadingFile ? <Loader size={18} className="animate-spin" /> : (
                                                         <>

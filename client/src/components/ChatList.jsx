@@ -4,6 +4,7 @@ import { Loader, MessageSquare, Trash2 } from 'lucide-react';
 import io from 'socket.io-client';
 import api, { API_URL } from '../utils/api';
 import useAuthStore from '../store/useAuthStore';
+import toast from 'react-hot-toast';
 
 const ChatList = ({ limit, onSelect, activeRoomId }) => {
     const { user } = useAuthStore();
@@ -32,6 +33,9 @@ const ChatList = ({ limit, onSelect, activeRoomId }) => {
             const socket = io(API_URL);
             socket.emit('setup', user._id);
             socket.on('receiveMessage', () => {
+                fetchRooms();
+            });
+            socket.on('roomDeleted', () => {
                 fetchRooms();
             });
             return () => socket.disconnect();
@@ -100,14 +104,14 @@ const ChatList = ({ limit, onSelect, activeRoomId }) => {
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            if (window.confirm('Delete this chat history?')) {
-                                                api.delete(`/api/messages/${room.roomId}`)
-                                                    .then(() => fetchRooms())
-                                                    .catch(err => {
-                                                        const errorMsg = err.response?.data?.message || err.message || 'Failed to delete';
-                                                        alert(`Delete failed: ${errorMsg}`);
-                                                    });
-                                            }
+                                            api.delete(`/api/messages/${room.roomId}`)
+                                                .then(() => {
+                                                    toast.success('Chat deleted');
+                                                    fetchRooms();
+                                                })
+                                                .catch(err => {
+                                                    toast.error('Failed to delete chat');
+                                                });
                                         }}
                                         style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px', transition: 'color 0.2s' }}
                                         onMouseOver={(e) => e.currentTarget.style.color = '#dc2626'}
