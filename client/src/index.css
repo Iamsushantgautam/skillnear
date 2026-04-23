@@ -161,6 +161,34 @@ button {
   animation: fadeIn 0.4s ease-out forwards;
 }
 
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Hide scrollbars globally but keep functionality */
+html, body, * {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+*::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari and Opera */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 @keyframes slideInLeft {
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }

@@ -6,6 +6,46 @@ import {
     ChevronRight, Edit3, Send, Search, ShoppingBag, MapPin, ChevronLeft, Plus as PlusIcon,
     ShoppingCart, Video, Trash2, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, X, Phone, MoreVertical, CreditCard, RotateCw, History
 } from 'lucide-react';
+...
+function RevisionHistoryModal({ isOpen, onClose, revisions }) {
+    if (!isOpen) return null;
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 10000 }}>
+            <div className="animate-slide-up" style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: '32px 24px 48px', boxShadow: '0 -10px 40px rgba(0,0,0,0.1)', maxHeight: '80vh', overflowY: 'auto' }}>
+                <div style={{ width: 40, height: 4, background: '#e2e8f0', borderRadius: 2, margin: '0 auto 24px' }}></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                    <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>Revision History</h3>
+                    <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <X size={16} />
+                    </button>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {revisions && revisions.length > 0 ? (
+                        revisions.map((rev, i) => (
+                            <div key={i} style={{ padding: 16, borderRadius: 20, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                                    <span style={{ fontSize: 11, fontWeight: 900, color: PC, textTransform: 'uppercase' }}>Revision #{revisions.length - i}</span>
+                                    <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700 }}>{new Date(rev.date).toLocaleDateString()}</span>
+                                </div>
+                                <p style={{ margin: 0, fontSize: 13, color: '#1e293b', fontWeight: 500, lineHeight: 1.5 }}>{rev.note}</p>
+                            </div>
+                        ))
+                    ) : (
+                        <p style={{ textAlign: 'center', color: '#64748b', py: 40 }}>No revisions found.</p>
+                    )}
+                </div>
+
+                <button 
+                    onClick={onClose}
+                    style={{ width: '100%', marginTop: 24, padding: 16, borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 800, fontSize: 14 }}
+                >
+                    Close History
+                </button>
+            </div>
+        </div>
+    );
+}
 import toast from 'react-hot-toast';
 import io from 'socket.io-client';
 import api, { API_URL } from '../utils/api';
@@ -16,12 +56,11 @@ const PC = '#003d9b';
 const PL = 'rgba(0,61,155,0.08)';
 
 /* ─── payment modal ─── */
-/* ─── payment modal ─── */
 function PaymentModal({ isOpen, onClose, onSelect }) {
     if (!isOpen) return null;
     return (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 10000 }}>
-            <div className="animate-slide-up no-scrollbar" style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: '32px 24px 48px', boxShadow: '0 -10px 40px rgba(0,0,0,0.1)' }}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 10000 }}>
+            <div className="animate-slide-up" style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: '32px 24px 48px', boxShadow: '0 -10px 40px rgba(0,0,0,0.1)' }}>
                 <div style={{ width: 40, height: 4, background: '#e2e8f0', borderRadius: 2, margin: '0 auto 24px' }}></div>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: 8, textAlign: 'center' }}>Service Completed?</h3>
                 <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center', marginBottom: 32, fontWeight: 500 }}>How did the customer pay for this service?</p>
@@ -65,52 +104,11 @@ function PaymentModal({ isOpen, onClose, onSelect }) {
     );
 }
 
-/* ─── revision history modal ─── */
-function RevisionHistoryModal({ isOpen, onClose, revisions }) {
-    if (!isOpen) return null;
-    return (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 10000 }}>
-            <div className="animate-slide-up no-scrollbar" style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: '32px 24px 48px', boxShadow: '0 -10px 40px rgba(0,0,0,0.1)', maxHeight: '85vh', overflowY: 'auto' }}>
-                <div style={{ width: 40, height: 4, background: '#e2e8f0', borderRadius: 2, margin: '0 auto 24px' }}></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                    <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>Revision History</h3>
-                    <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <X size={16} />
-                    </button>
-                </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    {revisions && revisions.length > 0 ? (
-                        revisions.map((rev, i) => (
-                            <div key={i} style={{ padding: 16, borderRadius: 20, background: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                                    <span style={{ fontSize: 11, fontWeight: 900, color: PC, textTransform: 'uppercase' }}>Revision #{revisions.length - i}</span>
-                                    <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 700 }}>{new Date(rev.date).toLocaleDateString()}</span>
-                                </div>
-                                <p style={{ margin: 0, fontSize: 13, color: '#1e293b', fontWeight: 500, lineHeight: 1.5 }}>{rev.note}</p>
-                            </div>
-                        ))
-                    ) : (
-                        <p style={{ textAlign: 'center', color: '#64748b', py: 40 }}>No revisions found.</p>
-                    )}
-                </div>
-
-                <button 
-                    onClick={onClose}
-                    style={{ width: '100%', marginTop: 24, padding: 16, borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 800, fontSize: 14 }}
-                >
-                    Close History
-                </button>
-            </div>
-        </div>
-    );
-}
-
 function RevisionModal({ isOpen, onClose, onSubmit, note, setNote }) {
     if (!isOpen) return null;
     return (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 10000 }}>
-            <div className="animate-slide-up no-scrollbar" style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: '32px 24px 48px', boxShadow: '0 -10px 40px rgba(0,0,0,0.1)' }}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 10000 }}>
+            <div className="animate-slide-up" style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: '32px 24px 48px', boxShadow: '0 -10px 40px rgba(0,0,0,0.1)' }}>
                 <div style={{ width: 40, height: 4, background: '#e2e8f0', borderRadius: 2, margin: '0 auto 24px' }}></div>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: 8, textAlign: 'center' }}>Request Revision</h3>
                 <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center', marginBottom: 24, fontWeight: 500 }}>Please describe what changes you would like the professional to make.</p>
@@ -183,6 +181,7 @@ function Badge({ status }) {
         confirmed: { label: 'Confirmed', bg: '#dae2ff', color: '#0040a2' },
         in_progress: { label: 'In Progress', bg: '#dae2ff', color: '#344573' },
         delivered: { label: 'Delivered', bg: '#ffdbcf', color: '#812800' },
+        revision_requested: { label: 'Revision Requested', bg: '#fef3c7', color: '#92400e' },
         completed: { label: 'Completed', bg: '#d1fae5', color: '#065f46' },
         cancelled: { label: 'Cancelled', bg: '#ffdad6', color: '#93000a' },
         live: { label: 'Live', bg: '#d1fae5', color: '#065f46' },
@@ -820,168 +819,24 @@ function GigsScreen({ myGigs, gigsLoading, setActiveTab, navigate, handleEditCli
                                         <div style={{ marginTop: 6 }}><Badge status={stat} /></div>
                                     </div>
                                 </div>
-                                <button onClick={() => handleEditClick?.(gig)} style={{ background: PL, border: 'none', borderRadius: 12, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Edit3 size={16} color={PC} />
-                                </button>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-        </Shell>
-    );
-}
-
-/* ─── Requests Screen ─── */
-function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus, setActiveTab, navigate, onSelectRoom, onSelectBooking, onMenuClick, onDeliverClick, onShowRevisions }) {
-    const [bookingFilter, setBookingFilter] = useState('all');
-
-    const filteredBookings = (bookingRequests || []).filter(b => {
-        if (bookingFilter === 'all') return true;
-        if (bookingFilter === 'pending') return b.status === 'pending';
-        if (bookingFilter === 'confirmed') return b.status === 'confirmed';
-        if (bookingFilter === 'in_progress') return ['in_progress', 'revision_requested', 'delivered'].includes(b.status);
-        if (bookingFilter === 'completed') return ['completed', 'cancelled', 'rejected'].includes(b.status);
-        return true;
-    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    return (
-        <Shell title="Booking Requests" onBack={() => setActiveTab('overview')} onMenuClick={onMenuClick}>
-            <div style={{ padding: '0 4px' }}>
-                {/* Editorial Header */}
-                <div style={{ marginBottom: 32 }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', color: PC, textTransform: 'uppercase', marginBottom: 8 }}>Portfolio Manager</p>
-                    <h2 style={{ fontSize: 32, fontWeight: 800, color: '#191b23', lineHeight: 1.2 }}>Incoming <br /><span style={{ color: '#0052cc' }}>requests.</span></h2>
-                </div>
-
-                {/* Filter Tabs */}
-                <div style={{ display: 'flex', gap: 12, marginBottom: 32, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
-                    {['all', 'pending', 'confirmed', 'in_progress', 'completed'].map(filter => (
-                        <button
-                            key={filter}
-                            onClick={() => setBookingFilter(filter)}
-                            style={{
-                                padding: '10px 24px',
-                                borderRadius: 9999,
-                                background: bookingFilter === filter ? PC : '#e7e7f2',
-                                color: bookingFilter === filter ? 'white' : '#434654',
-                                fontWeight: 700,
-                                fontSize: 13,
-                                border: 'none',
-                                whiteSpace: 'nowrap',
-                                transition: 'all 0.2s',
-                                boxShadow: bookingFilter === filter ? '0 10px 20px rgba(0,61,155,0.2)' : 'none'
-                            }}
-                        >
-                            {filter.charAt(0).toUpperCase() + filter.slice(1).replace('_', ' ')}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Bookings List */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                    {bookingsLoading ? (
-                        <div style={{ textAlign: 'center', padding: 48 }}><Loader size={28} color={PC} className="animate-spin" /></div>
-                    ) : filteredBookings.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: 24, border: '1px solid #f1f5f9' }}>
-                            <p style={{ color: '#94a3b8' }}>No {bookingFilter === 'all' ? '' : bookingFilter} requests found</p>
-                        </div>
-                    ) : filteredBookings.map(req => (
-                        <div key={req._id} onClick={() => onSelectBooking(req)} style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid rgba(195, 198, 214, 0.1)' }}>
-                            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                                <img 
-                                    src={req.service?.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.service?.title || 'S')}&background=f3f3fd&color=003d9b`} 
-                                    style={{ width: 80, height: 80, borderRadius: 16, objectFit: 'cover', flexShrink: 0, border: '1px solid #f1f5f9' }}
-                                    alt=""
-                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(req.service?.title || 'S')}&background=f3f3fd&color=003d9b`; }}
-                                />
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                                        <Badge status={req.status} />
-                                    </div>
-                                    <h3 style={{ fontSize: 18, fontWeight: 800, color: '#191b23', marginBottom: 4, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.service?.title}</h3>
-                                    <p style={{ fontSize: 14, color: '#434654', margin: 0, fontWeight: 500 }}>Customer: {req.user?.name || req.user?.username || 'User'}</p>
-                                </div>
-                            </div>
-                            
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
-                                        <CalendarIcon size={16} />
-                                        <span style={{ fontSize: 12, fontWeight: 500 }}>{new Date(req.createdAt).toLocaleDateString()} | {req.slot || 'TBA'}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
-                                        <MapPin size={16} />
-                                        <span style={{ fontSize: 12, fontWeight: 500 }}>
-                                            {typeof req.address === 'object' 
-                                                ? (`${req.address?.street || ''}, ${req.address?.city || ''}`.trim() || 'Location TBA')
-                                                : (req.address || 'Location TBA')}
-                                        </span>
-                                    </div>
-                                </div>
-                                <p style={{ fontSize: 24, fontWeight: 900, color: PC, margin: 0 }}>₹{req.price || req.totalPrice || '0'}</p>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); onSelectBooking(req); }} 
-                                    style={{ width: '100%', padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.2)', borderRadius: 16, color: '#434654', background: '#f8f9fc', fontWeight: 800, fontSize: 12 }}
-                                >View Order Details</button>
-
-                                {req.status === 'pending' && (
-                                    <div style={{ display: 'flex', gap: 12 }}>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'cancelled'); }} 
-                                            style={{ flex: 1, padding: '12px 0', borderRadius: 16, background: '#ffdad6', color: '#93000a', border: 'none', fontWeight: 800, fontSize: 12 }}
-                                        >Decline</button>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'confirmed'); }} 
-                                            style={{ flex: 1, padding: '12px 0', borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
-                                        >Accept Request</button>
-                                    </div>
-                                )}
-
-                                {req.status === 'confirmed' && (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'in_progress'); }} 
-                                            style={{ width: '100%', padding: '12px 0', borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
-                                        >Mark In Progress</button>
-                                        <button 
-                                            onClick={(e) => { 
-                                                e.stopPropagation(); 
-                                                const link = req.address?.googleMapLink || (req.address?.lat && req.address?.lng ? `https://www.google.com/maps?q=${req.address.lat},${req.address.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.address?.street || ''} ${req.address?.city || ''} ${req.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
-                                                window.open(link, '_blank'); 
-                                            }} 
-                                            style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '1px solid #e2e8f0', color: '#1e293b', background: '#f8f9fc', fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-                                        >
-                                            <MapPin size={16} /> Show Live Location
-                                        </button>
-                                    </div>
-                                )}
-
-                                {['in_progress', 'revision_requested'].includes(req.status) && (
+                {req.status === 'in_progress' && (
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onDeliverClick(req._id); }} 
                                         style={{ width: '100%', padding: '12px 0', borderRadius: 16, background: '#059669', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
                                     >Deliver Service</button>
                                 )}
-                                <div style={{ display: 'flex', gap: 12 }}>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: req._id, otherUser: req.user }); }} 
+                                    style={{ width: '100%', padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.2)', borderRadius: 16, color: '#434654', background: '#f8f9fc', fontWeight: 800, fontSize: 12 }}
+                                >Message Customer</button>
+                                {req.revisions && req.revisions.length > 0 && (
                                     <button 
-                                        onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: req._id, otherUser: req.user }); }} 
-                                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 8px', border: `1.5px solid ${PL}`, borderRadius: 16, color: PC, background: 'white', fontWeight: 800, fontSize: 12 }}
+                                        onClick={(e) => { e.stopPropagation(); onShowRevisions(req); }} 
+                                        style={{ width: '100%', padding: '12px 0', border: '1px solid #e2e8f0', borderRadius: 16, color: '#1e293b', background: '#f8f9fc', fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                                     >
-                                        <MessageSquare size={16} /> Message
+                                        <History size={14} /> View Revisions ({req.revisions.length})
                                     </button>
-                                    {req.revisions?.length > 0 && (
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); onShowRevisions(req); }} 
-                                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 8px', border: 'none', borderRadius: 16, color: '#003d9b', background: '#f0f7ff', fontWeight: 800, fontSize: 12 }}
-                                        >
-                                            <History size={16} /> Revisions ({req.revisions.length})
-                                        </button>
-                                    )}
-                                </div>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -1003,7 +858,7 @@ function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus,
 }
 
 /* ─── Orders Screen ─── */
-function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onSelectRoom, onSelectBooking, onMenuClick, updateBookingStatus, onShowRevisions }) {
+function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onSelectRoom, onSelectBooking, onMenuClick, updateBookingStatus, onRevisionClick, onShowRevisions }) {
     const [bookingFilter, setBookingFilter] = useState('all');
 
     const filteredBookings = (myBookings || []).filter(b => {
@@ -1103,7 +958,7 @@ function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onS
                                     {b.status === 'delivered' ? (
                                         <>
                                             <button 
-                                                onClick={(e) => { e.stopPropagation(); onRequestRevision(b); }} 
+                                                onClick={(e) => { e.stopPropagation(); onRevisionClick(b); }} 
                                                 style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 800, fontSize: 12 }}
                                             >Request Revision</button>
                                             <button 
@@ -1125,22 +980,7 @@ function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onS
                                     ) : (
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: b._id, otherUser: b.provider }); }} 
-                                            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, padding: '12px 0', border: `1.5px solid ${PL}`, borderRadius: 16, color: PC, background: 'white', fontWeight: 800, fontSize: 12 }}
-                                        >
-                                            <MessageSquare size={16} /> Message Provider
-                                        </button>
-                                    )}
-                                </div>
-                                {b.revisions?.length > 0 && (
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); onShowRevisions(b); }} 
-                                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0', border: 'none', borderRadius: 16, color: '#003d9b', background: '#f0f7ff', fontWeight: 800, fontSize: 12, marginTop: 4 }}
-                                    >
-                                        <History size={16} /> View Revision History ({b.revisions.length})
-                                    </button>
-                                )}
-                            </div>
-                        </div>
+                                            style={{ width: '100%', height: 44, padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.3)', borderRadius: 16, color: PC, background: 'transparent', fontWeight: 800, fontSize: 12 }}
                     ))}
                 </div>
 
@@ -1160,7 +1000,7 @@ function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onS
 }
 
 /* ─── Booking Details Screen ─── */
-function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, updateBookingStatus, onDeliverClick, navigate, onShowRevisions }) {
+function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, updateBookingStatus, onDeliverClick, navigate, onRevisionClick }) {
     if (!booking) return null;
 
     const otherUser = role === 'provider' ? booking.user : booking.provider;
@@ -1277,13 +1117,26 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                 </div>
 
                  {booking.status === 'completed' && (
-                    <div style={{ marginTop: 12 }}>
+                    <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <button 
                             onClick={() => navigate(`/invoice/${booking._id}`)} 
                             style={{ width: '100%', padding: '16px', borderRadius: 16, background: '#f1f5f9', color: '#1e293b', border: '1px solid #e2e8f0', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
                         >
                             <Download size={20} /> View & Download Invoice
                         </button>
+                        {role === 'user' && (
+                            <button 
+                                onClick={() => navigate(`/services/${booking.service?._id || booking.service}`)} 
+                                style={{ width: '100%', padding: '16px', borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 900 }}
+                            >Rate Professional</button>
+                        )}
+                    </div>
+                )}
+
+                {role === 'user' && booking.status === 'delivered' && (
+                    <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                        <button onClick={(e) => { e.stopPropagation(); onRevisionClick(booking); }} style={{ flex: 1, padding: '16px', borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 900 }}>Request Revision</button>
+                        <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(booking._id, 'completed'); }} style={{ flex: 1, padding: '16px', borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 900 }}>Accept & Complete</button>
                     </div>
                 )}
 
@@ -1313,17 +1166,6 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                 {role === 'provider' && ['in_progress', 'revision_requested'].includes(booking.status) && (
                     <div style={{ marginTop: 12 }}>
                         <button onClick={(e) => { e.stopPropagation(); onDeliverClick(booking._id); }} style={{ width: '100%', padding: '16px', borderRadius: 16, background: '#059669', color: 'white', border: 'none', fontWeight: 900 }}>Deliver & Request Payment</button>
-                    </div>
-                )}
-
-                {booking.revisions?.length > 0 && (
-                    <div style={{ marginTop: 12 }}>
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onShowRevisions(booking); }} 
-                            style={{ width: '100%', padding: '16px', borderRadius: 16, background: '#f0f7ff', color: '#003d9b', border: '1px solid #e2e8f0', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-                        >
-                            <History size={20} /> View Revision History ({booking.revisions.length})
-                        </button>
                     </div>
                 )}
             </div>
@@ -1903,9 +1745,7 @@ function ServicesScreen(props) {
         </Shell>
     );
 }
-function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, getAvatar, setActiveTab, navigate, providerTitle, providerAbout, onMenuClick, onShowRevisions }) {
-    const pendingRevisions = (myBookings || []).filter(b => b.status === 'revision_requested');
-    
+function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, getAvatar, setActiveTab, navigate, providerTitle, providerAbout, onMenuClick }) {
     return (
         <>
             <section style={{ background: `linear-gradient(135deg, ${PC} 0%, #1e40af 100%)`, padding: '64px 24px 100px', borderRadius: '0 0 32px 32px' }}>
@@ -1946,7 +1786,7 @@ function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, 
                         {[
                             { label: role === 'provider' ? 'Active Gigs' : 'Ongoing', value: role === 'provider' ? (myGigs?.length || 0) : (stats?.activeBookings || 0), color: '#4f46e5' },
                             { label: role === 'provider' ? 'Total Orders' : 'Completed', value: role === 'provider' ? (stats?.totalOrders || 0) : (stats?.completedBookings || 0), color: '#10b981' },
-                            { label: 'Revisions', value: pendingRevisions.length, color: '#f59e0b', icon: History }
+                            { label: 'Rating', value: role === 'provider' ? (stats?.rating || '4.9') : '5.0', color: '#f59e0b', icon: Star }
                         ].map((s, i) => (
                             <div key={i} style={{ flex: 1, background: '#f8fafc', padding: '12px 8px', borderRadius: 16, textAlign: 'center' }}>
                                 <p style={{ fontSize: 10, color: '#64748b', marginBottom: 4, fontWeight: 600 }}>{s.label}</p>
@@ -2177,49 +2017,81 @@ function FavoritesScreen({ favorites, favoritesLoading, fetchFavorites, setActiv
 
 export default function DashboardMobile(props) {
     const {
-        user, role, stats, myGigs, gigsLoading, bookingRequests, bookingsLoading,
-        profileAvatar, getAvatar, activeTab, setActiveTab,
-        navigate: navProp,
-        myBookings, updateBookingStatus,
-        profileName, setProfileName, profilePhone, setProfilePhone,
+        activeTab, setActiveTab, role, user,
+        profileAvatar, profileName, getAvatar, uploadingAvatar, handleAvatarUpload,
+        providerTitle, providerAbout, providerTitleSetter, providerAboutSetter,
+        myBookings, myGigs, stats, providerStatus, handleApplyProvider, isSubmitting,
+        bookingsLoading, updateBookingStatus,
+        bookingForRevision, setBookingForRevision,
+        revisionNote, setNote: setRevisionNote,
+        editingGigId, gigStep, setGigStep,
+        gigBusinessType, setGigBusinessType,
+        gigTitle, setGigTitle,
+        gigCategory, setGigCategory,
+        gigCustomCategory, setGigCustomCategory,
+        gigExperience, setGigExperience,
+        gigJobsCompleted, setGigJobsCompleted,
+        shopAge, setShopAge,
+        gigDesc, setGigDesc,
+        gigServicesIncluded, setGigServicesIncluded,
+        usePlans, setUsePlans,
+        gigPrice, setGigPrice,
+        gigPriceType, setGigPriceType,
+        gigPlans, setGigPlans,
+        shopOpeningTime, setShopOpeningTime,
+        shopClosingTime, setShopClosingTime,
+        shopIsHomeDelivery, setShopIsHomeDelivery,
+        shopIsHomeService, setShopIsHomeService,
+        shopHomeServiceFee, setShopHomeServiceFee,
+        gigLat, gigLng, setGigLat, setGigLng,
+        shopGoogleMapsLink, setShopGoogleMapsLink,
+        gigStateCode, setGigStateCode,
+        gigState, setGigState,
+        gigCity, setGigCity,
+        gigAddress, setGigAddress,
+        gigZipCode, setGigZipCode,
+        gigCoveragePincodes, setGigCoveragePincodes,
+        gigImages, setGigImages,
+        handleGigImageUpload, handleCreateGig, creatingGig, uploadingGigImages, gigsLoading,
+        handleEditClick, handleDeleteGig,
+        bookingRequests, navigate, isMobile,
+        dashActiveRoom, setDashActiveRoom,
+        dashMessages, setDashMessages, fetchDashMessages,
+        userLocation, dashMessageInput, handleSendMessageDash, handleTypeDash,
+        messagesEndRef, partnerTyping, isRecording, recordingTime, uploadingFile,
+        handleFileUploadDash, startRecordingDash, stopRecordingDash, fileInputRef,
         profileUsername, setProfileUsername,
         providerTitle, providerAbout,
         providerTitleSetter, providerAboutSetter,
         handleSaveProfile, savingProfile, handleAvatarUpload, uploadingAvatar,
         handleEditClick,
         favorites, favoritesLoading, fetchFavorites,
-        showRevisions, setShowRevisions, bookingWithRevisions, setBookingWithRevisions
+        showRevisions, setShowRevisions, bookingWithRevisions, setBookingWithRevisions,
+        profilePhone, setProfilePhone, profileName, setProfileName
     } = props;
 
     const { userLocation } = useAuthStore();
     const navHook = useNav();
-    const navigate = navProp || navHook;
+    const navigate = props.navigate || navHook;
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [bookingForPayment, setBookingForPayment] = useState(null);
-    const [bookingForRevision, setBookingForRevision] = useState(null);
-    const [revisionNote, setRevisionNote] = useState('');
 
     const handleDeliverClick = (booking) => {
         setBookingForPayment(booking);
     };
 
-    const handleShowRevisions = (booking) => {
-        setBookingWithRevisions(booking);
-        setShowRevisions(true);
-    };
-
-    const handleRequestRevision = (booking) => {
+    const handleRevisionClick = (booking) => {
         setBookingForRevision(booking);
-        setRevisionNote('');
     };
 
-    const submitRevision = async () => {
+    const handleRevisionSubmit = async () => {
         if (!bookingForRevision || !revisionNote.trim()) return;
         try {
-            await updateBookingStatus(bookingForRevision._id, 'revision_requested', revisionNote);
+            await updateBookingStatus(bookingForRevision._id || bookingForRevision, 'revision_requested', revisionNote);
             setBookingForRevision(null);
             setRevisionNote('');
+            setSelectedBooking(null);
         } catch (err) {
             console.error(err);
         }
@@ -2263,74 +2135,95 @@ export default function DashboardMobile(props) {
     const renderScreen = () => {
         if (selectedRoom) return <ChatRoom user={user} room={selectedRoom} onBack={() => setSelectedRoom(null)} />;
         
-        if (selectedBooking) {
-            return (
-                <BookingDetailsScreen 
-                    booking={selectedBooking} 
-                    userLocation={userLocation} 
-                    onBack={() => setSelectedBooking(null)} 
-                    onMessage={() => { setSelectedRoom({ roomId: selectedBooking._id, otherUser: role === 'provider' ? selectedBooking.user : selectedBooking.provider }); setSelectedBooking(null); }} 
-                    role={role}
-                    updateBookingStatus={updateBookingStatus}
-                    onDeliverClick={handleDeliverClick}
-                    navigate={navigate}
-                    onShowRevisions={handleShowRevisions}
-                />
-            );
-        }
-
         if (activeTab === 'requests') {
             return (
-                <RequestsScreen 
-                    bookingRequests={bookingRequests} 
-                    bookingsLoading={bookingsLoading} 
-                    updateBookingStatus={updateBookingStatus} 
-                    setActiveTab={setActiveTab} 
-                    navigate={navigate} 
-                    onSelectRoom={setSelectedRoom}
-                    onSelectBooking={setSelectedBooking}
-                    onDeliverClick={handleDeliverClick}
-                    onShowRevisions={handleShowRevisions}
-                />
+                <>
+                    <RequestsScreen 
+                        bookingRequests={bookingRequests} 
+                        bookingsLoading={bookingsLoading} 
+                        updateBookingStatus={updateBookingStatus} 
+                        setActiveTab={setActiveTab} 
+                        navigate={navigate} 
+                        onSelectRoom={setSelectedRoom}
+                        onSelectBooking={setSelectedBooking}
+                        onDeliverClick={handleDeliverClick}
+                        onRevisionClick={handleRevisionClick}
+                    />
+                    <PaymentModal 
+                        isOpen={!!bookingForPayment} 
+                        onClose={() => setBookingForPayment(null)} 
+                        onSelect={confirmDelivery} 
+                    />
+                    <RevisionModal 
+                        isOpen={!!bookingForRevision} 
+                        onClose={() => setBookingForRevision(null)} 
+                        onSubmit={handleRevisionSubmit} 
+                        note={revisionNote} 
+                        setNote={setRevisionNote} 
+                    />
+                </>
             );
         }
 
+        if (selectedBooking) {
+            return (
+                <>
+                    <BookingDetailsScreen 
+                        booking={selectedBooking} 
+                        userLocation={userLocation} 
+                        onBack={() => setSelectedBooking(null)} 
+                        onMessage={() => { setSelectedRoom({ roomId: selectedBooking._id, otherUser: role === 'provider' ? selectedBooking.user : selectedBooking.provider }); setSelectedBooking(null); }} 
+                        role={role}
+                        updateBookingStatus={updateBookingStatus}
+                        onDeliverClick={handleDeliverClick}
+                        onRevisionClick={handleRevisionClick}
+                        navigate={navigate}
+                    />
+                    <PaymentModal 
+                        isOpen={!!bookingForPayment} 
+                        onClose={() => setBookingForPayment(null)} 
+                        onSelect={confirmDelivery} 
+                    />
+                    <RevisionModal 
+                        isOpen={!!bookingForRevision} 
+                        onClose={() => setBookingForRevision(null)} 
+                        onSubmit={handleRevisionSubmit} 
+                        note={revisionNote} 
+                        setNote={setRevisionNote} 
+                    />
+                </>
+            );
+        }
 
         switch (activeTab) {
             case 'mygigs': return <GigsScreen myGigs={myGigs} gigsLoading={gigsLoading} setActiveTab={setActiveTab} navigate={navigate} handleEditClick={handleEditClick} />;
             case 'services': return <ServicesScreen {...props} setActiveTab={setActiveTab} />;
             case 'become_provider': return <BecomeProviderScreen handleApplyProvider={props.handleApplyProvider} isSubmitting={props.isSubmitting} setActiveTab={setActiveTab} />;
             case 'admin': return <AdminScreen allUsers={props.allUsers} usersLoading={props.usersLoading} handleUpdateUserRole={props.handleUpdateUserRole} handleToggleUserBan={props.handleToggleUserBan} setActiveTab={setActiveTab} />;
-            case 'requests': return <RequestsScreen bookingRequests={bookingRequests} bookingsLoading={bookingsLoading} updateBookingStatus={updateBookingStatus} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking} onShowRevisions={handleShowRevisions} />;
-            case 'bookings': return <OrdersScreen myBookings={myBookings} bookingsLoading={bookingsLoading} updateBookingStatus={updateBookingStatus} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking} onShowRevisions={handleShowRevisions} onRequestRevision={handleRequestRevision} />;
+            case 'requests': return <RequestsScreen bookingRequests={bookingRequests} bookingsLoading={bookingsLoading} updateBookingStatus={updateBookingStatus} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking} onDeliverClick={handleDeliverClick} onRevisionClick={handleRevisionClick} />;
+            case 'bookings': return (
+                <>
+                    <OrdersScreen myBookings={myBookings} bookingsLoading={bookingsLoading} updateBookingStatus={updateBookingStatus} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking} onRevisionClick={handleRevisionClick} />
+                    <RevisionModal 
+                        isOpen={!!bookingForRevision} 
+                        onClose={() => setBookingForRevision(null)} 
+                        onSubmit={handleRevisionSubmit} 
+                        note={revisionNote} 
+                        setNote={setRevisionNote} 
+                    />
+                </>
+            );
             case 'chat': return <InboxScreen user={user} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} />;
             case 'payments': return <PaymentsScreen stats={stats} bookingRequests={bookingRequests} setActiveTab={setActiveTab} />;
             case 'profile': return <ProfileScreen user={user} profileAvatar={profileAvatar} getAvatar={getAvatar} profileName={profileName} setProfileName={setProfileName} profilePhone={profilePhone} setProfilePhone={setProfilePhone} profileUsername={profileUsername} setProfileUsername={setProfileUsername} providerTitle={providerTitle} providerAbout={providerAbout} providerTitleSetter={providerTitleSetter} providerAboutSetter={providerAboutSetter} handleSaveProfile={handleSaveProfile} savingProfile={savingProfile} uploadingAvatar={uploadingAvatar} handleAvatarUpload={handleAvatarUpload} role={role} setActiveTab={setActiveTab} />;
             case 'favorites': return <FavoritesScreen favorites={favorites} favoritesLoading={favoritesLoading} fetchFavorites={fetchFavorites} setActiveTab={setActiveTab} navigate={navigate} user={user} />;
-            default: return <OverviewScreen user={user} role={role} stats={stats} myGigs={myGigs} myBookings={myBookings} providerTitle={providerTitle} providerAbout={providerAbout} profileAvatar={profileAvatar} getAvatar={getAvatar} setActiveTab={setActiveTab} navigate={navigate} onShowRevisions={handleShowRevisions} />;
+            default: return <OverviewScreen user={user} role={role} stats={stats} myGigs={myGigs} myBookings={myBookings} providerTitle={providerTitle} providerAbout={providerAbout} profileAvatar={profileAvatar} getAvatar={getAvatar} setActiveTab={setActiveTab} navigate={navigate} />;
         }
     };
 
     return (
         <div style={{ minHeight: '100dvh', backgroundColor: '#faf8ff', fontFamily: 'Inter, sans-serif' }}>
             {renderScreen()}
-            <RevisionHistoryModal 
-                isOpen={showRevisions} 
-                onClose={() => setShowRevisions(false)} 
-                revisions={bookingWithRevisions?.revisions || []} 
-            />
-            <RevisionModal 
-                isOpen={!!bookingForRevision} 
-                onClose={() => setBookingForRevision(null)} 
-                onSubmit={submitRevision}
-                note={revisionNote}
-                setNote={setRevisionNote}
-            />
-            <PaymentModal 
-                isOpen={!!bookingForPayment} 
-                onClose={() => setBookingForPayment(null)} 
-                onSelect={confirmDelivery} 
-            />
             <DashboardMobileNav
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}

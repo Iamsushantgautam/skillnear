@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, Search, Phone, Video, Lock, PlusCircle, ZoomIn, RotateCw, Camera, Award, History, BadgeCheck } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, Search, Phone, Video, Lock, PlusCircle, ZoomIn, RotateCw, Camera, Award, History, BadgeCheck, Clock, PlayCircle, DollarSign, PackageOpen, RotateCcw, XCircle } from 'lucide-react';
 import ChatList from '../../ChatList';
 import { City } from 'country-state-city';
 import api from '../../../utils/api';
@@ -67,6 +67,7 @@ function PaymentModal({ isOpen, onClose, onSelect }) {
     );
 }
 
+
 const DashboardDesktop = ({
     setActiveTab,
     activeTab,
@@ -93,6 +94,10 @@ const DashboardDesktop = ({
     setBookingForRevision,
     revisionNote,
     setRevisionNote,
+    showRevisions,
+    setShowRevisions,
+    bookingWithRevisions,
+    setBookingWithRevisions,
     editingGigId,
     gigStep,
     setGigStep,
@@ -603,7 +608,10 @@ const DashboardDesktop = ({
                                                             {b.status === 'delivered' ? (
                                                                 <>
                                                                     <button onClick={() => updateBookingStatus(b._id, 'completed')} style={{ flex: 1, background: '#003d9b', color: 'white', padding: '10px 0', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', border: 'none', cursor: 'pointer' }}>Accept & Mark Complete</button>
-                                                                    <button onClick={() => setBookingForRevision(b._id)} style={{ padding: '10px 24px', border: '1px solid #c3c6d6', color: '#475569', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', background: 'transparent', cursor: 'pointer' }}>Review Changes</button>
+                                                                    <button 
+                                                                        onClick={() => { setBookingForRevision(b); setRevisionNote(''); }} 
+                                                                        style={{ padding: '10px 24px', border: '1px solid #c3c6d6', color: '#475569', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', background: 'transparent', cursor: 'pointer' }}
+                                                                    >Request Revision</button>
                                                                 </>
                                                             ) : isCompleted ? (
                                                                 <>
@@ -613,32 +621,28 @@ const DashboardDesktop = ({
                                                             ) : (
                                                                 <>
                                                                     <button style={{ flex: 1, background: '#003d9b', color: 'white', padding: '10px 0', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', border: 'none', cursor: 'pointer' }}>View Details & Tracking</button>
-                                                                    <button onClick={() => { setDashActiveRoom({ roomId: b._id, otherUser: role === 'provider' ? b.user : b.provider, title: b.service?.title }); setActiveTab('chat'); }} style={{ padding: '10px 24px', border: '1px solid #c3c6d6', color: '#475569', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', background: 'transparent', cursor: 'pointer' }}>Message</button>
+                                                                    <button 
+                                                                        onClick={() => { setDashActiveRoom({ roomId: b._id, otherUser: role === 'provider' ? b.user : b.provider, title: b.service?.title }); setActiveTab('chat'); }} 
+                                                                        style={{ flex: 1, padding: '12px 24px', border: '1px solid #003d9b', color: '#003d9b', borderRadius: '14px', fontWeight: '800', fontSize: '0.875rem', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}
+                                                                        onMouseOver={(e) => { e.currentTarget.style.background = '#f0f7ff'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                                                                        onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                                                                    >
+                                                                        <MessageSquare size={18} /> Message
+                                                                    </button>
+                                                                    {b.revisions?.length > 0 && (
+                                                                        <button 
+                                                                            onClick={() => { setBookingWithRevisions(b); setShowRevisions(true); }}
+                                                                            style={{ padding: '12px 24px', border: '1px solid #003d9b', color: '#003d9b', borderRadius: '14px', fontWeight: '800', fontSize: '0.875rem', background: '#f0f7ff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+                                                                            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                                                                            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                                                        >
+                                                                            <History size={18} /> Revisions ({b.revisions.length})
+                                                                        </button>
+                                                                    )}
                                                                 </>
                                                             )}
                                                         </div>
 
-                                                        {b.status === 'delivered' && bookingForRevision === b._id && (
-                                                            <div className="animate-fade-in" style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fffbeb', borderRadius: '12px', border: '1px solid #fde68a' }}>
-                                                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', marginBottom: '8px', color: '#92400e' }}>Revision Details:</label>
-                                                                <textarea
-                                                                    className="input-field"
-                                                                    placeholder="What needs to be changed?"
-                                                                    value={revisionNote}
-                                                                    onChange={(e) => setRevisionNote(e.target.value)}
-                                                                    style={{ fontSize: '0.875rem', marginBottom: '12px', background: '#ffffff', width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #fcd34d', outline: 'none' }}
-                                                                />
-                                                                <div style={{ display: 'flex', gap: '12px' }}>
-                                                                    <button onClick={() => updateBookingStatus(b._id, 'revision_requested')} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', fontSize: '0.875rem', fontWeight: '700', backgroundColor: '#f59e0b', color: '#ffffff', cursor: 'pointer' }}>Submit Request</button>
-                                                                    <button onClick={() => setBookingForRevision(null)} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.875rem', fontWeight: '700', backgroundColor: 'transparent', color: '#4b5563', cursor: 'pointer' }}>Cancel</button>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                        {b.revisions && b.revisions.length > 0 && (
-                                                            <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#fef3c7', borderRadius: '12px', fontSize: '0.875rem', color: '#92400e' }}>
-                                                                <strong>Latest Revision Note:</strong> {b.revisions[b.revisions.length - 1].note}
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1270,191 +1274,274 @@ const DashboardDesktop = ({
 
             {/* ── BOOKING REQUESTS TAB (PROVIDER) ── */}
             {activeTab === 'requests' && (
-                <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                <div className="animate-fade-in" style={{ maxWidth: '1280px', margin: '0 auto', paddingBottom: '60px' }}>
+                    {/* Quick Stats Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
+                        {[
+                            { label: 'Pending', value: bookingRequests.filter(r => r.status === 'pending').length, color: '#f59e0b', bg: '#fef3c7', icon: Clock },
+                            { label: 'Active', value: bookingRequests.filter(r => ['confirmed', 'in_progress'].includes(r.status)).length, color: '#003d9b', bg: '#e0e7ff', icon: PlayCircle },
+                            { label: 'Completed', value: bookingRequests.filter(r => r.status === 'completed').length, color: '#059669', bg: '#d1fae5', icon: CheckCircle },
+                            { label: 'Total Value', value: `₹${bookingRequests.filter(r => r.status !== 'cancelled').reduce((acc, curr) => acc + (curr.totalPrice || 0), 0)}`, color: '#191b23', bg: '#f1f5f9', icon: DollarSign }
+                        ].map((stat, i) => (
+                            <div key={i} style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '24px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: stat.bg, color: stat.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <stat.icon size={24} />
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>{stat.label}</p>
+                                    <h4 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#191b23', margin: 0 }}>{stat.value}</h4>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Filter Bar */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+                        <div style={{ display: 'flex', background: '#f1f5f9', padding: '6px', borderRadius: '100px', gap: '4px' }}>
+                            {['all', 'pending', 'confirmed', 'in_progress', 'delivered', 'completed', 'cancelled'].map(f => (
+                                <button
+                                    key={f}
+                                    onClick={() => setBookingFilter(f)}
+                                    style={{
+                                        padding: '8px 20px',
+                                        borderRadius: '100px',
+                                        fontSize: '13px',
+                                        fontWeight: bookingFilter === f ? '700' : '600',
+                                        border: 'none',
+                                        backgroundColor: bookingFilter === f ? '#fff' : 'transparent',
+                                        color: bookingFilter === f ? '#003d9b' : '#64748b',
+                                        boxShadow: bookingFilter === f ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {f.charAt(0).toUpperCase() + f.slice(1).replace('_', ' ')}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
                     {bookingsLoading ? (
-                        <p>Loading requests...</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: '200px', borderRadius: '24px' }}></div>)}
+                        </div>
                     ) : bookingRequests.length === 0 ? (
-                        <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No requests found.</p>
-                    ) : (
-                        <>
-                            <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-                                {['all', 'pending', 'confirmed', 'in_progress', 'delivered', 'completed', 'cancelled'].map(f => (
-                                    <button
-                                        key={f}
-                                        onClick={() => setBookingFilter(f)}
-                                        style={{
-                                            padding: '8px 16px',
-                                            borderRadius: '100px',
-                                            fontSize: '0.8rem',
-                                            fontWeight: '700',
-                                            border: '1px solid ' + (bookingFilter === f ? 'var(--primary)' : '#e2e8f0'),
-                                            backgroundColor: bookingFilter === f ? 'var(--primary)' : '#fff',
-                                            color: bookingFilter === f ? '#fff' : '#64748b',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        {f.replace('_', ' ').toUpperCase()}
-                                    </button>
-                                ))}
+                        <div style={{ textAlign: 'center', padding: '80px 40px', backgroundColor: '#fff', borderRadius: '32px', border: '1px dashed #e2e8f0' }}>
+                            <div style={{ width: '80px', height: '80px', backgroundColor: '#f8fafc', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: '#94a3b8' }}>
+                                <PackageOpen size={40} />
                             </div>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#191b23', marginBottom: '8px' }}>No Orders Found</h3>
+                            <p style={{ color: '#64748b', maxWidth: '300px', margin: '0 auto' }}>You don't have any orders matching the selected filter.</p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                            {bookingRequests
+                                .filter(b => bookingFilter === 'all' || b.status === bookingFilter)
+                                .map(req => {
+                                    const statusConfig = {
+                                        pending: { color: '#f59e0b', bg: '#fef3c7', text: 'New Request' },
+                                        confirmed: { color: '#003d9b', bg: '#e0e7ff', text: 'Confirmed' },
+                                        in_progress: { color: '#003d9b', bg: '#e0e7ff', text: 'In Progress' },
+                                        delivered: { color: '#059669', bg: '#d1fae5', text: 'Delivered' },
+                                        completed: { color: '#059669', bg: '#d1fae5', text: 'Completed' },
+                                        cancelled: { color: '#ef4444', bg: '#fee2e2', text: 'Cancelled' },
+                                        revision_requested: { color: '#f59e0b', bg: '#fef3c7', text: 'Revision' }
+                                    };
+                                    const config = statusConfig[req.status] || statusConfig.pending;
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                {bookingRequests
-                                    .filter(b => bookingFilter === 'all' || b.status === bookingFilter)
-                                    .map(req => (
-                                        <div key={req._id} style={{ border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px', backgroundColor: '#fff' }}>
-                                            <div className="flex-between" style={{ marginBottom: '16px' }}>
-                                                <div style={{ display: 'flex', gap: '16px' }}>
-                                                    <div style={{ width: '64px', height: '64px', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', flexShrink: 0 }}>
-                                                        <img
-                                                            src={req.service?.images?.[0]?.url || req.service?.images?.[0] || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=500&auto=format&fit=crop'}
-                                                            alt={req.service?.title}
-                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                            onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=500&auto=format&fit=crop'; }}
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <span style={{
-                                                            color: ['pending', 'in_progress', 'revision_requested'].includes(req.status) ? '#f59e0b' : ['confirmed', 'delivered'].includes(req.status) ? '#2563eb' : req.status === 'completed' ? '#059669' : '#dc2626',
-                                                            backgroundColor: ['pending', 'in_progress', 'revision_requested'].includes(req.status) ? '#fef3c7' : ['confirmed', 'delivered'].includes(req.status) ? '#dbeafe' : req.status === 'completed' ? '#d1fae5' : '#fee2e2',
-                                                            padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700'
-                                                        }}>{req.status.replace('_', ' ').toUpperCase()}</span>
-                                                        <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginTop: '8px' }}>{req.service?.title}</h3>
+                                    return (
+                                        <div key={req._id} className="group" style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '32px', border: '1px solid #f1f5f9', transition: 'all 0.3s', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
+                                            <div style={{ display: 'flex', gap: '32px' }}>
+                                                {/* Service Preview */}
+                                                <div style={{ position: 'relative', width: '180px', height: '140px', borderRadius: '20px', overflow: 'hidden', flexShrink: 0 }}>
+                                                    <img
+                                                        src={req.service?.images?.[0]?.url || req.service?.images?.[0] || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=500&auto=format&fit=crop'}
+                                                        alt={req.service?.title}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    />
+                                                    <div style={{ position: 'absolute', top: '12px', left: '12px' }}>
+                                                        <span style={{ backgroundColor: config.bg, color: config.color, padding: '4px 12px', borderRadius: '100px', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                                            {config.text}
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                {req.service?.businessType === 'shop' ? (
-                                                    <button
-                                                        style={{
-                                                            backgroundColor: 'var(--primary)',
-                                                            color: '#fff',
-                                                            padding: '8px 16px',
-                                                            borderRadius: '100px',
-                                                            fontSize: '0.8rem',
-                                                            fontWeight: '700',
-                                                            border: 'none',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '6px',
-                                                            cursor: 'pointer'
-                                                        }}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const lat = req.service.geoCoordinates?.coordinates?.[1];
-                                                            const lng = req.service.geoCoordinates?.coordinates?.[0];
-                                                            if (lat && lng) {
-                                                                window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
-                                                            } else {
-                                                                toast.error("Location not available for this shop");
-                                                            }
-                                                        }}
-                                                    >
-                                                        Get Directions <MapPin size={14} />
-                                                    </button>
-                                                ) : (
-                                                    <div style={{ textAlign: 'right' }}>
-                                                        <div style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--primary)' }}>₹{req.totalPrice}</div>
-                                                        <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>{new Date(req.date).toLocaleDateString()}</div>
-                                                    </div>
-                                                )}
-                                            </div>
 
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '12px', marginBottom: '16px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
-                                                        <User size={16} />
+                                                {/* Details Section */}
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                                                        <div>
+                                                            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#191b23', marginBottom: '8px', letterSpacing: '-0.02em' }}>{req.service?.title}</h3>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '0.875rem' }}>
+                                                                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                        <User size={14} />
+                                                                    </div>
+                                                                    <span style={{ fontWeight: 600, color: '#191b23' }}>{req.user?.name}</span>
+                                                                </div>
+                                                                <div style={{ width: '1px', height: '12px', backgroundColor: '#e2e8f0' }}></div>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.875rem' }}>
+                                                                    <CalendarIcon size={14} />
+                                                                    <span>{new Date(req.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {req.timeSlot}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ textAlign: 'right' }}>
+                                                            <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#003d9b' }}>₹{req.totalPrice}</div>
+                                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', marginTop: '4px' }}>Order Value</div>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Customer</div>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{req.user?.name}</div>
+
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', padding: '20px', backgroundColor: '#fafafa', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                                                            <div style={{ padding: '8px', backgroundColor: '#fff', borderRadius: '10px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', color: '#003d9b' }}>
+                                                                <MapPin size={18} />
+                                                            </div>
+                                                            <div>
+                                                                <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Delivery Address</p>
+                                                                <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#434654', margin: 0 }}>{req.address?.street || 'Not specified'}, {req.address?.city} {req.address?.zipCode}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
+                                                            {req.address?.lat && req.address?.lng && (
+                                                                <button
+                                                                    onClick={() => window.open(`https://www.google.com/maps?q=${req.address.lat},${req.address.lng}`, '_blank')}
+                                                                    style={{ backgroundColor: '#fff', color: '#003d9b', border: '1px solid #e2e8f0', padding: '10px 20px', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+                                                                >
+                                                                    <MapPin size={16} /> Open in Maps
+                                                                </button>
+                                                            )}
+                                                            {req.service?.businessType === 'shop' && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const lat = req.service.geoCoordinates?.coordinates?.[1];
+                                                                        const lng = req.service.geoCoordinates?.coordinates?.[0];
+                                                                        if (lat && lng) window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+                                                                    }}
+                                                                    style={{ backgroundColor: '#003d9b', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                                                                >
+                                                                    Directions
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
-                                                        <CalendarIcon size={16} />
+
+                                                    {/* Action Buttons */}
+                                                    <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                                                        {req.status === 'pending' && (
+                                                            <>
+                                                                <button onClick={() => updateBookingStatus(req._id, 'confirmed')} style={{ flex: 2, background: 'linear-gradient(to right, #003d9b, #0052cc)', color: 'white', padding: '14px 0', borderRadius: '14px', fontWeight: '800', fontSize: '0.95rem', border: 'none', cursor: 'pointer', boxShadow: '0 8px 16px -4px rgba(0,61,155,0.3)', transition: 'all 0.3s' }}>
+                                                                    Accept Request
+                                                                </button>
+                                                                <button onClick={() => updateBookingStatus(req._id, 'cancelled')} style={{ flex: 1, backgroundColor: '#fff', color: '#ef4444', border: '1px solid #fee2e2', padding: '14px 0', borderRadius: '14px', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', transition: 'all 0.2s' }}>
+                                                                    Decline
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {req.status === 'confirmed' && (
+                                                            <>
+                                                                <button onClick={() => updateBookingStatus(req._id, 'in_progress')} style={{ flex: 2, background: '#003d9b', color: 'white', padding: '14px 0', borderRadius: '14px', fontWeight: '800', fontSize: '0.95rem', border: 'none', cursor: 'pointer' }}>
+                                                                    Start Service
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => {
+                                                                        const link = req.address?.googleMapLink || (req.address?.lat && req.address?.lng ? `https://www.google.com/maps?q=${req.address.lat},${req.address.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.address?.street || ''} ${req.address?.city || ''} ${req.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
+                                                                        window.open(link, '_blank');
+                                                                    }}
+                                                                    style={{ flex: 1, background: '#fff', border: '1px solid #e2e8f0', color: '#1e293b', padding: '14px 0', borderRadius: '14px', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                                                >
+                                                                    <MapPin size={18} /> Location
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {['in_progress', 'revision_requested'].includes(req.status) && (
+                                                            <button onClick={() => handleDeliverClick(req._id)} style={{ flex: 1, background: '#059669', color: 'white', padding: '14px 0', borderRadius: '14px', fontWeight: '800', fontSize: '0.95rem', border: 'none', cursor: 'pointer', boxShadow: '0 8px 16px -4px rgba(5,150,105,0.3)' }}>
+                                                                Mark as Delivered
+                                                            </button>
+                                                        )}
+                                                        {['confirmed', 'in_progress', 'revision_requested', 'delivered'].includes(req.status) && (
+                                                            <>
+                                                                <button 
+                                                                    onClick={() => { setDashActiveRoom({ roomId: req._id, otherUser: req.user, title: req.service?.title }); setActiveTab('chat'); }} 
+                                                                    style={{ padding: '0 24px', height: '48px', border: '1px solid #003d9b', color: '#003d9b', borderRadius: '14px', fontWeight: '800', fontSize: '0.95rem', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'all 0.2s' }}
+                                                                    onMouseOver={(e) => { e.currentTarget.style.background = '#f0f7ff'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                                                                    onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                                                                >
+                                                                    <MessageSquare size={20} /> Message
+                                                                </button>
+                                                                {req.revisions?.length > 0 && (
+                                                                    <button 
+                                                                        onClick={() => { setBookingWithRevisions(req); setShowRevisions(true); }}
+                                                                        style={{ padding: '0 24px', height: '48px', border: '1px solid #003d9b', color: '#003d9b', borderRadius: '14px', fontWeight: '800', fontSize: '0.95rem', background: '#f0f7ff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'all 0.2s' }}
+                                                                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                                                                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                                                    >
+                                                                        <History size={20} /> Revisions ({req.revisions.length})
+                                                                    </button>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                        {req.status === 'completed' && (
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 24px', backgroundColor: '#f0fdf4', borderRadius: '12px', border: '1px solid #dcfce7', color: '#166534', fontWeight: 700, fontSize: '0.9rem' }}>
+                                                                <CheckCircle size={20} /> Order completed and funds released.
+                                                            </div>
+                                                        )}
+                                                        {req.status === 'cancelled' && (
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 24px', backgroundColor: '#fef2f2', borderRadius: '12px', border: '1px solid #fee2e2', color: '#991b1b', fontWeight: 700, fontSize: '0.9rem' }}>
+                                                                <XCircle size={20} /> This order was cancelled.
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <div>
-                                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Schedule</div>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{req.timeSlot}</div>
-                                                    </div>
-                                                </div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
-                                                        <MapPin size={16} />
-                                                    </div>
-                                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Location</div>
-                                                        <div style={{ fontSize: '0.85rem', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.address?.city}, {req.address?.zipCode}</div>
-                                                    </div>
-                                                    {req.address?.lat && req.address?.lng && (
-                                                        <button
-                                                            onClick={() => window.open(`https://www.google.com/maps?q=${req.address.lat},${req.address.lng}`, '_blank')}
-                                                            style={{ background: '#f0f9ff', color: '#0ea5e9', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}
-                                                        >View Map 📍</button>
+
+                                                    {req.status === 'revision_requested' && req.revisions?.length > 0 && (
+                                                        <div style={{ marginTop: '20px', padding: '20px', backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', borderRadius: '12px' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#92400e', marginBottom: '8px' }}>
+                                                                <RotateCcw size={16} />
+                                                                <strong style={{ fontSize: '0.9rem' }}>Revision Requested:</strong>
+                                                            </div>
+                                                            <p style={{ margin: 0, fontSize: '0.875rem', color: '#92400e', lineHeight: 1.5 }}>{req.revisions[req.revisions.length - 1].note}</p>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
-
-                                            <div style={{ display: 'flex', gap: '12px' }}>
-                                                {req.status === 'pending' && (
-                                                    <>
-                                                        <button onClick={() => updateBookingStatus(req._id, 'confirmed')} className="btn-primary" style={{ flex: 1, padding: '10px' }}>Accept Booking</button>
-                                                        <button onClick={() => updateBookingStatus(req._id, 'cancelled')} className="btn-outline" style={{ flex: 1, padding: '10px', borderColor: '#ef4444', color: '#ef4444' }}>Decline</button>
-                                                    </>
-                                                )}
-                                                {req.status === 'confirmed' && (
-                                                    <>
-                                                        <button onClick={() => updateBookingStatus(req._id, 'in_progress')} className="btn-primary" style={{ flex: 1, padding: '10px' }}>Mark In Progress</button>
-                                                        <button 
-                                                            onClick={() => {
-                                                                const link = req.address?.googleMapLink || (req.address?.lat && req.address?.lng ? `https://www.google.com/maps?q=${req.address.lat},${req.address.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.address?.street || ''} ${req.address?.city || ''} ${req.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
-                                                                window.open(link, '_blank');
-                                                            }}
-                                                            className="btn-outline" 
-                                                            style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                                                        >
-                                                            <MapPin size={16} /> Show Live Location
-                                                        </button>
-                                                    </>
-                                                )}
-                                                {['in_progress', 'revision_requested'].includes(req.status) && (
-                                                    <button onClick={() => handleDeliverClick(req._id)} className="btn-primary" style={{ flex: 1, padding: '10px', backgroundColor: '#059669' }}>Deliver Service</button>
-                                                )}
-                                                {['confirmed', 'in_progress', 'revision_requested', 'delivered'].includes(req.status) && (
-                                                    <button onClick={() => navigate(`/chat?roomId=${req._id}`)} className="btn-outline" style={{ flex: 1, padding: '10px' }}>Chat with Customer</button>
-                                                )}
-                                                {req.status === 'completed' && (
-                                                    <p style={{ color: '#059669', fontWeight: '600', fontSize: '0.9rem' }}>✓ Service completed & accepted</p>
-                                                )}
-                                                {req.status === 'cancelled' && (
-                                                    <p style={{ color: '#dc2626', fontWeight: '600', fontSize: '0.9rem' }}>This booking was cancelled</p>
-                                                )}
-                                            </div>
-
-                                            {req.status === 'revision_requested' && req.revisions?.length > 0 && (
-                                                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', borderRadius: '4px' }}>
-                                                    <strong style={{ color: '#92400e', fontSize: '0.9rem' }}>Customer requested revision:</strong>
-                                                    <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem' }}>{req.revisions[req.revisions.length - 1].note}</p>
-                                                </div>
-                                            )}
-                                            {req.status === 'delivered' && (
-                                                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '4px', fontSize: '0.85rem', color: '#1e40af' }}>
-                                                    Waiting for customer to accept or request a revision.
-                                                </div>
-                                            )}
                                         </div>
-                                    ))}
-                            </div>
-                        </>
+                                    );
+                                })}
+                        </div>
                     )}
-
-                    <PaymentModal
-                        isOpen={!!bookingForPayment}
-                        onClose={() => setBookingForPayment(null)}
-                        onSelect={confirmDelivery}
-                    />
                 </div>
             )}
+
+            <PaymentModal
+                isOpen={!!bookingForPayment}
+                onClose={() => setBookingForPayment(null)}
+                onSelect={confirmDelivery}
+            />
+
+            <RevisionHistoryModal 
+                isOpen={showRevisions} 
+                onClose={() => setShowRevisions(false)} 
+                revisions={bookingWithRevisions?.revisions || []} 
+            />
+
+            <RevisionModal 
+                isOpen={!!bookingForRevision} 
+                onClose={() => setBookingForRevision(null)} 
+                onSubmit={async () => {
+                    if (!bookingForRevision || !revisionNote.trim()) return;
+                    try {
+                        await updateBookingStatus(bookingForRevision._id, 'revision_requested', revisionNote);
+                        setBookingForRevision(null);
+                        setRevisionNote('');
+                        toast.success('Revision request sent!');
+                    } catch (err) {
+                        console.error(err);
+                        toast.error('Failed to send revision request');
+                    }
+                }}
+                note={revisionNote}
+                setNote={setRevisionNote}
+            />
+
 
             {activeTab === 'profile' && (
                 <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '40px' }}>
@@ -2294,5 +2381,93 @@ const DashboardDesktop = ({
         </div>
     );
 };
+
+/* ─── revision history modal ─── */
+function RevisionHistoryModal({ isOpen, onClose, revisions }) {
+    if (!isOpen) return null;
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '24px' }}>
+            <div className="animate-in fade-in zoom-in duration-300 no-scrollbar" style={{ backgroundColor: 'white', width: '100%', maxWidth: '550px', borderRadius: '28px', padding: '32px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', maxHeight: '85vh', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <div>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>Revision History</h3>
+                        <p style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '4px' }}>Timeline of all requested changes</p>
+                    </div>
+                    <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                        <X size={20} color="#64748b" />
+                    </button>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {revisions && revisions.length > 0 ? (
+                        [...revisions].reverse().map((rev, i) => (
+                            <div key={i} style={{ padding: '20px', borderRadius: '20px', background: '#f8fafc', border: '1px solid #f1f5f9', position: 'relative' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                    <span style={{ fontSize: '11px', fontWeight: '900', color: '#003d9b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Revision #{revisions.length - i}</span>
+                                    <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '700' }}>{new Date(rev.date).toLocaleDateString()}</span>
+                                </div>
+                                <p style={{ margin: 0, fontSize: '0.95rem', color: '#1e293b', fontWeight: '500', lineHeight: 1.6 }}>{rev.note}</p>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                            <p style={{ color: '#64748b', fontSize: '0.95rem' }}>No revisions found for this booking.</p>
+                        </div>
+                    )}
+                </div>
+
+                <button 
+                    onClick={onClose}
+                    style={{ width: '100%', marginTop: '32px', padding: '16px 0', borderRadius: '16px', background: '#003d9b', color: 'white', border: 'none', fontWeight: '800', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 10px 15px -3px rgba(0, 61, 155, 0.3)' }}
+                    onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+                    onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+                >
+                    Close History
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function RevisionModal({ isOpen, onClose, onSubmit, note, setNote }) {
+    if (!isOpen) return null;
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '24px' }}>
+            <div className="animate-in fade-in zoom-in duration-300" style={{ backgroundColor: 'white', width: '100%', maxWidth: '550px', borderRadius: '28px', padding: '40px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+                <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                    <div style={{ width: '64px', height: '64px', backgroundColor: '#f0f7ff', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#003d9b' }}>
+                        <RotateCw size={32} />
+                    </div>
+                    <h3 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#1e293b', margin: '0 0 8px 0' }}>Request Revision</h3>
+                    <p style={{ color: '#64748b', fontSize: '1rem', fontWeight: '500' }}>Tell the professional what needs to be changed.</p>
+                </div>
+                
+                <div style={{ marginBottom: '32px' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', color: '#1e293b', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Revision Instructions</label>
+                    <textarea 
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        placeholder="Please describe the changes you'd like to see..."
+                        style={{ width: '100%', height: '160px', padding: '20px', borderRadius: '18px', border: '2px solid #f1f5f9', backgroundColor: '#f8fafc', fontSize: '1rem', color: '#1e293b', outline: 'none', resize: 'none', transition: 'all 0.2s' }}
+                        onFocus={(e) => e.target.style.borderColor = '#003d9b'}
+                        onBlur={(e) => e.target.style.borderColor = '#f1f5f9'}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', gap: '16px' }}>
+                    <button 
+                        onClick={onClose}
+                        style={{ flex: 1, padding: '16px 0', borderRadius: '16px', background: '#f1f5f9', color: '#64748b', border: 'none', fontWeight: '800', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                    >Cancel</button>
+                    <button 
+                        onClick={onSubmit}
+                        disabled={!note.trim()}
+                        style={{ flex: 2, padding: '16px 0', borderRadius: '16px', background: note.trim() ? '#003d9b' : '#94a3b8', color: 'white', border: 'none', fontWeight: '800', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: note.trim() ? '0 10px 15px -3px rgba(0, 61, 155, 0.3)' : 'none' }}
+                    >Submit Request</button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default DashboardDesktop;

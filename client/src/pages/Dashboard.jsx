@@ -22,6 +22,8 @@ const Dashboard = () => {
     const [activeTab, setActiveTab] = useState(initialTab || 'overview');
     const [revisionNote, setRevisionNote] = useState('');
     const [bookingForRevision, setBookingForRevision] = useState(null);
+    const [showRevisions, setShowRevisions] = useState(false);
+    const [bookingWithRevisions, setBookingWithRevisions] = useState(null);
 
     const getAvatar = (userData) => {
         if (userData?.avatar && userData.avatar.startsWith('http')) return userData.avatar;
@@ -1138,6 +1140,10 @@ const Dashboard = () => {
                     favorites={favorites}
                     favoritesLoading={favoritesLoading}
                     fetchFavorites={fetchFavorites}
+                    showRevisions={showRevisions}
+                    setShowRevisions={setShowRevisions}
+                    bookingWithRevisions={bookingWithRevisions}
+                    setBookingWithRevisions={setBookingWithRevisions}
                 />
             </div>
 
@@ -1370,6 +1376,10 @@ const Dashboard = () => {
                                 indianStates={indianStates}
                                 MapPicker={MapPicker}
                                 styles={styles}
+                                showRevisions={showRevisions}
+                                setShowRevisions={setShowRevisions}
+                                bookingWithRevisions={bookingWithRevisions}
+                                setBookingWithRevisions={setBookingWithRevisions}
                                 allUsers={allUsers}
                                 usersLoading={usersLoading}
                                 adminServices={adminServices}
