@@ -221,7 +221,23 @@ const Services = () => {
                 ) : (
                     <div style={styles.grid} className="animate-fade-in">
                         {loading ? (
-                            <p>Loading services...</p>
+                            Array.from({ length: 6 }).map((_, i) => (
+                                <div key={i} className="card" style={{ ...styles.serviceCard, height: '400px' }}>
+                                    <div className="skeleton" style={{ width: '100%', height: '220px' }}></div>
+                                    <div style={{ padding: '16px' }}>
+                                        <div className="skeleton" style={{ width: '30%', height: '16px', marginBottom: '12px', borderRadius: '4px' }}></div>
+                                        <div className="skeleton" style={{ width: '90%', height: '20px', marginBottom: '12px' }}></div>
+                                        <div className="skeleton" style={{ width: '80%', height: '20px', marginBottom: '20px' }}></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
+                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                <div className="skeleton skeleton-circle" style={{ width: '28px', height: '28px' }}></div>
+                                                <div className="skeleton" style={{ width: '60px', height: '14px' }}></div>
+                                            </div>
+                                            <div className="skeleton" style={{ width: '50px', height: '20px' }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
                         ) : servicesList.length === 0 ? (
                             <p>No services found matching your criteria.</p>
                         ) : (

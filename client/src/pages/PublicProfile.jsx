@@ -24,8 +24,36 @@ const PublicProfile = () => {
 
     if (loading) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-                <Loader className="animate-spin" size={40} style={{ color: '#003d9b' }} />
+            <div style={{ backgroundColor: '#faf8ff', minHeight: '100vh', paddingBottom: '100px', marginTop: '-4.4rem' }}>
+                <div style={{ height: '240px', background: '#003d9b', opacity: 0.8 }}></div>
+                <div className="container" style={{ maxWidth: '1100px', margin: '-100px auto 0', padding: '0 20px' }}>
+                    <div style={{ backgroundColor: '#fff', borderRadius: '32px', padding: '40px', display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
+                        <div className="skeleton" style={{ width: '180px', height: '180px', borderRadius: '40px' }}></div>
+                        <div style={{ flex: 1 }}>
+                            <div className="skeleton" style={{ width: '60%', height: '40px', marginBottom: '12px' }}></div>
+                            <div className="skeleton" style={{ width: '30%', height: '20px', marginBottom: '32px' }}></div>
+                            <div style={{ display: 'flex', gap: '20px', marginBottom: '32px' }}>
+                                <div className="skeleton" style={{ width: '120px', height: '40px', borderRadius: '12px' }}></div>
+                                <div className="skeleton" style={{ width: '120px', height: '40px', borderRadius: '12px' }}></div>
+                                <div className="skeleton" style={{ width: '120px', height: '40px', borderRadius: '12px' }}></div>
+                            </div>
+                            <div className="skeleton" style={{ width: '100%', height: '80px' }}></div>
+                        </div>
+                    </div>
+                    
+                    <div style={{ marginTop: '60px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '32px' }}>
+                        {[1, 2, 3].map(i => (
+                            <div key={i} style={{ backgroundColor: '#fff', borderRadius: '24px', overflow: 'hidden', height: '380px' }}>
+                                <div className="skeleton" style={{ width: '100%', height: '200px' }}></div>
+                                <div style={{ padding: '24px' }}>
+                                    <div className="skeleton" style={{ width: '40%', height: '16px', marginBottom: '12px' }}></div>
+                                    <div className="skeleton" style={{ width: '90%', height: '24px', marginBottom: '16px' }}></div>
+                                    <div className="skeleton" style={{ width: '30%', height: '20px' }}></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
         );
     }

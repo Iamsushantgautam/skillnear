@@ -105,7 +105,25 @@ const ServiceDetails = () => {
     };
 
     if (loading) {
-        return <div className="container" style={{ padding: '40px 20px' }}><p>Loading...</p></div>;
+        return (
+            <div className="container" style={{ padding: '40px 20px 80px' }}>
+                <div className="skeleton" style={{ width: '200px', height: '20px', marginBottom: '24px' }}></div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '40px' }}>
+                    <div>
+                        <div className="skeleton" style={{ width: '70%', height: '56px', marginBottom: '16px', borderRadius: '8px' }}></div>
+                        <div className="skeleton" style={{ width: '40%', height: '32px', marginBottom: '32px', borderRadius: '12px' }}></div>
+                        <div className="skeleton" style={{ width: '100%', height: '450px', borderRadius: '24px' }}></div>
+                        <div style={{ marginTop: '48px' }}>
+                            <div className="skeleton" style={{ width: '200px', height: '32px', marginBottom: '20px' }}></div>
+                            <div className="skeleton" style={{ width: '100%', height: '100px' }}></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div className="skeleton" style={{ width: '100%', height: '500px', borderRadius: '32px' }}></div>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     if (!service) {

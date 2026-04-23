@@ -499,7 +499,18 @@ const DashboardDesktop = ({
                         {/* Bookings List Column (col-span-8) */}
                         <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                             {bookingsLoading ? (
-                                <p>Loading bookings...</p>
+                                Array.from({ length: 3 }).map((_, i) => (
+                                    <div key={i} style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '24px', border: '1px solid rgba(195,198,214,0.2)' }}>
+                                        <div style={{ display: 'flex', gap: '24px' }}>
+                                            <div className="skeleton" style={{ width: '100px', height: '100px', borderRadius: '16px' }}></div>
+                                            <div style={{ flex: 1 }}>
+                                                <div className="skeleton" style={{ width: '30%', height: '12px', marginBottom: '8px' }}></div>
+                                                <div className="skeleton" style={{ width: '60%', height: '24px', marginBottom: '8px' }}></div>
+                                                <div className="skeleton" style={{ width: '40%', height: '16px' }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
                             ) : (() => {
                                 const filteredBookings = myBookings.filter(b => {
                                     if (bookingFilter === 'all') return true;

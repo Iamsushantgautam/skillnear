@@ -165,10 +165,34 @@ const Home = () => {
 
             {/* DYNAMIC CATEGORY SECTIONS */}
             {loading ? (
-                <div className="container" style={{ textAlign: 'center', padding: '100px 0' }}>
-                    <div className="dot-typing" style={{ margin: '0 4px' }}></div>
-                    <div className="dot-typing" style={{ margin: '0 4px' }}></div>
-                    <div className="dot-typing" style={{ margin: '0 4px' }}></div>
+                <div className="container" style={{ padding: '60px 0' }}>
+                    {[1, 2].map(i => (
+                        <div key={i} style={{ marginBottom: '60px' }}>
+                            <div className="flex-between" style={{ marginBottom: '24px' }}>
+                                <div>
+                                    <div className="skeleton" style={{ width: '200px', height: '32px', marginBottom: '8px' }}></div>
+                                    <div className="skeleton" style={{ width: '300px', height: '16px' }}></div>
+                                </div>
+                                <div className="skeleton" style={{ width: '100px', height: '40px', borderRadius: '100px' }}></div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '24px', overflow: 'hidden' }}>
+                                {[1, 2, 3, 4].map(j => (
+                                    <div key={j} style={{ ...styles.serviceCard, height: '360px', minWidth: '280px' }}>
+                                        <div className="skeleton" style={{ width: '100%', height: '180px' }}></div>
+                                        <div style={{ padding: '16px' }}>
+                                            <div className="skeleton" style={{ width: '40%', height: '12px', marginBottom: '12px' }}></div>
+                                            <div className="skeleton" style={{ width: '90%', height: '20px', marginBottom: '12px' }}></div>
+                                            <div className="skeleton" style={{ width: '70%', height: '20px', marginBottom: '20px' }}></div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                                                <div className="skeleton skeleton-circle" style={{ width: '24px', height: '24px' }}></div>
+                                                <div className="skeleton" style={{ width: '60px', height: '24px' }}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             ) : (
                 Object.keys(servicesByCategory)
