@@ -782,7 +782,10 @@ function ChatRoom({ user, room, onBack }) {
 }
 
 /* ─── My Gigs screen ─── */
-function GigsScreen({ myGigs, gigsLoading, setActiveTab, navigate, handleEditClick, onMenuClick }) {
+function GigsScreen({ 
+    filteredGigs, gigSearchQuery, setGigSearchQuery, gigTypeFilter, setGigTypeFilter,
+    gigsLoading, setActiveTab, navigate, handleEditClick, onMenuClick, providerStatus 
+}) {
     return (
         <Shell title="My Gigs" onBack={() => setActiveTab('overview')} onMenuClick={onMenuClick}
             headerRight={
@@ -791,17 +794,68 @@ function GigsScreen({ myGigs, gigsLoading, setActiveTab, navigate, handleEditCli
                     + New Gig
                 </button>
             }>
+            
+            {/* Search and Filters */}
+            <div style={{ marginBottom: 20 }}>
+                <div style={{ position: 'relative', marginBottom: 12 }}>
+                    <Search size={16} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                    <input 
+                        type="text" 
+                        placeholder="Search gigs..." 
+                        value={gigSearchQuery}
+                        onChange={(e) => setGigSearchQuery(e.target.value)}
+                        style={{ width: '100%', padding: '12px 12px 12px 42px', borderRadius: 16, border: '1px solid #e2e8f0', background: 'white', fontSize: 14, fontWeight: 500, outline: 'none' }}
+                    />
+                </div>
+                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }} className="no-scrollbar">
+                    {[
+                        { id: 'all', label: 'All Gigs' },
+                        { id: 'service', label: 'Services' },
+                        { id: 'shop', label: 'Shops' }
+                    ].map(f => (
+                        <button
+                            key={f.id}
+                            onClick={() => setGigTypeFilter(f.id)}
+                            style={{
+                                padding: '8px 16px',
+                                borderRadius: 9999,
+                                border: 'none',
+                                background: gigTypeFilter === f.id ? PC : 'white',
+                                color: gigTypeFilter === f.id ? 'white' : '#64748b',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                whiteSpace: 'nowrap',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {f.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             {gigsLoading ? (
                 <div style={{ textAlign: 'center', padding: 48 }}><Loader size={28} color={PC} className="animate-spin" /></div>
-            ) : myGigs.length === 0 ? (
+            ) : filteredGigs.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '48px 24px', border: '2px dashed #e2e8f0', borderRadius: 20 }}>
                     <Briefcase size={40} color="#cbd5e1" style={{ marginBottom: 12 }} />
-                    <p style={{ color: '#94a3b8' }}>No gigs yet</p>
-                    <button onClick={() => setActiveTab('services')} style={{ background: PC, color: 'white', border: 'none', borderRadius: 9999, padding: '10px 24px', fontWeight: 700 }}>Create First Gig</button>
+                    <p style={{ color: '#94a3b8' }}>
+                        {gigSearchQuery || gigTypeFilter !== 'all' 
+                            ? 'No matching gigs found.' 
+                            : (providerStatus === 'pending'
+                                ? 'Your account is pending review. You can still create gigs!'
+                                : 'No gigs yet')}
+                    </p>
+                    {gigSearchQuery || gigTypeFilter !== 'all' ? (
+                        <button onClick={() => { setGigSearchQuery(''); setGigTypeFilter('all'); }} style={{ background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: 9999, padding: '10px 24px', fontWeight: 700 }}>Clear Filters</button>
+                    ) : (
+                        <button onClick={() => setActiveTab('services')} style={{ background: PC, color: 'white', border: 'none', borderRadius: 9999, padding: '10px 24px', fontWeight: 700 }}>Create First Gig</button>
+                    )}
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {myGigs.map(gig => {
+                    {filteredGigs.map(gig => {
                         const isLive = gig.isApproved && gig.isActive;
                         const stat = !gig.isApproved ? 'review' : isLive ? 'live' : 'rejected';
                         return (
@@ -1824,9 +1878,9 @@ function ServicesScreen(props) {
                             </div>
                         )}
 
-                        {gigBusinessType === 'shop' && (
-                            <div style={{ marginTop: 24, padding: 16, background: '#f8fafc', borderRadius: 16 }}>
-                                <label style={labelStyle}>Shop Details</label>
+                        <div style={{ marginTop: 24, padding: 16, background: '#f8fafc', borderRadius: 16 }}>
+                            <label style={labelStyle}>{gigBusinessType === 'shop' ? 'Shop Details' : 'Operational Details'}</label>
+                            {gigBusinessType === 'shop' && (
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
                                     <div>
                                         <label style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8' }}>Open</label>
@@ -1837,19 +1891,19 @@ function ServicesScreen(props) {
                                         <input type="time" value={shopClosingTime} onChange={e => setShopClosingTime(e.target.value)} style={inputStyle} />
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600 }}>
-                                        <input type="checkbox" checked={shopIsHomeDelivery} onChange={e => setShopIsHomeDelivery(e.target.checked)} /> Home Delivery?
-                                    </label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600 }}>
-                                        <input type="checkbox" checked={shopIsHomeService} onChange={e => setShopIsHomeService(e.target.checked)} /> Visit Client?
-                                    </label>
-                                    {shopIsHomeService && (
-                                        <input type="number" value={shopHomeServiceFee} onChange={e => setShopHomeServiceFee(e.target.value)} style={{ ...inputStyle, marginTop: 8 }} placeholder="Visit Fee (₹)" />
-                                    )}
-                                </div>
+                            )}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600 }}>
+                                    <input type="checkbox" checked={shopIsHomeDelivery} onChange={e => setShopIsHomeDelivery(e.target.checked)} /> Home Delivery Service
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600 }}>
+                                    <input type="checkbox" checked={shopIsHomeService} onChange={e => setShopIsHomeService(e.target.checked)} /> On-Site Home Visits
+                                </label>
+                                {shopIsHomeService && (
+                                    <input type="number" value={shopHomeServiceFee} onChange={e => setShopHomeServiceFee(e.target.value)} style={{ ...inputStyle, marginTop: 8 }} placeholder="Visit Fee (₹)" />
+                                )}
                             </div>
-                        )}
+                        </div>
                     </div>
                 )}
 
@@ -2185,11 +2239,12 @@ function ReviewsScreen({ setActiveTab, user, role }) {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #f1f5f9' }}>
-                                            {role === 'provider' ? (
-                                                <img src={review.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'U')}&background=ede9fe&color=4f46e5`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'U')}&background=ede9fe&color=4f46e5`; }} />
-                                            ) : (
-                                                <img src={review.provider?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.provider?.name || 'P')}&background=f3e8ff&color=9333ea`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.provider?.name || 'P')}&background=f3e8ff&color=9333ea`; }} />
-                                            )}
+                                            <img 
+                                                src={review.service?.images?.[0] || (role === 'provider' ? review.user?.avatar : review.provider?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.service?.title || 'S')}&background=ede9fe&color=4f46e5`} 
+                                                alt="" 
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.service?.title || 'S')}&background=ede9fe&color=4f46e5`; }} 
+                                            />
                                         </div>
                                         <div>
                                             <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '800', color: '#1e293b' }}>{role === 'provider' ? review.user?.name : review.provider?.name || 'Professional'}</h4>
@@ -2403,7 +2458,9 @@ function FavoritesScreen({ favorites, favoritesLoading, fetchFavorites, setActiv
 export default function DashboardMobile(props) {
     const {
         user, role, stats, myGigs, gigsLoading, bookingRequests, bookingsLoading,
+        providerStatus,
         profileAvatar, getAvatar, activeTab, setActiveTab,
+        gigSearchQuery, setGigSearchQuery, gigTypeFilter, setGigTypeFilter,
         navigate: navProp,
         myBookings, updateBookingStatus,
         profileName, setProfileName, profilePhone, setProfilePhone,
@@ -2415,6 +2472,15 @@ export default function DashboardMobile(props) {
         favorites, favoritesLoading, fetchFavorites,
         showRevisions, setShowRevisions, bookingWithRevisions, setBookingWithRevisions
     } = props;
+
+    const filteredGigs = (myGigs || []).filter(gig => {
+        const title = (gig?.title || '').toLowerCase();
+        const category = (gig?.category || '').toLowerCase();
+        const query = (gigSearchQuery || '').toLowerCase();
+        const matchesSearch = title.includes(query) || category.includes(query);
+        const matchesType = gigTypeFilter === 'all' || gig?.businessType === gigTypeFilter;
+        return matchesSearch && matchesType;
+    });
 
     const { userLocation } = useAuthStore();
     const navHook = useNav();
@@ -2454,7 +2520,7 @@ export default function DashboardMobile(props) {
         if (!bookingForPayment) return;
         try {
             // updateBookingStatus(bookingId, status, note, paymentMode)
-            await updateBookingStatus(bookingForPayment, 'delivered', '', paymentMode);
+            await updateBookingStatus(bookingForPayment._id, 'delivered', '', paymentMode);
             setBookingForPayment(null);
             setSelectedBooking(null);
         } catch (err) {
@@ -2522,7 +2588,20 @@ export default function DashboardMobile(props) {
 
 
         switch (activeTab) {
-            case 'mygigs': return <GigsScreen myGigs={myGigs} gigsLoading={gigsLoading} setActiveTab={setActiveTab} navigate={navigate} handleEditClick={handleEditClick} />;
+            case 'mygigs': return (
+                <GigsScreen 
+                    filteredGigs={filteredGigs} 
+                    gigSearchQuery={gigSearchQuery}
+                    setGigSearchQuery={setGigSearchQuery}
+                    gigTypeFilter={gigTypeFilter}
+                    setGigTypeFilter={setGigTypeFilter}
+                    gigsLoading={gigsLoading} 
+                    setActiveTab={setActiveTab} 
+                    navigate={navigate} 
+                    handleEditClick={handleEditClick} 
+                    providerStatus={providerStatus}
+                />
+            );
             case 'services': return <ServicesScreen {...props} setActiveTab={setActiveTab} />;
             case 'become_provider': return <BecomeProviderScreen handleApplyProvider={props.handleApplyProvider} isSubmitting={props.isSubmitting} setActiveTab={setActiveTab} />;
             case 'admin': return <AdminScreen allUsers={props.allUsers} usersLoading={props.usersLoading} handleUpdateUserRole={props.handleUpdateUserRole} handleToggleUserBan={props.handleToggleUserBan} setActiveTab={setActiveTab} />;

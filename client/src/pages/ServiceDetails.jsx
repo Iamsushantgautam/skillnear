@@ -61,6 +61,7 @@ const ServiceDetails = () => {
     };
 
     useEffect(() => {
+        window.scrollTo(0, 0);
         fetchService();
         fetchReviews();
         checkReviewEligibility();
@@ -418,21 +419,49 @@ const ServiceDetails = () => {
                             </div>
                         ) : (
                             <div style={{ padding: '32px' }}>
-                                <div style={{ paddingBottom: '24px', borderBottom: '1px solid var(--border-color)', marginBottom: '24px' }}>
-                                    <h2 style={{ fontSize: '2.8rem', fontWeight: 900, display: 'flex', alignItems: 'baseline', gap: '4px', margin: 0 }}>
-                                        ₹{service.businessType === 'shop' ? (service.shopDetails?.homeServiceFee || 0) : service.price}
-                                        <span style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-muted)' }}>
-                                            {service.priceType === 'hourly' && service.businessType !== 'shop' ? '/ hr' : (service.businessType === 'shop' ? ' (Fee)' : '')}
-                                        </span>
-                                    </h2>
-                                    <p style={{ marginTop: '8px', color: '#64748b', fontWeight: 600 }}>{service.businessType === 'shop' ? 'Home Visit Charge' : 'Total Service Price'}</p>
-                                </div>
+                                {!(service.businessType === 'shop' && (service.shopDetails?.homeServiceFee || 0) === 0) && (
+                                    <div style={{ paddingBottom: '24px', borderBottom: '1px solid var(--border-color)', marginBottom: '24px' }}>
+                                        <h2 style={{ fontSize: '2.8rem', fontWeight: 900, display: 'flex', alignItems: 'baseline', gap: '4px', margin: 0 }}>
+                                            ₹{service.businessType === 'shop' ? (service.shopDetails?.homeServiceFee || 0) : service.price}
+                                            <span style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-muted)' }}>
+                                                {service.priceType === 'hourly' && service.businessType !== 'shop' ? '/ hr' : ''}
+                                            </span>
+                                        </h2>
+                                        <p style={{ marginTop: '8px', color: '#64748b', fontWeight: 600 }}>{service.businessType === 'shop' ? 'Service Fee' : 'Total Service Price'}</p>
+                                    </div>
+                                )}
 
-                                <div style={{ marginBottom: '32px' }}>
+                                <div style={{ marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#16a34a', fontWeight: 700, fontSize: '0.95rem' }}>
                                         <Clock size={18} />
                                         <span>Instant Response Available</span>
                                     </div>
+
+                                    {/* Shop Timing */}
+                                    {isShop && service.shopDetails?.openingTime && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#64748b', fontWeight: 700, fontSize: '0.95rem' }}>
+                                            <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Clock size={12} color="#64748b" />
+                                            </div>
+                                            <span>Hours: {service.shopDetails.openingTime} - {service.shopDetails.closingTime}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Home Delivery Service */}
+                                    {service.shopDetails?.isHomeDelivery && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#0369a1', fontWeight: 700, fontSize: '0.95rem' }}>
+                                            <CheckCircle size={18} color="#0369a1" />
+                                            <span>Home Delivery Available ({service.shopDetails?.homeServiceFee > 0 ? `₹${service.shopDetails.homeServiceFee}` : 'Free'})</span>
+                                        </div>
+                                    )}
+
+                                    {/* On-Site Home Visits */}
+                                    {service.shopDetails?.isHomeService && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#0891b2', fontWeight: 700, fontSize: '0.95rem' }}>
+                                            <CheckCircle size={18} color="#0891b2" />
+                                            <span>On-Site Home Visits ({service.shopDetails?.homeServiceFee > 0 ? `₹${service.shopDetails.homeServiceFee}` : 'Free'})</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {isShop ? (

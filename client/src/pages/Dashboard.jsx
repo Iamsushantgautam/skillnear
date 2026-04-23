@@ -33,6 +33,8 @@ const Dashboard = () => {
     // My Gigs state
     const [myGigs, setMyGigs] = useState([]);
     const [gigsLoading, setGigsLoading] = useState(false);
+    const [gigSearchQuery, setGigSearchQuery] = useState('');
+    const [gigTypeFilter, setGigTypeFilter] = useState('all'); // all, service, shop
 
     // Form states
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -805,15 +807,15 @@ const Dashboard = () => {
                 jobsCompleted: gigBusinessType === 'service' ? (Number(gigJobsCompleted) || 0) : 0,
                 targetGender: gigTargetGender,
                 isActive: true,
-                shopDetails: gigBusinessType === 'shop' ? {
-                    openingTime: shopOpeningTime,
-                    closingTime: shopClosingTime,
+                shopDetails: {
+                    openingTime: gigBusinessType === 'shop' ? shopOpeningTime : null,
+                    closingTime: gigBusinessType === 'shop' ? shopClosingTime : null,
                     isHomeDelivery: shopIsHomeDelivery,
                     isHomeService: shopIsHomeService,
                     homeServiceFee: shopIsHomeService ? (Number(shopHomeServiceFee) || 0) : 0,
-                    shopAge: Number(shopAge) || 0,
+                    shopAge: gigBusinessType === 'shop' ? (Number(shopAge) || 0) : 0,
                     googleMapsLink: shopGoogleMapsLink
-                } : null,
+                },
                 coveragePincodes: gigCoveragePincodes ? (Array.isArray(gigCoveragePincodes) ? gigCoveragePincodes : gigCoveragePincodes.split(',').map(s => s.trim()).filter(Boolean)) : []
             };
 
@@ -1046,6 +1048,10 @@ const Dashboard = () => {
                     getAvatar={getAvatar}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
+                    gigSearchQuery={gigSearchQuery}
+                    setGigSearchQuery={setGigSearchQuery}
+                    gigTypeFilter={gigTypeFilter}
+                    setGigTypeFilter={setGigTypeFilter}
                     navigate={navigate}
                     myBookings={myBookings}
                     bookingsLoading={bookingsLoading}
@@ -1262,6 +1268,10 @@ const Dashboard = () => {
                             <DashboardDesktop
                                 setActiveTab={setActiveTab}
                                 activeTab={activeTab}
+                                gigSearchQuery={gigSearchQuery}
+                                setGigSearchQuery={setGigSearchQuery}
+                                gigTypeFilter={gigTypeFilter}
+                                setGigTypeFilter={setGigTypeFilter}
                                 role={role}
                                 user={user}
                                 profileAvatar={profileAvatar}

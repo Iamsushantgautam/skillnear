@@ -71,6 +71,10 @@ function PaymentModal({ isOpen, onClose, onSelect }) {
 const DashboardDesktop = ({
     setActiveTab,
     activeTab,
+    gigSearchQuery,
+    setGigSearchQuery,
+    gigTypeFilter,
+    setGigTypeFilter,
     role,
     user,
     profileAvatar,
@@ -212,6 +216,15 @@ const DashboardDesktop = ({
     const [activeService, setActiveService] = useState(null);
     const [bookingFilter, setBookingFilter] = useState('all');
     const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
+
+    const filteredGigs = (myGigs || []).filter(gig => {
+        const title = (gig?.title || '').toLowerCase();
+        const category = (gig?.category || '').toLowerCase();
+        const query = (gigSearchQuery || '').toLowerCase();
+        const matchesSearch = title.includes(query) || category.includes(query);
+        const matchesType = gigTypeFilter === 'all' || gig?.businessType === gigTypeFilter;
+        return matchesSearch && matchesType;
+    });
     
     // Reviews state
     const [myReviews, setMyReviews] = useState([]);
@@ -1177,13 +1190,14 @@ const DashboardDesktop = ({
                                             </div>
                                         )}
 
-                                        {gigBusinessType === 'shop' && (
-                                            <div style={{ marginTop: '40px', padding: '32px', backgroundColor: '#f0f9ff', borderRadius: '28px', border: '1px solid #bae6fd' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                                                    <BadgeCheck size={24} color="#0369a1" />
-                                                    <h4 style={{ fontWeight: '800', color: '#0369a1', margin: 0 }}>Operational Details</h4>
-                                                </div>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                                        <div style={{ marginTop: '40px', padding: '32px', backgroundColor: '#f0f9ff', borderRadius: '28px', border: '1px solid #bae6fd' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                                                <BadgeCheck size={24} color="#0369a1" />
+                                                <h4 style={{ fontWeight: '800', color: '#0369a1', margin: 0 }}>Operational Details</h4>
+                                            </div>
+
+                                            {gigBusinessType === 'shop' && (
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
                                                     <div style={styles.formGroup}>
                                                         <label style={{ ...styles.label, color: '#0369a1', fontWeight: '800' }}>Opening Hours</label>
                                                         <input type="time" className="input-field" style={{ height: '56px', borderRadius: '16px', backgroundColor: '#fff', border: '1px solid #bae6fd' }} value={shopOpeningTime} onChange={e => setShopOpeningTime(e.target.value)} />
@@ -1193,29 +1207,30 @@ const DashboardDesktop = ({
                                                         <input type="time" className="input-field" style={{ height: '56px', borderRadius: '16px', backgroundColor: '#fff', border: '1px solid #bae6fd' }} value={shopClosingTime} onChange={e => setShopClosingTime(e.target.value)} />
                                                     </div>
                                                 </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', backgroundColor: '#fff', padding: '16px', borderRadius: '16px', border: '1px solid #bae6fd' }}>
-                                                        <input type="checkbox" checked={shopIsHomeDelivery} onChange={e => setShopIsHomeDelivery(e.target.checked)} style={{ width: '20px', height: '20px', accentColor: '#0369a1' }} />
-                                                        <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '0.9rem' }}>Enable Home Delivery Service</span>
-                                                    </label>
-                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', backgroundColor: '#fff', padding: '16px', borderRadius: '16px', border: '1px solid #bae6fd' }}>
-                                                        <input type="checkbox" checked={shopIsHomeService} onChange={e => setShopIsHomeService(e.target.checked)} style={{ width: '20px', height: '20px', accentColor: '#0369a1' }} />
-                                                        <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '0.9rem' }}>Enable On-Site Home Visits</span>
-                                                    </label>
-                                                    {shopIsHomeService && (
-                                                        <div className="animate-fade-in" style={{ padding: '0 16px' }}>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                                                <span style={{ color: '#64748b', fontWeight: '700', fontSize: '0.85rem' }}>Minimum Visiting Fee:</span>
-                                                                <div style={{ position: 'relative' }}>
-                                                                    <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontWeight: '800', color: '#64748b' }}>₹</span>
-                                                                    <input type="number" className="input-field" style={{ padding: '0 12px 0 28px', height: '44px', fontSize: '0.9rem', width: '140px', borderRadius: '12px', backgroundColor: '#fff', border: '1px solid #bae6fd' }} placeholder="e.g. 150" value={shopHomeServiceFee} onChange={e => setShopHomeServiceFee(e.target.value)} />
-                                                                </div>
+                                            )}
+
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', backgroundColor: '#fff', padding: '16px', borderRadius: '16px', border: '1px solid #bae6fd' }}>
+                                                    <input type="checkbox" checked={shopIsHomeDelivery} onChange={e => setShopIsHomeDelivery(e.target.checked)} style={{ width: '20px', height: '20px', accentColor: '#0369a1' }} />
+                                                    <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '0.9rem' }}>Enable Home Delivery Service</span>
+                                                </label>
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', backgroundColor: '#fff', padding: '16px', borderRadius: '16px', border: '1px solid #bae6fd' }}>
+                                                    <input type="checkbox" checked={shopIsHomeService} onChange={e => setShopIsHomeService(e.target.checked)} style={{ width: '20px', height: '20px', accentColor: '#0369a1' }} />
+                                                    <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '0.9rem' }}>Enable On-Site Home Visits</span>
+                                                </label>
+                                                {shopIsHomeService && (
+                                                    <div className="animate-fade-in" style={{ padding: '0 16px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                            <span style={{ color: '#64748b', fontWeight: '700', fontSize: '0.85rem' }}>Minimum Visiting Fee:</span>
+                                                            <div style={{ position: 'relative' }}>
+                                                                <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontWeight: '800', color: '#64748b' }}>₹</span>
+                                                                <input type="number" className="input-field" style={{ padding: '0 12px 0 32px', height: '48px', width: '120px', borderRadius: '12px', backgroundColor: '#fff', border: '1px solid #bae6fd' }} placeholder="0" value={shopHomeServiceFee} onChange={e => setShopHomeServiceFee(e.target.value)} />
                                                             </div>
                                                         </div>
-                                                    )}
-                                                </div>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
                                 )}
 
@@ -1373,6 +1388,46 @@ const DashboardDesktop = ({
             {/* ── MY GIGS TAB ── */}
             {activeTab === 'mygigs' && (
                 <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                    {/* Search and Filters */}
+                    <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center', backgroundColor: '#fff', padding: '20px', borderRadius: '20px', border: '1px solid var(--border-color)', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                        <div style={{ position: 'relative', flex: 1 }}>
+                            <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+                            <input 
+                                type="text" 
+                                placeholder="Search by title or category..." 
+                                value={gigSearchQuery}
+                                onChange={(e) => setGigSearchQuery(e.target.value)}
+                                style={{ width: '100%', padding: '14px 14px 14px 48px', borderRadius: '14px', border: '1.5px solid #e2e8f0', fontSize: '0.95rem', fontWeight: 500, outline: 'none' }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', backgroundColor: '#f1f5f9', padding: '6px', borderRadius: '14px', gap: '4px' }}>
+                            {[
+                                { id: 'all', label: 'All' },
+                                { id: 'service', label: 'Services' },
+                                { id: 'shop', label: 'Shops' }
+                            ].map(filter => (
+                                <button
+                                    key={filter.id}
+                                    onClick={() => setGigTypeFilter(filter.id)}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '10px',
+                                        border: 'none',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
+                                        backgroundColor: gigTypeFilter === filter.id ? '#fff' : 'transparent',
+                                        color: gigTypeFilter === filter.id ? 'var(--primary)' : '#64748b',
+                                        boxShadow: gigTypeFilter === filter.id ? '0 4px 12px rgba(0,0,0,0.05)' : 'none',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    {filter.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Status legend */}
                     <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
                         {[['🟡 Pending', '#fef3c7', '#92400e'], ['🟢 Live', '#d1fae5', '#065f46'], ['🔴 Rejected', '#fee2e2', '#991b1b']].map(([l, bg, c]) => (
@@ -1382,19 +1437,25 @@ const DashboardDesktop = ({
 
                     {gigsLoading ? (
                         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Loading your gigs…</div>
-                    ) : myGigs.length === 0 ? (
+                    ) : filteredGigs.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '60px 40px', border: '2px dashed var(--border-color)', borderRadius: 12 }}>
                             <Briefcase size={40} style={{ color: 'var(--text-muted)', marginBottom: 12, opacity: 0.4 }} />
                             <p style={{ color: 'var(--text-muted)', marginBottom: 16 }}>
-                                {providerStatus === 'pending'
-                                    ? 'Your provider account is pending approval. You can start submitting gigs — they will go live once you are approved.'
-                                    : 'You haven\'t created any gigs yet.'}
+                                {gigSearchQuery || gigTypeFilter !== 'all' 
+                                    ? 'No gigs found matching your filters.' 
+                                    : (providerStatus === 'pending'
+                                        ? 'Your provider account is pending approval. You can start submitting gigs — they will go live once you are approved.'
+                                        : 'You haven\'t created any gigs yet.')}
                             </p>
-                            <button className="btn-primary" onClick={() => setActiveTab('services')}>Create First Gig</button>
+                            {(gigSearchQuery || gigTypeFilter !== 'all') ? (
+                                <button className="btn-primary" onClick={() => { setGigSearchQuery(''); setGigTypeFilter('all'); }}>Clear Filters</button>
+                            ) : (
+                                <button className="btn-primary" onClick={() => setActiveTab('services')}>Create First Gig</button>
+                            )}
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                            {myGigs.map(gig => {
+                            {filteredGigs.map(gig => {
                                 const isLive = gig.isApproved && gig.isActive;
                                 const isPending = !gig.isApproved;
                                 const isRejected = !gig.isApproved && !gig.isActive && gig.updatedAt !== gig.createdAt;
@@ -2494,11 +2555,12 @@ const DashboardDesktop = ({
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #f1f5f9' }}>
-                                                {role === 'provider' ? (
-                                                    <img src={review.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'U')}&background=ede9fe&color=4f46e5`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'U')}&background=ede9fe&color=4f46e5`; }} />
-                                                ) : (
-                                                    <img src={review.provider?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.provider?.name || 'P')}&background=f3e8ff&color=9333ea`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.provider?.name || 'P')}&background=f3e8ff&color=9333ea`; }} />
-                                                )}
+                                                <img 
+                                                    src={review.service?.images?.[0] || (role === 'provider' ? review.user?.avatar : review.provider?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.service?.title || 'S')}&background=ede9fe&color=4f46e5`} 
+                                                    alt="" 
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.service?.title || 'S')}&background=ede9fe&color=4f46e5`; }} 
+                                                />
                                             </div>
                                             <div>
                                                 <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#1e293b' }}>{role === 'provider' ? review.user?.name : review.provider?.name || 'Professional'}</h4>
