@@ -1204,7 +1204,7 @@ const Dashboard = () => {
                             flex: 1,
                             minHeight: 0
                         }}>
-                            {activeTab !== 'profile' && (
+                            {activeTab !== 'profile' && activeTab !== 'services' && (
                                 <header style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexShrink: 0 }}>
                                     <div>
                                         <nav style={{ fontSize: '10px', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>
