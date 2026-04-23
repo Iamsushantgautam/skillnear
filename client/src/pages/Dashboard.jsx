@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
-import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, Loader, Home, LogOut, Wallet, Inbox, Heart } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, Loader, Home, LogOut, Wallet, Inbox, Heart, Star } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/useAuthStore';
@@ -944,6 +944,9 @@ const Dashboard = () => {
             <button style={getTabStyle('chat')} onClick={() => setActiveTab('chat')}>
                 <MessageSquare size={22} strokeWidth={1.5} /> Messages
             </button>
+            <button style={getTabStyle('reviews')} onClick={() => setActiveTab('reviews')}>
+                <Star size={22} strokeWidth={1.5} /> Reviews
+            </button>
             <button style={getTabStyle('profile')} onClick={() => setActiveTab('profile')}>
                 <User size={22} strokeWidth={1.5} /> Profile
             </button>
@@ -1004,6 +1007,9 @@ const Dashboard = () => {
             </button>
             <button style={getTabStyle('chat')} onClick={() => setActiveTab('chat')}>
                 <MessageSquare size={22} strokeWidth={1.5} /> Messages
+            </button>
+            <button style={getTabStyle('reviews')} onClick={() => setActiveTab('reviews')}>
+                <Star size={22} strokeWidth={1.5} /> Reviews
             </button>
             {user?.role === 'admin' && (
                 <button style={getTabStyle('admin')} onClick={() => setActiveTab('admin')}>

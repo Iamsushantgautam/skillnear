@@ -841,7 +841,8 @@ function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus,
         if (bookingFilter === 'pending') return b.status === 'pending';
         if (bookingFilter === 'confirmed') return b.status === 'confirmed';
         if (bookingFilter === 'in_progress') return ['in_progress', 'revision_requested', 'delivered'].includes(b.status);
-        if (bookingFilter === 'completed') return ['completed', 'cancelled', 'rejected'].includes(b.status);
+        if (bookingFilter === 'completed') return b.status === 'completed';
+        if (bookingFilter === 'cancelled') return ['cancelled', 'rejected'].includes(b.status);
         return true;
     }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
@@ -856,7 +857,7 @@ function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus,
 
                 {/* Filter Tabs */}
                 <div style={{ display: 'flex', gap: 12, marginBottom: 32, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
-                    {['all', 'pending', 'confirmed', 'in_progress', 'completed'].map(filter => (
+                    {['all', 'pending', 'confirmed', 'in_progress', 'completed', 'cancelled'].map(filter => (
                         <button
                             key={filter}
                             onClick={() => setBookingFilter(filter)}
@@ -886,8 +887,11 @@ function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus,
                         <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: 24, border: '1px solid #f1f5f9' }}>
                             <p style={{ color: '#94a3b8' }}>No {bookingFilter === 'all' ? '' : bookingFilter} requests found</p>
                         </div>
-                    ) : filteredBookings.map(req => (
-                        <div key={req._id} onClick={() => onSelectBooking(req)} style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid rgba(195, 198, 214, 0.1)' }}>
+                    ) : filteredBookings.map(req => {
+                        const isCancelled = ['cancelled', 'rejected'].includes(req.status);
+                        const isCompleted = req.status === 'completed';
+                        return (
+                        <div key={req._id} onClick={() => onSelectBooking(req)} style={{ background: isCancelled ? '#f8fafc' : (isCompleted ? '#faf8ff' : 'white'), borderRadius: 24, padding: 24, boxShadow: (isCancelled || isCompleted) ? 'none' : '0 10px 30px rgba(0,0,0,0.03)', border: isCancelled ? '2px dashed #e2e8f0' : '1px solid rgba(195, 198, 214, 0.1)', opacity: isCancelled ? 0.7 : 1, filter: isCancelled ? 'grayscale(100%)' : 'none' }}>
                             <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
                                 <img 
                                     src={req.service?.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.service?.title || 'S')}&background=f3f3fd&color=003d9b`} 
@@ -990,7 +994,8 @@ function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus,
                                 </div>
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Decorative Help Card */}
@@ -1009,7 +1014,7 @@ function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus,
 }
 
 /* ─── Orders Screen ─── */
-function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onSelectRoom, onSelectBooking, onMenuClick, updateBookingStatus, onShowRevisions }) {
+function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onSelectRoom, onSelectBooking, onMenuClick, updateBookingStatus, onShowRevisions, onRequestRevision }) {
     const [bookingFilter, setBookingFilter] = useState('all');
 
     const filteredBookings = (myBookings || []).filter(b => {
@@ -1017,7 +1022,8 @@ function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onS
         if (bookingFilter === 'pending') return b.status === 'pending';
         if (bookingFilter === 'confirmed') return b.status === 'confirmed';
         if (bookingFilter === 'in_progress') return ['in_progress', 'revision_requested', 'delivered'].includes(b.status);
-        if (bookingFilter === 'completed') return ['completed', 'cancelled', 'rejected'].includes(b.status);
+        if (bookingFilter === 'completed') return b.status === 'completed';
+        if (bookingFilter === 'cancelled') return ['cancelled', 'rejected'].includes(b.status);
         return true;
     }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
@@ -1032,7 +1038,7 @@ function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onS
 
                 {/* Filter Tabs */}
                 <div style={{ display: 'flex', gap: 12, marginBottom: 32, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
-                    {['all', 'pending', 'confirmed', 'in_progress', 'completed'].map(filter => (
+                    {['all', 'pending', 'confirmed', 'in_progress', 'completed', 'cancelled'].map(filter => (
                         <button
                             key={filter}
                             onClick={() => setBookingFilter(filter)}
@@ -1062,8 +1068,11 @@ function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onS
                         <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: 24, border: '1px solid #f1f5f9' }}>
                             <p style={{ color: '#94a3b8' }}>No {bookingFilter === 'all' ? '' : bookingFilter} orders found</p>
                         </div>
-                    ) : filteredBookings.map(b => (
-                        <div key={b._id} onClick={() => onSelectBooking(b)} style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid rgba(195, 198, 214, 0.2)' }}>
+                    ) : filteredBookings.map(b => {
+                        const isCancelled = ['cancelled', 'rejected'].includes(b.status);
+                        const isCompleted = b.status === 'completed';
+                        return (
+                        <div key={b._id} onClick={() => onSelectBooking(b)} style={{ background: isCancelled ? '#f8fafc' : (isCompleted ? '#faf8ff' : 'white'), borderRadius: 24, padding: 24, boxShadow: (isCancelled || isCompleted) ? 'none' : '0 10px 30px rgba(0,0,0,0.03)', border: isCancelled ? '2px dashed #e2e8f0' : '1px solid rgba(195, 198, 214, 0.2)', opacity: isCancelled ? 0.7 : 1, filter: isCancelled ? 'grayscale(100%)' : 'none' }}>
                             <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
                                 <img 
                                     src={b.service?.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(b.service?.title || 'S')}&background=f3f3fd&color=003d9b`} 
@@ -1147,7 +1156,8 @@ function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onS
                                 )}
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Decorative Help Card */}
@@ -1941,19 +1951,19 @@ function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, 
                     <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: PL, opacity: 0.5 }}></div>
 
                     <p style={{ fontSize: 11, fontWeight: 800, color: '#64748b', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                        {role === 'provider' ? 'Total Earnings' : 'Wallet Balance'}
+                        {role === 'provider' ? 'Total Earnings' : 'Total Invested'}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, margin: '8px 0' }}>
                         <span style={{ fontSize: '1.2rem', fontWeight: 800, color: PC }}>₹</span>
                         <h2 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, letterSpacing: '-1px' }}>
-                            {role === 'provider' ? (stats?.totalEarnings?.toLocaleString() || 0) : (user?.wallet?.toLocaleString() || '0')}
+                            {role === 'provider' ? (stats?.totalEarnings?.toLocaleString() || 0) : (myBookings?.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.totalPrice || b.price || 0), 0).toLocaleString() || '0')}
                         </h2>
                     </div>
 
                     <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
                         {[
-                            { label: role === 'provider' ? 'Active Gigs' : 'Ongoing', value: role === 'provider' ? (myGigs?.length || 0) : (stats?.activeBookings || 0), color: '#4f46e5' },
-                            { label: role === 'provider' ? 'Total Orders' : 'Completed', value: role === 'provider' ? (stats?.totalOrders || 0) : (stats?.completedBookings || 0), color: '#10b981' },
+                            { label: role === 'provider' ? 'Active Gigs' : 'Ongoing', value: role === 'provider' ? (myGigs?.length || 0) : (myBookings?.filter(b => ['pending', 'confirmed', 'in_progress'].includes(b.status)).length || 0), color: '#4f46e5' },
+                            { label: role === 'provider' ? 'Total Orders' : 'Completed', value: role === 'provider' ? (stats?.totalOrders || 0) : (myBookings?.filter(b => b.status === 'completed').length || 0), color: '#10b981' },
                             { label: 'Revisions', value: pendingRevisions.length, color: '#f59e0b', icon: History }
                         ].map((s, i) => (
                             <div key={i} style={{ flex: 1, background: '#f8fafc', padding: '12px 8px', borderRadius: 16, textAlign: 'center' }}>
@@ -2025,11 +2035,13 @@ function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, 
                             { icon: ShoppingBag, label: 'My Gigs', tab: 'mygigs' },
                             { icon: Heart, label: 'Favorites', tab: 'favorites' },
                             { icon: ShoppingCart, label: 'Purchased Orders', tab: 'bookings' },
+                            { icon: Star, label: 'My Reviews', tab: 'reviews' },
                             { icon: User, label: 'Profile Settings', tab: 'profile' },
                         ] : [
                             { icon: Search, label: 'Find Services', action: () => navigate('/services') },
                             { icon: Briefcase, label: 'My Bookings', tab: 'bookings' },
                             { icon: Heart, label: 'Favorites', tab: 'favorites' },
+                            { icon: Star, label: 'My Reviews', tab: 'reviews' },
                             { icon: MessageSquare, label: 'Messages', tab: 'chat' },
                             { icon: User, label: 'Account', tab: 'profile' },
                         ]).map(({ icon: Icon, label, tab, action }, idx) => (
@@ -2042,6 +2054,32 @@ function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, 
                             </button>
                         ))}
                     </section>
+                </div>
+                {/* Recent Activity Details */}
+                <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 4px 16px' }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>Recent Activity</h3>
+                        <button onClick={() => setActiveTab(role === 'provider' ? 'requests' : 'bookings')} style={{ background: 'none', border: 'none', color: '#0052cc', fontWeight: 700, fontSize: '0.85rem' }}>View All</button>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {myBookings?.length > 0 ? myBookings.slice(0, 3).map(b => (
+                            <div key={b._id} onClick={() => setActiveTab(role === 'provider' ? 'requests' : 'bookings')} style={{ background: 'white', borderRadius: 20, padding: 16, display: 'flex', alignItems: 'center', gap: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                                <img src={b.service?.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(b.service?.title || 'S')}&background=eff6ff&color=3b82f6`} alt="" style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(b.service?.title || 'S')}&background=eff6ff&color=3b82f6`; }} />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <h4 style={{ margin: '0 0 4px', fontSize: '0.9rem', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.service?.title || 'Service Booking'}</h4>
+                                    <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>{new Date(b.createdAt).toLocaleDateString()} • ₹{b.totalPrice || b.price}</p>
+                                </div>
+                                <div style={{ padding: '4px 10px', borderRadius: 8, fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', background: b.status === 'completed' ? '#f0fdf4' : (b.status === 'cancelled' || b.status === 'rejected' ? '#fef2f2' : '#eff6ff'), color: b.status === 'completed' ? '#16a34a' : (b.status === 'cancelled' || b.status === 'rejected' ? '#ef4444' : '#3b82f6') }}>
+                                    {b.status}
+                                </div>
+                            </div>
+                        )) : (
+                            <div style={{ padding: 24, textAlign: 'center', background: 'white', borderRadius: 20, border: '1px solid #f1f5f9' }}>
+                                <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem', fontWeight: 600 }}>No recent activity to show.</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Status Update / Tip Section */}
@@ -2058,6 +2096,185 @@ function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, 
                 </div>
             </main>
         </>
+    );
+}
+
+function ReviewsScreen({ setActiveTab, user, role }) {
+    const [myReviews, setMyReviews] = React.useState([]);
+    const [myReviewsLoading, setMyReviewsLoading] = React.useState(false);
+    const [editingReviewId, setEditingReviewId] = React.useState(null);
+    const [editRating, setEditRating] = React.useState(0);
+    const [editComment, setEditComment] = React.useState('');
+
+    const fetchMyReviews = async () => {
+        setMyReviewsLoading(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const endpoint = role === 'provider' ? '/api/reviews/provider' : '/api/reviews/me';
+            const { data } = await api.get(endpoint, config);
+            setMyReviews(data);
+        } catch (error) {
+            console.error('Error fetching reviews:', error);
+        } finally {
+            setMyReviewsLoading(false);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchMyReviews();
+    }, []);
+
+    const handleDeleteReview = async (reviewId) => {
+        if (!window.confirm('Are you sure you want to delete this review?')) return;
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.delete(`/api/reviews/${reviewId}`, config);
+            toast.success('Review deleted');
+            fetchMyReviews();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Error deleting review');
+        }
+    };
+
+    const handleEditReview = (review) => {
+        setEditingReviewId(review._id);
+        setEditRating(review.rating);
+        setEditComment(review.comment);
+    };
+
+    const handleUpdateReview = async (reviewId) => {
+        if (!editComment.trim()) {
+            toast.error('Comment cannot be empty');
+            return;
+        }
+        if (editRating < 1 || editRating > 5) {
+            toast.error('Please select a rating');
+            return;
+        }
+
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.put(`/api/reviews/${reviewId}`, { rating: editRating, comment: editComment }, config);
+            toast.success('Review updated');
+            setEditingReviewId(null);
+            fetchMyReviews();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Error updating review');
+        }
+    };
+
+    return (
+        <Shell title={role === 'provider' ? 'Customer Reviews' : 'My Reviews'} onBack={() => setActiveTab('overview')}>
+            <div className="animate-fade-in" style={{ padding: '0 0 20px 0' }}>
+                {myReviewsLoading ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><Loader className="animate-spin" /></div>
+                ) : myReviews.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '80px 20px', background: 'white', borderRadius: 24, boxShadow: '0 4px 15px rgba(0,0,0,0.03)', margin: '0 16px' }}>
+                        <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                            <Star size={40} color="#cbd5e1" />
+                        </div>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: 8 }}>No reviews found</h3>
+                        <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                            {role === 'provider' ? 'You have not received any reviews yet.' : 'You have not written any reviews yet.'}
+                        </p>
+                    </div>
+                ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', padding: '0 16px' }}>
+                        {myReviews.map(review => (
+                            <div key={review._id} style={{ background: '#fff', borderRadius: '24px', padding: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', border: '1px solid #f8fafc' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #f1f5f9' }}>
+                                            {role === 'provider' ? (
+                                                <img src={review.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'U')}&background=ede9fe&color=4f46e5`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'U')}&background=ede9fe&color=4f46e5`; }} />
+                                            ) : (
+                                                <img src={review.provider?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.provider?.name || 'P')}&background=f3e8ff&color=9333ea`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.provider?.name || 'P')}&background=f3e8ff&color=9333ea`; }} />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '800', color: '#1e293b' }}>{role === 'provider' ? review.user?.name : review.provider?.name || 'Professional'}</h4>
+                                            {review.service && (
+                                                <div 
+                                                    onClick={() => navigate(`/services/${review.service._id}`)}
+                                                    style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#003d9b', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0, 61, 155, 0.05)', padding: '4px 8px', borderRadius: '6px', width: 'fit-content' }}
+                                                >
+                                                    <Briefcase size={10} />
+                                                    {review.service?.title?.split(' ')?.slice(0, 4)?.join(' ')}{review.service?.title?.split(' ').length > 4 ? '...' : ''}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#fffbeb', padding: '4px 8px', borderRadius: '8px' }}>
+                                        <span style={{ fontSize: '0.85rem', fontWeight: '800', color: '#d97706' }}>{review.rating}</span>
+                                        <Star size={12} fill="#d97706" color="#d97706" />
+                                    </div>
+                                </div>
+                                
+                                {editingReviewId === review._id ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
+                                        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                                <Star 
+                                                    key={star}
+                                                    size={24} 
+                                                    fill={star <= editRating ? "#d97706" : "none"} 
+                                                    color={star <= editRating ? "#d97706" : "#cbd5e1"} 
+                                                    onClick={() => setEditRating(star)}
+                                                />
+                                            ))}
+                                        </div>
+                                        <textarea 
+                                            value={editComment}
+                                            onChange={(e) => setEditComment(e.target.value)}
+                                            style={{ width: '100%', height: '100px', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '12px', fontSize: '0.95rem', resize: 'none', outline: 'none' }}
+                                            placeholder="Write your review here..."
+                                        />
+                                        <div style={{ display: 'flex', gap: '12px' }}>
+                                            <button 
+                                                onClick={() => handleUpdateReview(review._id)}
+                                                style={{ flex: 1, padding: '12px', borderRadius: '10px', background: PC, color: '#fff', border: 'none', fontWeight: '700' }}
+                                            >
+                                                Save
+                                            </button>
+                                            <button 
+                                                onClick={() => setEditingReviewId(null)}
+                                                style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#f1f5f9', color: '#64748b', border: 'none', fontWeight: '700' }}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div style={{ flex: 1, margin: '4px 0 16px', padding: '12px 12px 12px 24px', background: '#f8fafc', borderRadius: '12px', position: 'relative' }}>
+                                            <MessageSquare size={14} color="#cbd5e1" style={{ position: 'absolute', top: '12px', left: '8px', opacity: 0.5 }} />
+                                            <p style={{ color: '#334155', fontSize: '0.9rem', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>"{review.comment}"</p>
+                                        </div>
+                                        
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
+                                            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <CalendarIcon size={12} />
+                                                {new Date(review.createdAt).toLocaleDateString()}
+                                            </span>
+                                            {role === 'customer' && (
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <button onClick={() => handleEditReview(review)} style={{ padding: '6px 12px', borderRadius: '8px', background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <Edit3 size={12} /> Edit
+                                                    </button>
+                                                    <button onClick={() => handleDeleteReview(review._id)} style={{ padding: '6px 12px', borderRadius: '8px', background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <Trash2 size={12} /> Delete
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </Shell>
     );
 }
 
@@ -2315,6 +2532,7 @@ export default function DashboardMobile(props) {
             case 'payments': return <PaymentsScreen stats={stats} bookingRequests={bookingRequests} setActiveTab={setActiveTab} />;
             case 'profile': return <ProfileScreen user={user} profileAvatar={profileAvatar} getAvatar={getAvatar} profileName={profileName} setProfileName={setProfileName} profilePhone={profilePhone} setProfilePhone={setProfilePhone} profileUsername={profileUsername} setProfileUsername={setProfileUsername} providerTitle={providerTitle} providerAbout={providerAbout} providerTitleSetter={providerTitleSetter} providerAboutSetter={providerAboutSetter} handleSaveProfile={handleSaveProfile} savingProfile={savingProfile} uploadingAvatar={uploadingAvatar} handleAvatarUpload={handleAvatarUpload} role={role} setActiveTab={setActiveTab} />;
             case 'favorites': return <FavoritesScreen favorites={favorites} favoritesLoading={favoritesLoading} fetchFavorites={fetchFavorites} setActiveTab={setActiveTab} navigate={navigate} user={user} />;
+            case 'reviews': return <ReviewsScreen user={user} role={role} setActiveTab={setActiveTab} />;
             default: return <OverviewScreen user={user} role={role} stats={stats} myGigs={myGigs} myBookings={myBookings} providerTitle={providerTitle} providerAbout={providerAbout} profileAvatar={profileAvatar} getAvatar={getAvatar} setActiveTab={setActiveTab} navigate={navigate} onShowRevisions={handleShowRevisions} />;
         }
     };

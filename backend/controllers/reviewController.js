@@ -158,3 +158,33 @@ export const checkEligibility = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// @desc    Get all reviews written by the logged-in user
+// @route   GET /api/reviews/me
+// @access  Private
+export const getMyReviews = async (req, res) => {
+    try {
+        const reviews = await Review.find({ user: req.user._id })
+            .populate('service', 'title images')
+            .populate('provider', 'name')
+            .sort({ createdAt: -1 });
+        res.json(reviews);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get all reviews received by the logged-in provider
+// @route   GET /api/reviews/provider
+// @access  Private
+export const getProviderReviews = async (req, res) => {
+    try {
+        const reviews = await Review.find({ provider: req.user._id })
+            .populate('user', 'name avatar')
+            .populate('service', 'title')
+            .sort({ createdAt: -1 });
+        res.json(reviews);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

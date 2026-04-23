@@ -212,6 +212,72 @@ const DashboardDesktop = ({
     const [activeService, setActiveService] = useState(null);
     const [bookingFilter, setBookingFilter] = useState('all');
     const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
+    
+    // Reviews state
+    const [myReviews, setMyReviews] = useState([]);
+    const [myReviewsLoading, setMyReviewsLoading] = useState(false);
+    const [editingReviewId, setEditingReviewId] = useState(null);
+    const [editRating, setEditRating] = useState(0);
+    const [editComment, setEditComment] = useState('');
+
+    const fetchMyReviews = async () => {
+        setMyReviewsLoading(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const endpoint = role === 'provider' ? '/api/reviews/provider' : '/api/reviews/me';
+            const { data } = await api.get(endpoint, config);
+            setMyReviews(data);
+        } catch (error) {
+            console.error('Error fetching reviews:', error);
+        } finally {
+            setMyReviewsLoading(false);
+        }
+    };
+
+    const handleDeleteReview = async (reviewId) => {
+        if (!window.confirm('Are you sure you want to delete this review?')) return;
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.delete(`/api/reviews/${reviewId}`, config);
+            toast.success('Review deleted');
+            fetchMyReviews();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Error deleting review');
+        }
+    };
+
+    const handleEditReview = (review) => {
+        setEditingReviewId(review._id);
+        setEditRating(review.rating);
+        setEditComment(review.comment);
+    };
+
+    const handleUpdateReview = async (reviewId) => {
+        if (!editComment.trim()) {
+            toast.error('Comment cannot be empty');
+            return;
+        }
+        if (editRating < 1 || editRating > 5) {
+            toast.error('Please select a rating');
+            return;
+        }
+
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.put(`/api/reviews/${reviewId}`, { rating: editRating, comment: editComment }, config);
+            toast.success('Review updated');
+            setEditingReviewId(null);
+            fetchMyReviews();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Error updating review');
+        }
+    };
+
+    React.useEffect(() => {
+        if (activeTab === 'reviews') {
+            fetchMyReviews();
+        }
+    }, [activeTab]);
 
     const handleDeliverClick = (bookingId) => {
         setBookingForPayment(bookingId);
@@ -234,221 +300,347 @@ const DashboardDesktop = ({
     return (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             {activeTab === 'overview' && (
-                <div id="account-settings-section" className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-                    {/* Bio & Avatar Card */}
-                    <section style={{ gridColumn: 'span 8', backgroundColor: '#fff', borderRadius: '24px', padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', gap: '32px', alignItems: 'flex-start', position: 'relative', overflow: 'hidden' }}>
-                        <div style={{ position: 'absolute', top: 0, right: 0, width: '128px', height: '128px', backgroundColor: 'rgba(0, 61, 155, 0.05)', borderRadius: '0 0 0 100%' }}></div>
-
-                        <div style={{ position: 'relative' }}>
-                            <div style={{ position: 'relative', width: '128px', height: '128px' }}>
-                                <img
-                                    src={getAvatar({ avatar: profileAvatar, name: profileName })}
-                                    alt={user?.name}
-                                    style={{ width: '128px', height: '128px', borderRadius: '24px', objectFit: 'cover', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileName || 'U')}&background=ede9fe&color=4f46e5&size=120`; }}
-                                />
-                                {uploadingAvatar && (
-                                    <div style={{ position: 'absolute', inset: 0, borderRadius: '24px', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.8rem', fontWeight: '700' }}>…</div>
-                                )}
-                            </div>
-                            <label htmlFor="avatar-upload-direct" style={{ position: 'absolute', bottom: '-8px', right: '-8px', backgroundColor: '#fff', padding: '8px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Edit size={16} />
-                            </label>
-                            <input id="avatar-upload-direct" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+                <div id="account-settings-section" className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px', maxWidth: '1200px', margin: '0 auto', paddingBottom: '32px' }}>
+                    {/* Main Bio & Avatar Card */}
+                    <section style={{ gridColumn: 'span 8', backgroundColor: '#ffffff', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.4)', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        {/* Header Banner */}
+                        <div style={{ height: '100px', width: '100%', background: 'linear-gradient(90deg, #0f172a 0%, #1e293b 100%)', position: 'relative' }}>
+                            <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
                         </div>
-
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: '800' }}>{user?.name}</h3>
-                                {role === 'provider' ? (
-                                    <span style={{ backgroundColor: 'rgba(0, 61, 155, 0.1)', color: 'var(--primary)', fontSize: '10px', padding: '2px 8px', borderRadius: '100px', fontWeight: '800', textTransform: 'uppercase' }}>Top Rated</span>
-                                ) : (
-                                    <span style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#16a34a', fontSize: '10px', padding: '2px 8px', borderRadius: '100px', fontWeight: '800', textTransform: 'uppercase' }}>Verified Customer</span>
-                                )}
+                        
+                        <div style={{ padding: '0 32px 32px 32px', display: 'flex', gap: '24px', position: 'relative', flex: 1 }}>
+                            {/* Avatar Section */}
+                            <div style={{ position: 'relative', marginTop: '-40px' }}>
+                                <div style={{ padding: '6px', background: 'white', borderRadius: '24px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}>
+                                    <img
+                                        src={getAvatar({ avatar: profileAvatar, name: profileName })}
+                                        alt={user?.name}
+                                        style={{ width: '120px', height: '120px', borderRadius: '18px', objectFit: 'cover' }}
+                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileName || 'U')}&background=ede9fe&color=4f46e5&size=120`; }}
+                                    />
+                                </div>
                             </div>
-                            <p style={{ color: '#434654', fontWeight: '500', fontSize: '1.125rem', marginBottom: '16px' }}>{providerTitle || (role === 'provider' ? 'Professional Service Provider' : 'SkillNear Member')}</p>
-                            <p style={{ color: '#737685', fontSize: '0.875rem', lineHeight: '1.6', maxWidth: '500px' }}>
-                                {providerAbout || (role === 'provider' ? 'Expert skills dedicated to delivering high-quality results. Open to custom projects and long-term collaborations.' : 'Valued member of the SkillNear community. Dedicated to supporting local experts and quality services.')}
-                            </p>
 
-                            <div style={{ display: 'flex', gap: '24px', marginTop: '24px' }}>
-                                {role === 'provider' ? (
-                                    <>
-                                        <div>
-                                            <span style={{ display: 'block', fontSize: '12px', color: '#737685', fontWeight: '500' }}>Response Rate</span>
-                                            <span style={{ fontSize: '1.125rem', fontWeight: '700' }}>98%</span>
+                            {/* Content Section */}
+                            <div style={{ paddingTop: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                                            <h3 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#1e293b', margin: 0, letterSpacing: '-0.025em' }}>{user?.name}</h3>
+                                            <span style={{ backgroundColor: role === 'provider' ? '#fef08a' : '#dcfce7', color: role === 'provider' ? '#854d0e' : '#166534', fontSize: '10px', padding: '4px 10px', borderRadius: '8px', fontWeight: 900, letterSpacing: '0.05em' }}>
+                                                {role === 'provider' ? 'TOP RATED PRO' : 'VERIFIED CUSTOMER'}
+                                            </span>
                                         </div>
-                                        <div>
-                                            <span style={{ display: 'block', fontSize: '12px', color: '#737685', fontWeight: '500' }}>Experience</span>
-                                            <span style={{ fontSize: '1.125rem', fontWeight: '700' }}>{user?.providerDetails?.experienceYears || 0} Years</span>
-                                        </div>
-                                        <div>
-                                            <span style={{ display: 'block', fontSize: '12px', color: '#737685', fontWeight: '500' }}>Rating</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                <span style={{ fontSize: '1.125rem', fontWeight: '700' }}>4.9</span>
-                                                <Star size={14} color="#f59e0b" fill="#f59e0b" />
+                                        <p style={{ color: '#003d9b', fontWeight: 700, fontSize: '1rem', marginBottom: '12px' }}>
+                                            {providerTitle || (role === 'provider' ? 'Professional Service Provider' : 'SkillNear Member')}
+                                        </p>
+                                    </div>
+                                    <button onClick={() => setActiveTab('profile')} style={{ padding: '8px 16px', borderRadius: '12px', background: '#f1f5f9', color: '#475569', border: 'none', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseOver={e => { e.currentTarget.style.background = '#e2e8f0'; e.currentTarget.style.color = '#1e293b'; }} onMouseOut={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#475569'; }}>
+                                        Edit Profile
+                                    </button>
+                                </div>
+                                
+                                <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '24px', maxWidth: '90%' }}>
+                                    {providerAbout || (role === 'provider' ? 'Expert skills dedicated to delivering high-quality results. Open to custom projects and long-term collaborations.' : 'Valued member of the SkillNear community. Dedicated to supporting local experts and quality services.')}
+                                </p>
+
+                                {/* Stats Bar */}
+                                <div style={{ display: 'flex', gap: '12px', marginTop: 'auto' }}>
+                                    {role === 'provider' ? (
+                                        <>
+                                            <div style={{ flex: 1, backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', padding: '16px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Response Rate</span>
+                                                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1e293b' }}>98%</span>
                                             </div>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div>
-                                            <span style={{ display: 'block', fontSize: '12px', color: '#737685', fontWeight: '500' }}>Member Since</span>
-                                            <span style={{ fontSize: '1.125rem', fontWeight: '700' }}>{user?.createdAt ? new Date(user.createdAt).getFullYear() : 2024}</span>
-                                        </div>
-                                        <div>
-                                            <span style={{ display: 'block', fontSize: '12px', color: '#737685', fontWeight: '500' }}>Total Bookings</span>
-                                            <span style={{ fontSize: '1.125rem', fontWeight: '700' }}>{myBookings.length}</span>
-                                        </div>
-                                        <div>
-                                            <span style={{ display: 'block', fontSize: '12px', color: '#737685', fontWeight: '500' }}>Account Status</span>
-                                            <span style={{ fontSize: '1.125rem', fontWeight: '700', color: '#22c55e' }}>Active</span>
-                                        </div>
-                                    </>
-                                )}
+                                            <div style={{ flex: 1, backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', padding: '16px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Experience</span>
+                                                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1e293b' }}>{user?.providerDetails?.experienceYears || 0} Yrs</span>
+                                            </div>
+                                            <div style={{ flex: 1, backgroundColor: '#fffbeb', border: '1px solid #fef3c7', padding: '16px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <span style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rating</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#b45309' }}>4.9</span>
+                                                    <Star size={16} color="#d97706" fill="#d97706" />
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div style={{ flex: 1, backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', padding: '16px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Member Since</span>
+                                                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1e293b' }}>{user?.createdAt ? new Date(user.createdAt).getFullYear() : 2024}</span>
+                                            </div>
+                                            <div style={{ flex: 1, backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', padding: '16px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Bookings</span>
+                                                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1e293b' }}>{myBookings.length}</span>
+                                            </div>
+                                            <div style={{ flex: 1, backgroundColor: '#ecfdf5', border: '1px solid #dcfce7', padding: '16px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <span style={{ fontSize: '0.75rem', color: '#166534', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Account Status</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></div>
+                                                    <span style={{ fontSize: '1rem', fontWeight: 900, color: '#166534' }}>Active</span>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </section>
 
+                    {/* Right Side Column for Row 1 */}
                     {role === 'customer' && (
-                        <section style={{
-                            gridColumn: 'span 4',
-                            background: 'linear-gradient(135deg, #003d9b 0%, #0052cc 100%)',
-                            borderRadius: '24px',
-                            padding: '32px',
-                            color: 'white',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'center',
-                            boxShadow: '0 20px 40px rgba(0, 61, 155, 0.2)',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            cursor: 'pointer'
-                        }} onClick={() => setActiveTab('become_provider')}>
-                            <div style={{ position: 'absolute', right: -20, top: -20, opacity: 0.1 }}>
-                                <Briefcase size={120} />
+                        <section 
+                            onClick={() => setActiveTab('become_provider')}
+                            style={{ gridColumn: 'span 4', background: 'linear-gradient(135deg, #003d9b 0%, #3b82f6 100%)', borderRadius: '24px', padding: '32px', color: 'white', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 20px 40px -10px rgba(0, 61, 155, 0.3)', position: 'relative', overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                            onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 61, 155, 0.4)'; }}
+                            onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 20px 40px -10px rgba(0, 61, 155, 0.3)'; }}
+                        >
+                            <div style={{ position: 'absolute', right: '-20px', top: '-20px', opacity: 0.1, transform: 'rotate(15deg)' }}>
+                                <Briefcase size={160} />
                             </div>
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '12px', position: 'relative' }}>Join as a Seller</h3>
-                            <p style={{ fontSize: '0.9rem', opacity: 0.9, lineHeight: '1.6', marginBottom: '24px', position: 'relative' }}>
+                            <h3 style={{ fontSize: '1.75rem', fontWeight: 900, marginBottom: '12px', position: 'relative', lineHeight: 1.2 }}>Level Up & Join<br/>as a Seller</h3>
+                            <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, marginBottom: '32px', position: 'relative' }}>
                                 Unlock professional features, reach local customers, and start earning by offering your services today.
                             </p>
-                            <div
-                                style={{
-                                    backgroundColor: 'white',
-                                    color: '#003d9b',
-                                    border: 'none',
-                                    padding: '14px 24px',
-                                    borderRadius: '100px',
-                                    fontWeight: '800',
-                                    fontSize: '0.9rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    width: 'fit-content',
-                                    position: 'relative'
-                                }}
-                            >
+                            <div style={{ backgroundColor: 'white', color: '#003d9b', border: 'none', padding: '14px 24px', borderRadius: '12px', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: 'fit-content', position: 'relative', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
                                 Start Selling Now <ChevronRight size={18} />
                             </div>
                         </section>
                     )}
 
-                    {/* Quick Stats Card */}
                     {role === 'provider' && (
-                        <section style={{ gridColumn: 'span 4', backgroundColor: '#e7e7f2', borderRadius: '24px', padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                            <div>
-                                <h4 style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--primary)', marginBottom: '24px' }}>Account Status</h4>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    <div style={{ backgroundColor: '#fff', padding: '16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '14px', fontWeight: '600' }}>Verification</span>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#22c55e', fontWeight: '700' }}>
-                                            <CheckCircle size={14} /> Verified
-                                        </span>
+                        <section style={{ gridColumn: 'span 4', backgroundColor: '#ffffff', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.4)', padding: '32px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
+                                <div style={{ padding: '8px', background: '#f0f7ff', borderRadius: '10px', color: '#003d9b' }}><CheckCircle size={18} /></div>
+                                <h4 style={{ fontSize: '1.125rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>Quick Status</h4>
+                            </div>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
+                                <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #f1f5f9' }}>
+                                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#475569' }}>Identity</span>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#10b981', fontWeight: 800, background: '#ecfdf5', padding: '4px 10px', borderRadius: '6px' }}>
+                                        <BadgeCheck size={14} /> Verified
+                                    </span>
+                                </div>
+                                <div style={{ backgroundColor: '#f8fafc', padding: '20px 16px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '16px', border: '1px solid #f1f5f9', flex: 1 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#475569' }}>Active Gigs</span>
+                                        <div style={{ backgroundColor: '#003d9b', color: 'white', padding: '4px 12px', borderRadius: '99px', fontSize: '0.9rem', fontWeight: 900 }}>{myGigs.length}</div>
                                     </div>
-                                    <div style={{ backgroundColor: '#fff', padding: '16px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '14px', fontWeight: '600' }}>Active Gigs</span>
-                                            <span style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--primary)' }}>{myGigs.length}</span>
+                                    {myGigs.length > 0 ? (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: 'auto' }}>
+                                            {myGigs.slice(0, 2).map((gig, idx) => (
+                                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'white', padding: '10px', borderRadius: '10px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: gig.isApproved ? '#10b981' : '#f59e0b' }}></div>
+                                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{gig.title}</span>
+                                                </div>
+                                            ))}
+                                            {myGigs.length > 2 && <span style={{ fontSize: '0.75rem', color: '#003d9b', fontWeight: 800, textAlign: 'center', marginTop: '4px' }}>+ {myGigs.length - 2} more gigs</span>}
                                         </div>
-                                        {myGigs.length > 0 ? (
-                                            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                {myGigs.slice(0, 2).map((gig, idx) => (
-                                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: gig.isApproved ? '#22c55e' : '#f59e0b' }}></div>
-                                                        <span style={{ fontSize: '12px', color: '#434654', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{gig.title}</span>
-                                                    </div>
-                                                ))}
-                                                {myGigs.length > 2 && <span style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: '700' }}>+ {myGigs.length - 2} more gigs</span>}
-                                            </div>
-                                        ) : (
-                                            <p style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>No gigs posted yet.</p>
-                                        )}
-                                    </div>
+                                    ) : (
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, backgroundColor: 'white', borderRadius: '10px', padding: '20px' }}>
+                                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic', margin: 0, fontWeight: 500 }}>No gigs posted yet.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <button style={{ width: '100%', marginTop: 'auto', padding: '12px', borderRadius: '100px', backgroundColor: '#191b23', color: '#fff', fontSize: '14px', fontWeight: '700', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                Upgrade Plan <BarChart size={16} />
-                            </button>
                         </section>
                     )}
 
                     {/* Quick Links / Actions */}
                     {role === 'provider' && (
                         <div style={{ gridColumn: 'span 12', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
-                            <div onClick={() => setActiveTab('mygigs')} className="group" style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '24px', border: '1px solid rgba(0,0,0,0.05)', cursor: 'pointer', transition: 'all 0.3s' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>
-                                    <div style={{ padding: '12px', backgroundColor: '#f3f3fd', borderRadius: '16px', color: 'var(--primary)' }}>
-                                        <Briefcase size={24} />
+                            <div 
+                                onClick={() => setActiveTab('mygigs')} 
+                                style={{ backgroundColor: '#ffffff', padding: '32px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.4)', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
+                                onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.05)'; e.currentTarget.style.borderColor = '#003d9b'; }}
+                                onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; e.currentTarget.style.borderColor = 'rgba(195, 198, 214, 0.4)'; }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ padding: '16px', backgroundColor: '#f0f7ff', borderRadius: '16px', color: '#003d9b' }}>
+                                        <Briefcase size={28} />
                                     </div>
-                                    <Plus size={20} color="#737685" />
+                                    <div style={{ backgroundColor: '#f8fafc', padding: '8px', borderRadius: '50%', color: '#94a3b8' }}>
+                                        <ArrowUpRight size={20} />
+                                    </div>
                                 </div>
-                                <h4 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '8px' }}>My Gigs</h4>
-                                <p style={{ fontSize: '12px', color: '#737685' }}>Manage your active listings and draft new proposals.</p>
+                                <div>
+                                    <h4 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: '8px' }}>Manage Gigs</h4>
+                                    <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0, fontWeight: 500 }}>Create new listings, edit active services, and manage your portfolio.</p>
+                                </div>
                             </div>
 
-                            <div onClick={() => setActiveTab('chat')} style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '24px', border: '1px solid rgba(0,0,0,0.05)', cursor: 'pointer' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>
-                                    <div style={{ padding: '12px', backgroundColor: '#f3f3fd', borderRadius: '16px', color: 'var(--tertiary-container)' }}>
-                                        <MessageSquare size={24} />
+                            <div 
+                                onClick={() => setActiveTab('chat')} 
+                                style={{ backgroundColor: '#ffffff', padding: '32px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.4)', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
+                                onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.05)'; e.currentTarget.style.borderColor = '#003d9b'; }}
+                                onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; e.currentTarget.style.borderColor = 'rgba(195, 198, 214, 0.4)'; }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ padding: '16px', backgroundColor: '#fdf4ff', borderRadius: '16px', color: '#c026d3' }}>
+                                        <MessageSquare size={28} />
                                     </div>
-                                    <div style={{ position: 'relative' }}>
-                                        <Plus size={20} color="#737685" />
-                                        <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '50%' }}></div>
+                                    <div style={{ position: 'relative', backgroundColor: '#f8fafc', padding: '8px', borderRadius: '50%', color: '#94a3b8' }}>
+                                        <ArrowUpRight size={20} />
+                                        <div style={{ position: 'absolute', top: '0', right: '0', width: '10px', height: '10px', backgroundColor: '#ef4444', borderRadius: '50%', border: '2px solid white' }}></div>
                                     </div>
                                 </div>
-                                <h4 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '8px' }}>Messages</h4>
-                                <p style={{ fontSize: '12px', color: '#737685' }}>Check ongoing client conversations and feedback.</p>
+                                <div>
+                                    <h4 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: '8px' }}>Client Messages</h4>
+                                    <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0, fontWeight: 500 }}>Respond to inquiries, negotiate pricing, and finalize bookings directly.</p>
+                                </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Earnings Snapshot */}
-                    {role === 'provider' && (
-                        <section style={{ gridColumn: 'span 12', backgroundColor: '#f3f3fd', borderRadius: '32px', padding: '40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px' }}>
-                            <div style={{ maxWidth: '400px' }}>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '12px' }}>Earnings Snapshot</h3>
-                                <p style={{ fontSize: '14px', color: '#737685', marginBottom: '24px' }}>Your professional performance has increased by <span style={{ color: 'var(--primary)', fontWeight: '700' }}>12.4%</span> this month. Keep it up!</p>
-                                <div style={{ display: 'flex', gap: '16px' }}>
-                                    <div style={{ backgroundColor: '#fff', padding: '12px 20px', borderRadius: '16px' }}>
-                                        <p style={{ fontSize: '10px', fontWeight: '700', color: '#737685', textTransform: 'uppercase', marginBottom: '4px' }}>Total Earned</p>
-                                        <p style={{ fontSize: '1.25rem', fontWeight: '900' }}>₹{stats.totalEarnings.toLocaleString()}</p>
+                    {/* Customer Quick Links */}
+                    {role === 'customer' && (
+                        <div style={{ gridColumn: 'span 12', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+                            <div 
+                                onClick={() => setActiveTab('bookings')} 
+                                style={{ backgroundColor: '#ffffff', padding: '32px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.4)', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
+                                onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.05)'; e.currentTarget.style.borderColor = '#003d9b'; }}
+                                onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; e.currentTarget.style.borderColor = 'rgba(195, 198, 214, 0.4)'; }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ padding: '16px', backgroundColor: '#f0fdf4', borderRadius: '16px', color: '#16a34a' }}>
+                                        <Briefcase size={28} />
                                     </div>
-                                    <div style={{ backgroundColor: '#fff', padding: '12px 20px', borderRadius: '16px' }}>
-                                        <p style={{ fontSize: '10px', fontWeight: '700', color: '#737685', textTransform: 'uppercase', marginBottom: '4px' }}>Pending</p>
-                                        <p style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--primary)' }}>₹{Math.floor(stats.totalEarnings * 0.2).toLocaleString()}</p>
+                                    <div style={{ backgroundColor: '#f8fafc', padding: '8px', borderRadius: '50%', color: '#94a3b8' }}>
+                                        <ArrowUpRight size={20} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: '8px' }}>My Bookings</h4>
+                                    <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0, fontWeight: 500 }}>Track your active service requests and past completed jobs.</p>
+                                </div>
+                            </div>
+
+                            <div 
+                                onClick={() => setActiveTab('chat')} 
+                                style={{ backgroundColor: '#ffffff', padding: '32px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.4)', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}
+                                onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.05)'; e.currentTarget.style.borderColor = '#003d9b'; }}
+                                onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.02)'; e.currentTarget.style.borderColor = 'rgba(195, 198, 214, 0.4)'; }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ padding: '16px', backgroundColor: '#fdf4ff', borderRadius: '16px', color: '#c026d3' }}>
+                                        <MessageSquare size={28} />
+                                    </div>
+                                    <div style={{ position: 'relative', backgroundColor: '#f8fafc', padding: '8px', borderRadius: '50%', color: '#94a3b8' }}>
+                                        <ArrowUpRight size={20} />
+                                        <div style={{ position: 'absolute', top: '0', right: '0', width: '10px', height: '10px', backgroundColor: '#ef4444', borderRadius: '50%', border: '2px solid white' }}></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: '8px' }}>Provider Chats</h4>
+                                    <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0, fontWeight: 500 }}>Message professionals to discuss details before or after booking.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Earnings Snapshot Widget */}
+                    {role === 'provider' && (
+                        <section style={{ gridColumn: 'span 12', backgroundColor: '#0f172a', borderRadius: '32px', padding: '40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 40px -10px rgba(15, 23, 42, 0.4)' }}>
+                            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '60%', background: 'linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.1) 100%)', pointerEvents: 'none' }}></div>
+                            
+                            <div style={{ maxWidth: '40%', position: 'relative', zIndex: 10 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                                    <div style={{ backgroundColor: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', padding: '8px', borderRadius: '10px' }}><DollarSign size={20} /></div>
+                                    <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'white', margin: 0 }}>Earnings Snapshot</h3>
+                                </div>
+                                <p style={{ fontSize: '0.95rem', color: '#94a3b8', marginBottom: '32px', lineHeight: 1.6, fontWeight: 500 }}>
+                                    Your professional performance has increased by <span style={{ color: '#38bdf8', fontWeight: 800 }}>12.4%</span> this month. Keep up the excellent work!
+                                </p>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '20px 24px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Total Earned</p>
+                                        <p style={{ fontSize: '1.75rem', fontWeight: 900, color: 'white', margin: 0 }}>₹{stats.totalEarnings.toLocaleString()}</p>
+                                    </div>
+                                    <div style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: '20px 24px', borderRadius: '20px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                                        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Pending Orders</p>
+                                        <p style={{ fontSize: '1.75rem', fontWeight: 900, color: 'white', margin: 0 }}>{stats.pendingOrders}</p>
                                     </div>
                                 </div>
                             </div>
-                            <div style={{ width: '50%', height: '160px', background: 'rgba(255,255,255,0.5)', borderRadius: '24px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '24px', gap: '8px', border: '1px solid #fff', backdropFilter: 'blur(4px)' }}>
-                                {stats.chartData.length > 0 ? stats.chartData.map((d, i) => (
-                                    <div key={i} style={{ flex: 1, backgroundColor: 'rgba(0, 61, 155, 0.1)', borderRadius: '8px 8px 0 0', height: `${Math.max(20, (d.earnings / (Math.max(...stats.chartData.map(x => x.earnings)) || 1)) * 100)}%`, transition: 'all 0.3s' }}></div>
-                                )) : [40, 60, 30, 90, 50, 75].map((h, i) => (
-                                    <div key={i} style={{ flex: 1, backgroundColor: i === 5 ? 'var(--primary)' : 'rgba(0, 61, 155, 0.1)', borderRadius: '8px 8px 0 0', height: `${h}%` }}></div>
+                            
+                            <div style={{ width: '55%', height: '220px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0', gap: '16px', position: 'relative', zIndex: 10 }}>
+                                {stats.chartData.length > 0 ? stats.chartData.map((d, i) => {
+                                    const maxEarnings = Math.max(...stats.chartData.map(x => x.earnings)) || 1;
+                                    const percentage = (d.earnings / maxEarnings) * 100;
+                                    const isCurrentMonth = i === stats.chartData.length - 1;
+                                    return (
+                                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: '8px' }}>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: d.earnings > 0 ? '#38bdf8' : '#64748b', opacity: d.earnings > 0 ? 1 : 0.5 }}>
+                                                ₹{d.earnings >= 1000 ? (d.earnings/1000).toFixed(1) + 'k' : d.earnings}
+                                            </div>
+                                            <div style={{ width: '100%', backgroundColor: d.earnings > 0 ? (isCurrentMonth ? '#38bdf8' : 'rgba(56, 189, 248, 0.4)') : 'rgba(255,255,255,0.05)', borderRadius: '8px 8px 0 0', height: `${Math.max(4, percentage)}%`, transition: 'all 0.5s ease-out', border: d.earnings === 0 ? '1px dashed rgba(255,255,255,0.1)' : 'none', borderBottom: 'none' }}></div>
+                                            <div style={{ fontSize: '0.75rem', fontWeight: isCurrentMonth ? 800 : 600, color: isCurrentMonth ? 'white' : '#94a3b8', marginTop: '4px' }}>
+                                                {d.name}
+                                            </div>
+                                        </div>
+                                    );
+                                }) : [40, 60, 30, 90, 50, 75].map((h, i) => (
+                                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: '8px' }}>
+                                        <div style={{ width: '100%', backgroundColor: i === 5 ? '#38bdf8' : 'rgba(255,255,255,0.05)', borderRadius: '8px 8px 0 0', height: `${h}%`, border: '1px solid rgba(255,255,255,0.1)', borderBottom: 'none' }}></div>
+                                    </div>
                                 ))}
                             </div>
                         </section>
                     )}
 
+                    {/* Customer Insights Widget */}
+                    {role === 'customer' && (
+                        <section style={{ gridColumn: 'span 12', backgroundColor: '#0f172a', borderRadius: '32px', padding: '40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 40px -10px rgba(15, 23, 42, 0.4)' }}>
+                            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '60%', background: 'linear-gradient(-90deg, transparent 0%, rgba(16, 185, 129, 0.1) 100%)', pointerEvents: 'none' }}></div>
+                            
+                            <div style={{ maxWidth: '40%', position: 'relative', zIndex: 10 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                                    <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', padding: '8px', borderRadius: '10px' }}><Wallet size={20} /></div>
+                                    <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'white', margin: 0 }}>Spending & Activity</h3>
+                                </div>
+                                <p style={{ fontSize: '0.95rem', color: '#94a3b8', marginBottom: '32px', lineHeight: 1.6, fontWeight: 500 }}>
+                                    Track your SkillNear investments. You have <span style={{ color: '#10b981', fontWeight: 800 }}>{myBookings.filter(b => b.status === 'completed').length}</span> completed projects!
+                                </p>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '20px 24px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Total Invested</p>
+                                        <p style={{ fontSize: '1.75rem', fontWeight: 900, color: 'white', margin: 0 }}>₹{myBookings.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.totalPrice || b.price || 0), 0).toLocaleString()}</p>
+                                    </div>
+                                    <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '20px 24px', borderRadius: '20px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                                        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Active Services</p>
+                                        <p style={{ fontSize: '1.75rem', fontWeight: 900, color: 'white', margin: 0 }}>{myBookings.filter(b => ['pending', 'confirmed', 'in_progress'].includes(b.status)).length}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style={{ width: '55%', display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative', zIndex: 10 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                    <h4 style={{ color: 'white', fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>Recent Collaborations</h4>
+                                    <button onClick={() => setActiveTab('bookings')} style={{ background: 'none', border: 'none', color: '#10b981', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}>View All</button>
+                                </div>
+                                {myBookings.slice(0, 3).map((b, i) => (
+                                    <div key={i} style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <img src={b.service?.images?.[0] || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1000&auto=format&fit=crop'} alt="" style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1000&auto=format&fit=crop'; }} />
+                                        <div style={{ flex: 1 }}>
+                                            <h5 style={{ color: 'white', margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 700 }}>{b.service?.title || 'Service Booking'}</h5>
+                                            <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.8rem' }}>{new Date(b.createdAt).toLocaleDateString()}</p>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <p style={{ color: 'white', margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 800 }}>₹{b.totalPrice || b.price || 0}</p>
+                                            <span style={{ fontSize: '0.7rem', color: b.status === 'completed' ? '#10b981' : (b.status === 'cancelled' || b.status === 'rejected' ? '#ef4444' : '#38bdf8'), fontWeight: 800, textTransform: 'uppercase', background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px' }}>{b.status}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                                {myBookings.length === 0 && (
+                                    <div style={{ padding: '32px', textAlign: 'center', color: '#64748b', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                                        <p style={{ margin: 0, fontWeight: 600 }}>No bookings yet.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+                    )}
                 </div>
             )}
 
@@ -498,6 +690,7 @@ const DashboardDesktop = ({
                             <button onClick={() => setBookingFilter('confirmed')} style={{ padding: '8px 20px', borderRadius: '100px', background: bookingFilter === 'confirmed' ? '#ffffff' : 'transparent', color: bookingFilter === 'confirmed' ? '#003d9b' : '#64748b', fontWeight: bookingFilter === 'confirmed' ? '700' : '600', border: 'none', boxShadow: bookingFilter === 'confirmed' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}>Confirmed</button>
                             <button onClick={() => setBookingFilter('in_progress')} style={{ padding: '8px 20px', borderRadius: '100px', background: bookingFilter === 'in_progress' ? '#ffffff' : 'transparent', color: bookingFilter === 'in_progress' ? '#003d9b' : '#64748b', fontWeight: bookingFilter === 'in_progress' ? '700' : '600', border: 'none', boxShadow: bookingFilter === 'in_progress' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}>In Progress</button>
                             <button onClick={() => setBookingFilter('completed')} style={{ padding: '8px 20px', borderRadius: '100px', background: bookingFilter === 'completed' ? '#ffffff' : 'transparent', color: bookingFilter === 'completed' ? '#003d9b' : '#64748b', fontWeight: bookingFilter === 'completed' ? '700' : '600', border: 'none', boxShadow: bookingFilter === 'completed' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}>Completed</button>
+                            <button onClick={() => setBookingFilter('cancelled')} style={{ padding: '8px 20px', borderRadius: '100px', background: bookingFilter === 'cancelled' ? '#ffffff' : 'transparent', color: bookingFilter === 'cancelled' ? '#003d9b' : '#64748b', fontWeight: bookingFilter === 'cancelled' ? '700' : '600', border: 'none', boxShadow: bookingFilter === 'cancelled' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}>Cancelled</button>
                         </div>
                     </div>
 
@@ -523,7 +716,8 @@ const DashboardDesktop = ({
                                     if (bookingFilter === 'pending') return b.status === 'pending';
                                     if (bookingFilter === 'confirmed') return b.status === 'confirmed';
                                     if (bookingFilter === 'in_progress') return ['in_progress', 'revision_requested', 'delivered'].includes(b.status);
-                                    if (bookingFilter === 'completed') return ['completed', 'cancelled', 'rejected'].includes(b.status);
+                                    if (bookingFilter === 'completed') return b.status === 'completed';
+                                    if (bookingFilter === 'cancelled') return ['cancelled', 'rejected'].includes(b.status);
                                     return true;
                                 }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
@@ -541,23 +735,24 @@ const DashboardDesktop = ({
                                         if (b.status === 'completed') { statusColor = '#047857'; statusBg = '#d1fae5'; }
 
                                         const isCompleted = b.status === 'completed';
+                                        const isCancelled = ['cancelled', 'rejected'].includes(b.status);
 
                                         return (
                                             <div key={b._id} style={{
-                                                background: isCompleted ? '#faf8ff' : '#ffffff',
+                                                background: isCancelled ? '#f8fafc' : (isCompleted ? '#faf8ff' : '#ffffff'),
                                                 padding: '24px',
                                                 borderRadius: '24px',
-                                                border: '1px solid rgba(195, 198, 214, 0.2)',
-                                                boxShadow: isCompleted ? 'none' : '0 10px 30px rgba(0,61,155,0.03)',
+                                                border: isCancelled ? '2px dashed #e2e8f0' : '1px solid rgba(195, 198, 214, 0.2)',
+                                                boxShadow: (isCompleted || isCancelled) ? 'none' : '0 10px 30px rgba(0,61,155,0.03)',
                                                 transition: 'all 0.3s',
-                                                opacity: 1,
-                                                filter: 'none'
+                                                opacity: isCancelled ? 0.7 : 1,
+                                                filter: isCancelled ? 'grayscale(100%)' : 'none'
                                             }}
                                                 onMouseEnter={(e) => {
-                                                    e.currentTarget.style.boxShadow = '0 15px 40px rgba(0,61,155,0.08)';
+                                                    if (!isCancelled && !isCompleted) e.currentTarget.style.boxShadow = '0 15px 40px rgba(0,61,155,0.08)';
                                                 }}
                                                 onMouseLeave={(e) => {
-                                                    e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,61,155,0.03)';
+                                                    if (!isCancelled && !isCompleted) e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,61,155,0.03)';
                                                 }}>
                                                 <div style={{ display: 'flex', gap: '24px' }}>
                                                     {/* Image */}
@@ -661,12 +856,12 @@ const DashboardDesktop = ({
                                     <h4 style={{ fontSize: '0.875rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, marginBottom: '24px' }}>Activity Summary</h4>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                                         <div>
-                                            <p style={{ fontSize: '2.25rem', fontWeight: '900', lineHeight: 1 }}>₹{myBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0)}</p>
+                                            <p style={{ fontSize: '2.25rem', fontWeight: '900', lineHeight: 1 }}>₹{myBookings.filter(b => b.status !== 'cancelled' && b.status !== 'rejected').reduce((sum, b) => sum + (b.totalPrice || 0), 0)}</p>
                                             <p style={{ fontSize: '0.75rem', fontWeight: '600', opacity: 0.8, marginTop: '4px' }}>Total Bookings Value</p>
                                         </div>
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '16px', borderRadius: '16px', backdropFilter: 'blur(4px)' }}>
-                                                <p style={{ fontSize: '1.25rem', fontWeight: '700' }}>{myBookings.length}</p>
+                                                <p style={{ fontSize: '1.25rem', fontWeight: '700' }}>{myBookings.filter(b => b.status !== 'cancelled' && b.status !== 'rejected').length}</p>
                                                 <p style={{ fontSize: '0.625rem', fontWeight: '700', opacity: 0.7, textTransform: 'uppercase', marginTop: '2px' }}>Bookings</p>
                                             </div>
                                             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '16px', borderRadius: '16px', backdropFilter: 'blur(4px)' }}>
@@ -1598,70 +1793,87 @@ const DashboardDesktop = ({
                     {/* Dashboard Layout: Bento Style */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '32px' }}>
                         {/* Profile Image & Quick Info */}
-                        <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                            {/* User Card */}
-                            <div style={{ backgroundColor: '#ffffff', padding: '32px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.2)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden' }}>
-                                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '96px', background: 'linear-gradient(to bottom right, rgba(0, 61, 155, 0.05), transparent)' }}></div>
-                                <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        {/* Profile Image & Quick Info */}
+                        <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                            {/* Modern User Card */}
+                            <div style={{ backgroundColor: '#ffffff', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.4)', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.08)', position: 'relative', overflow: 'hidden' }}>
+                                {/* Header Banner */}
+                                <div style={{ width: '100%', height: '120px', background: 'linear-gradient(135deg, #003d9b 0%, #3b82f6 100%)', position: 'relative' }}>
+                                    <div style={{ position: 'absolute', inset: 0, opacity: 0.2, backgroundImage: 'radial-gradient(circle at 20px 20px, white 2px, transparent 0)', backgroundSize: '40px 40px' }}></div>
+                                </div>
+                                
+                                <div style={{ position: 'relative', padding: '0 32px 32px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '-64px' }}>
                                     <div style={{ position: 'relative', marginBottom: '16px' }}>
-                                        <img
-                                            src={getAvatar({ avatar: profileAvatar, name: profileNameState })}
-                                            alt={profileNameState}
-                                            style={{ width: '128px', height: '128px', borderRadius: '24px', objectFit: 'cover', ring: '4px solid white', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
-                                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileNameState || 'U')}&background=ede9fe&color=4f46e5&size=120`; }}
-                                        />
-                                        <span style={{ position: 'absolute', bottom: '-8px', right: '-8px', backgroundColor: '#003d9b', color: 'white', fontSize: '10px', fontWeight: 900, padding: '4px 12px', borderRadius: '9999px', border: '2px solid white', letterSpacing: '0.1em' }}>{user?.role === 'provider' ? 'PRO' : 'USER'}</span>
+                                        <div style={{ padding: '6px', background: 'white', borderRadius: '50%', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15)' }}>
+                                            <img
+                                                src={getAvatar({ avatar: profileAvatar, name: profileNameState })}
+                                                alt={profileNameState}
+                                                style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover' }}
+                                                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileNameState || 'U')}&background=ede9fe&color=4f46e5&size=120`; }}
+                                            />
+                                        </div>
+                                        <div style={{ position: 'absolute', bottom: '8px', right: '4px', backgroundColor: '#10b981', color: 'white', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', border: '3px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', zIndex: 10 }}>
+                                            <Check size={14} strokeWidth={4} />
+                                        </div>
                                     </div>
-                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#191b23', margin: 0 }}>{profileNameState}</h3>
-                                    <p style={{ color: '#434654', fontSize: '0.875rem', fontWeight: 500, marginTop: '4px' }}>Member since {new Date(user?.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
                                     
-                                    <label htmlFor="avatar-upload-bento" style={{ marginTop: '24px', width: '100%', padding: '10px 0', border: '2px dashed #c3c6d6', borderRadius: '12px', color: '#737685', fontWeight: 500, fontSize: '0.875rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                        {uploadingAvatar ? <Loader size={16} className="animate-spin" /> : <Camera size={16} />}
-                                        {uploadingAvatar ? 'Uploading...' : 'Change Photo'}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                        <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1e293b', margin: 0, letterSpacing: '-0.025em' }}>{profileNameState}</h3>
+                                        <span style={{ backgroundColor: user?.role === 'provider' ? '#fef08a' : '#e0e7ff', color: user?.role === 'provider' ? '#854d0e' : '#3730a3', fontSize: '10px', fontWeight: 900, padding: '4px 10px', borderRadius: '8px', letterSpacing: '0.05em' }}>{user?.role === 'provider' ? 'PRO' : 'USER'}</span>
+                                    </div>
+                                    <p style={{ color: '#64748b', fontSize: '0.875rem', fontWeight: 600, marginBottom: '24px' }}>Joined {new Date(user?.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+                                    
+                                    <label htmlFor="avatar-upload-bento" style={{ width: '100%', padding: '12px 0', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '14px', color: '#334155', fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }} onMouseOver={e => { e.currentTarget.style.backgroundColor = '#f1f5f9'; e.currentTarget.style.borderColor = '#cbd5e1'; }} onMouseOut={e => { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.borderColor = '#e2e8f0'; }}>
+                                        {uploadingAvatar ? <Loader size={18} className="animate-spin" /> : <Camera size={18} color="#64748b" />}
+                                        {uploadingAvatar ? 'Uploading...' : 'Update Profile Photo'}
                                         <input id="avatar-upload-bento" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} disabled={uploadingAvatar} />
                                     </label>
                                 </div>
                             </div>
 
                             {/* Account Status Card */}
-                            <div style={{ backgroundColor: '#f3f3fd', padding: '24px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.2)' }}>
-                                <h4 style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#434654', marginBottom: '16px' }}>Account Status</h4>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ffffff', padding: '12px', borderRadius: '12px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                                        <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#64748b' }}>Verification</span>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#003d9b', fontWeight: 700, fontSize: '0.875rem' }}>
-                                            <BadgeCheck size={16} />
-                                            Verified
+                            <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.4)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                                    <div style={{ padding: '8px', background: '#ecfdf5', borderRadius: '10px', color: '#10b981' }}><BadgeCheck size={18} /></div>
+                                    <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>Account Status</h4>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4f46e5' }}><Lock size={16} /></div>
+                                            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#334155' }}>Identity</span>
                                         </div>
+                                        <div style={{ backgroundColor: '#ecfdf5', color: '#059669', padding: '6px 12px', borderRadius: '8px', fontWeight: 800, fontSize: '0.75rem' }}>VERIFIED</div>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ffffff', padding: '12px', borderRadius: '12px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                                        <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#64748b' }}>Status</span>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#059669', fontWeight: 700, fontSize: '0.875rem' }}>
-                                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', animation: 'pulse 2s infinite' }}></div>
-                                            Available
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc', padding: '16px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}><div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16a34a', animation: 'pulse 2s infinite' }}></div></div>
+                                            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#334155' }}>Status</span>
                                         </div>
+                                        <div style={{ color: '#16a34a', fontWeight: 800, fontSize: '0.85rem' }}>Available</div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Security Alert Card */}
-                            <div style={{ backgroundColor: 'rgba(255, 218, 214, 0.2)', padding: '24px', borderRadius: '24px', border: '1px solid rgba(186, 26, 26, 0.1)', position: 'relative', overflow: 'hidden' }}>
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-                                    <div style={{ backgroundColor: '#ffffff', padding: '8px', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                                        <Lock size={20} color="#ba1a1a" />
+                            <div style={{ background: 'linear-gradient(to right, #fff1f2, #ffe4e6)', padding: '24px', borderRadius: '24px', border: '1px solid #fecdd3', position: 'relative', overflow: 'hidden' }}>
+                                <div style={{ position: 'absolute', right: '-10px', top: '-10px', opacity: 0.1, color: '#e11d48' }}><Lock size={100} /></div>
+                                <div style={{ position: 'relative', zIndex: 10 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                                        <div style={{ backgroundColor: '#e11d48', padding: '6px', borderRadius: '8px', color: 'white' }}><Lock size={16} /></div>
+                                        <h4 style={{ fontWeight: 800, color: '#be123c', fontSize: '1rem', margin: 0 }}>Security Tip</h4>
                                     </div>
-                                    <div>
-                                        <h4 style={{ fontWeight: 700, color: '#93000a', fontSize: '0.875rem', margin: 0 }}>Security Tip</h4>
-                                        <p style={{ fontSize: '0.75rem', color: 'rgba(147, 0, 10, 0.8)', marginTop: '4px', lineHeight: 1.5 }}>
-                                            Ensure your account remains secure by updating your password periodically and enabling two-factor authentication.
-                                        </p>
-                                        <button 
-                                            onClick={() => toast.info('Password reset link sent to your email')}
-                                            style={{ marginTop: '12px', fontSize: '0.75rem', fontWeight: 700, color: '#ba1a1a', textTransform: 'uppercase', letterSpacing: '0.05em', border: 'none', background: 'transparent', cursor: 'pointer', textDecoration: 'underline' }}
-                                        >
-                                            Update Now
-                                        </button>
-                                    </div>
+                                    <p style={{ fontSize: '0.85rem', color: '#9f1239', lineHeight: 1.5, fontWeight: 500, marginBottom: '16px' }}>
+                                        Protect your account by regularly updating your password and never sharing your OTP.
+                                    </p>
+                                    <button 
+                                        onClick={() => toast.info('Password reset link sent to your email')}
+                                        style={{ padding: '8px 16px', backgroundColor: 'rgba(225, 29, 72, 0.1)', color: '#be123c', fontWeight: 800, fontSize: '0.8rem', borderRadius: '10px', border: '1px solid rgba(225, 29, 72, 0.2)', cursor: 'pointer', transition: 'all 0.2s' }}
+                                        onMouseOver={e => e.currentTarget.style.backgroundColor = 'rgba(225, 29, 72, 0.15)'}
+                                        onMouseOut={e => e.currentTarget.style.backgroundColor = 'rgba(225, 29, 72, 0.1)'}
+                                    >
+                                        Update Password
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -1669,90 +1881,133 @@ const DashboardDesktop = ({
                         {/* Form Area */}
                         <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '32px' }}>
                             {/* Personal Info Section */}
-                            <section style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.1)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-                                    <User size={24} color="#003d9b" />
-                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.025em', margin: 0 }}>Personal Information</h3>
+                            <section style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.4)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                    <div style={{ padding: '10px', background: '#f0f7ff', borderRadius: '12px', color: '#003d9b' }}><User size={20} /></div>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>Personal Information</h3>
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+                                <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '32px', fontWeight: 500 }}>Update your basic profile information and contact details.</p>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '32px 24px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>Full Name</label>
-                                        <input
-                                            style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 500, color: '#191b23', outline: 'none' }}
-                                            type="text"
-                                            value={profileNameState}
-                                            onChange={e => setProfileNameState(e.target.value)}
-                                        />
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>Username</label>
-                                        <input
-                                            style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 500, color: '#191b23', outline: 'none' }}
-                                            type="text"
-                                            value={profileUsername}
-                                            onChange={e => setProfileUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
-                                        />
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>Email Address</label>
-                                        <div style={{ position: 'relative' }}>
+                                        <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e293b' }}>Full Name</label>
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                            <div style={{ position: 'absolute', left: '16px', color: '#94a3b8' }}><User size={18} /></div>
                                             <input
-                                                style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 500, color: '#191b23', outline: 'none', opacity: 0.7 }}
+                                                style={{ width: '100%', backgroundColor: '#f8fafc', border: '2px solid #f1f5f9', borderRadius: '12px', padding: '14px 16px 14px 44px', fontSize: '0.95rem', fontWeight: 600, color: '#1e293b', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
+                                                type="text"
+                                                value={profileNameState}
+                                                onChange={e => setProfileNameState(e.target.value)}
+                                                onFocus={e => { e.target.style.borderColor = '#003d9b'; e.target.style.backgroundColor = '#fff'; }}
+                                                onBlur={e => { e.target.style.borderColor = '#f1f5f9'; e.target.style.backgroundColor = '#f8fafc'; }}
+                                                placeholder="Enter your full name"
+                                            />
+                                        </div>
+                                        <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Displayed on your public profile</span>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e293b' }}>Username</label>
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                            <div style={{ position: 'absolute', left: '16px', color: '#94a3b8', fontWeight: 800 }}>@</div>
+                                            <input
+                                                style={{ width: '100%', backgroundColor: '#f8fafc', border: '2px solid #f1f5f9', borderRadius: '12px', padding: '14px 16px 14px 44px', fontSize: '0.95rem', fontWeight: 600, color: '#1e293b', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
+                                                type="text"
+                                                value={profileUsername}
+                                                onChange={e => setProfileUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
+                                                onFocus={e => { e.target.style.borderColor = '#003d9b'; e.target.style.backgroundColor = '#fff'; }}
+                                                onBlur={e => { e.target.style.borderColor = '#f1f5f9'; e.target.style.backgroundColor = '#f8fafc'; }}
+                                                placeholder="Choose a unique handle"
+                                            />
+                                        </div>
+                                        <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Used for your unique profile URL</span>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e293b' }}>Email Address</label>
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                            <div style={{ position: 'absolute', left: '16px', color: '#94a3b8' }}>
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 4 10 8 10-8"/></svg>
+                                            </div>
+                                            <input
+                                                style={{ width: '100%', backgroundColor: '#f1f5f9', border: '2px solid #e2e8f0', borderRadius: '12px', padding: '14px 85px 14px 44px', fontSize: '0.95rem', fontWeight: 600, color: '#64748b', outline: 'none', cursor: 'not-allowed', boxSizing: 'border-box' }}
                                                 type="email"
                                                 value={user?.email}
                                                 readOnly
                                             />
-                                            <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#10b981' }}>
-                                                <CheckCircle size={16} />
-                                            </span>
+                                            <div style={{ position: 'absolute', right: '16px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 800 }}>
+                                                <CheckCircle size={14} /> Verified
+                                            </div>
                                         </div>
+                                        <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Contact support to change email</span>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>Phone Number</label>
-                                        <input
-                                            style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 500, color: '#191b23', outline: 'none' }}
-                                            type="tel"
-                                            value={profilePhone}
-                                            onChange={e => {
-                                                const val = e.target.value.replace(/\D/g, '');
-                                                if (val.length <= 10) setProfilePhone(val);
-                                            }}
-                                        />
+                                        <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e293b' }}>Phone Number</label>
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                            <div style={{ position: 'absolute', left: '16px', color: '#94a3b8' }}><Phone size={18} /></div>
+                                            <input
+                                                style={{ width: '100%', backgroundColor: '#f8fafc', border: '2px solid #f1f5f9', borderRadius: '12px', padding: '14px 16px 14px 44px', fontSize: '0.95rem', fontWeight: 600, color: '#1e293b', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
+                                                type="tel"
+                                                value={profilePhone}
+                                                onChange={e => {
+                                                    const val = e.target.value.replace(/\D/g, '');
+                                                    if (val.length <= 10) setProfilePhone(val);
+                                                }}
+                                                onFocus={e => { e.target.style.borderColor = '#003d9b'; e.target.style.backgroundColor = '#fff'; }}
+                                                onBlur={e => { e.target.style.borderColor = '#f1f5f9'; e.target.style.backgroundColor = '#f8fafc'; }}
+                                                placeholder="Enter 10-digit number"
+                                            />
+                                        </div>
+                                        <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Used for booking updates</span>
                                     </div>
                                 </div>
                             </section>
 
-                            {/* Professional Details Section */}
-                            <section style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.1)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-                                    <Award size={24} color="#003d9b" />
-                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.025em', margin: 0 }}>Professional Details</h3>
+                            <section style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.4)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                    <div style={{ padding: '10px', background: '#fef08a', borderRadius: '12px', color: '#ca8a04' }}><Award size={20} /></div>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>Professional Details</h3>
                                 </div>
+                                <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '32px', fontWeight: 500 }}>Tell customers what you do and highlight your expertise.</p>
+
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>Public Title / Headline</label>
-                                        <input
-                                            style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 600, color: '#191b23', outline: 'none' }}
-                                            type="text"
-                                            value={providerTitle}
-                                            maxLength={25}
-                                            onChange={e => setProviderTitle(e.target.value)}
-                                            placeholder="e.g. Expert Home Stylist or Senior Electrician"
-                                        />
+                                        <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e293b' }}>Public Title / Headline</label>
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                            <div style={{ position: 'absolute', left: '16px', color: '#94a3b8' }}><Briefcase size={18} /></div>
+                                            <input
+                                                style={{ width: '100%', backgroundColor: '#f8fafc', border: '2px solid #f1f5f9', borderRadius: '12px', padding: '14px 16px 14px 44px', fontSize: '0.95rem', fontWeight: 600, color: '#1e293b', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
+                                                type="text"
+                                                value={providerTitle}
+                                                maxLength={25}
+                                                onChange={e => setProviderTitle(e.target.value)}
+                                                onFocus={e => { e.target.style.borderColor = '#ca8a04'; e.target.style.backgroundColor = '#fff'; }}
+                                                onBlur={e => { e.target.style.borderColor = '#f1f5f9'; e.target.style.backgroundColor = '#f8fafc'; }}
+                                                placeholder="e.g. Expert Home Stylist or Senior Electrician"
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px' }}>
+                                            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Appears below your name</span>
+                                            <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>{providerTitle?.length || 0} / 25</span>
+                                        </div>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>About Me / Bio</label>
-                                            <span style={{ fontSize: '10px', color: '#737685', fontWeight: 500 }}>{providerAbout?.length || 0} / 50 characters</span>
+                                        <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e293b' }}>About Me / Bio</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <div style={{ position: 'absolute', left: '16px', top: '16px', color: '#94a3b8' }}><FileText size={18} /></div>
+                                            <textarea
+                                                style={{ width: '100%', backgroundColor: '#f8fafc', border: '2px solid #f1f5f9', borderRadius: '12px', padding: '16px 16px 16px 44px', fontSize: '0.95rem', fontWeight: 500, color: '#1e293b', outline: 'none', resize: 'none', lineHeight: 1.6, transition: 'all 0.2s', boxSizing: 'border-box' }}
+                                                rows="3"
+                                                value={providerAbout}
+                                                maxLength={50}
+                                                onChange={e => setProviderAbout(e.target.value)}
+                                                onFocus={e => { e.target.style.borderColor = '#ca8a04'; e.target.style.backgroundColor = '#fff'; }}
+                                                onBlur={e => { e.target.style.borderColor = '#f1f5f9'; e.target.style.backgroundColor = '#f8fafc'; }}
+                                                placeholder="Describe your skills in 50 characters or less..."
+                                            ></textarea>
                                         </div>
-                                        <textarea
-                                            style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 500, color: '#191b23', outline: 'none', resize: 'none', lineHeight: 1.6 }}
-                                            rows="3"
-                                            value={providerAbout}
-                                            maxLength={50}
-                                            onChange={e => setProviderAbout(e.target.value)}
-                                            placeholder="Describe your skills in 50 characters or less..."
-                                        ></textarea>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px' }}>
+                                            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>A short introduction to your services</span>
+                                            <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>{providerAbout?.length || 0} / 50</span>
+                                        </div>
                                     </div>
                                 </div>
                             </section>
@@ -2076,21 +2331,35 @@ const DashboardDesktop = ({
                 <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px', marginBottom: '32px' }}>
                         {/* Balance Overview */}
-                        <div style={{ gridColumn: 'span 4', backgroundColor: '#003d9b', borderRadius: '24px', padding: '32px', color: 'white', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ gridColumn: 'span 4', backgroundColor: role === 'provider' ? '#003d9b' : '#0f172a', borderRadius: '24px', padding: '32px', color: 'white', position: 'relative', overflow: 'hidden' }}>
                             <div style={{ position: 'absolute', right: -20, bottom: -20, opacity: 0.1 }}>
                                 <Wallet size={120} />
                             </div>
-                            <p style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8, marginBottom: '8px' }}>Total Earnings</p>
-                            <h2 style={{ fontSize: '2.5rem', fontWeight: '900', margin: 0 }}>₹{stats.totalEarnings?.toLocaleString() || '0'}</h2>
-                            <div style={{ marginTop: '24px', display: 'flex', gap: '16px' }}>
-                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1 }}>
-                                    <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', opacity: 0.7 }}>Available</span>
-                                    <span style={{ fontSize: '1.25rem', fontWeight: '800' }}>₹{(stats.totalEarnings - (stats.withdrawnAmount || 0)).toLocaleString()}</span>
+                            <p style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8, marginBottom: '8px' }}>{role === 'provider' ? 'Total Earnings' : 'Total Invested'}</p>
+                            <h2 style={{ fontSize: '2.5rem', fontWeight: '900', margin: 0 }}>₹{role === 'provider' ? (stats.totalEarnings?.toLocaleString() || '0') : myBookings.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.totalPrice || b.price || 0), 0).toLocaleString()}</h2>
+                            
+                            {role === 'provider' ? (
+                                <div style={{ marginTop: '24px', display: 'flex', gap: '16px' }}>
+                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1 }}>
+                                        <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', opacity: 0.7 }}>Available</span>
+                                        <span style={{ fontSize: '1.25rem', fontWeight: '800' }}>₹{((stats.totalEarnings || 0) - (stats.withdrawnAmount || 0)).toLocaleString()}</span>
+                                    </div>
+                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <button className="btn-primary" style={{ background: 'white', color: '#003d9b', padding: '8px 16px', borderRadius: '12px', fontSize: '10px', fontWeight: '900', border: 'none' }}>WITHDRAW</button>
+                                    </div>
                                 </div>
-                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <button className="btn-primary" style={{ background: 'white', color: '#003d9b', padding: '8px 16px', borderRadius: '12px', fontSize: '10px', fontWeight: '900', border: 'none' }}>WITHDRAW</button>
+                            ) : (
+                                <div style={{ marginTop: '24px', display: 'flex', gap: '16px' }}>
+                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1 }}>
+                                        <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', opacity: 0.7 }}>Completed Projects</span>
+                                        <span style={{ fontSize: '1.25rem', fontWeight: '800' }}>{myBookings.filter(b => b.status === 'completed').length}</span>
+                                    </div>
+                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1 }}>
+                                        <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', opacity: 0.7 }}>Active Services</span>
+                                        <span style={{ fontSize: '1.25rem', fontWeight: '800' }}>{myBookings.filter(b => ['pending', 'confirmed', 'in_progress'].includes(b.status)).length}</span>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Stats Cards */}
@@ -2100,8 +2369,8 @@ const DashboardDesktop = ({
                                     <ArrowDownLeft size={24} />
                                 </div>
                                 <div>
-                                    <p style={{ fontSize: '12px', color: '#737685', fontWeight: '600' }}>Last 30 Days</p>
-                                    <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>₹{Math.round((stats.totalEarnings || 0) * 0.35).toLocaleString()}</h4>
+                                    <p style={{ fontSize: '12px', color: '#737685', fontWeight: '600' }}>{role === 'provider' ? 'Last 30 Days' : 'Recent Spending (30d)'}</p>
+                                    <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>₹{role === 'provider' ? Math.round((stats.totalEarnings || 0) * 0.35).toLocaleString() : Math.round(myBookings.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.totalPrice || b.price || 0), 0) * 0.35).toLocaleString()}</h4>
                                 </div>
                             </div>
                             <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -2109,8 +2378,8 @@ const DashboardDesktop = ({
                                     <CreditCard size={24} />
                                 </div>
                                 <div>
-                                    <p style={{ fontSize: '12px', color: '#737685', fontWeight: '600' }}>Active Orders Value</p>
-                                    <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>₹{bookingRequests.filter(b => b.status === 'confirmed' || b.status === 'in_progress').reduce((acc, b) => acc + (b.totalPrice || 0), 0).toLocaleString()}</h4>
+                                    <p style={{ fontSize: '12px', color: '#737685', fontWeight: '600' }}>{role === 'provider' ? 'Active Orders Value' : 'Pending Obligations'}</p>
+                                    <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>₹{role === 'provider' ? bookingRequests.filter(b => b.status === 'confirmed' || b.status === 'in_progress').reduce((acc, b) => acc + (b.totalPrice || 0), 0).toLocaleString() : myBookings.filter(b => b.status === 'confirmed' || b.status === 'in_progress').reduce((acc, b) => acc + (b.totalPrice || 0), 0).toLocaleString()}</h4>
                                 </div>
                             </div>
                         </div>
@@ -2138,7 +2407,7 @@ const DashboardDesktop = ({
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {(bookingRequests || []).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed').length === 0 ? (
+                                    {(role === 'provider' ? bookingRequests : myBookings).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed').length === 0 ? (
                                         <tr>
                                             <td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
@@ -2148,7 +2417,7 @@ const DashboardDesktop = ({
                                             </td>
                                         </tr>
                                     ) : (
-                                        (bookingRequests || []).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed').map((tx, idx) => (
+                                        (role === 'provider' ? bookingRequests : myBookings).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed').map((tx, idx) => (
                                             <tr key={idx} style={{ borderBottom: '1px solid #f8fafc', transition: 'all 0.2s ease' }} className="hover-bg-light">
                                                 <td style={{ padding: '20px 8px' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -2156,7 +2425,7 @@ const DashboardDesktop = ({
                                                             {tx.paymentStatus === 'paid' ? <CheckCircle size={20} /> : <ArrowDownLeft size={20} />}
                                                         </div>
                                                         <div style={{ overflow: 'hidden' }}>
-                                                            <span style={{ display: 'block', fontSize: '14px', fontWeight: '800', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.paymentStatus === 'paid' ? 'Payment Completed' : 'Incoming Transfer'}</span>
+                                                            <span style={{ display: 'block', fontSize: '14px', fontWeight: '800', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{role === 'provider' ? (tx.paymentStatus === 'paid' ? 'Payment Completed' : 'Incoming Transfer') : (tx.paymentStatus === 'paid' ? 'Payment Completed' : 'Outgoing Payment')}</span>
                                                             <span style={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'monospace', letterSpacing: '0.5px' }}>ID: {tx._id?.toString()?.toUpperCase() || 'TXN'}</span>
                                                         </div>
                                                     </div>
@@ -2169,12 +2438,12 @@ const DashboardDesktop = ({
                                                 </td>
                                                 <td style={{ padding: '20px 8px' }}>
                                                     <div>
-                                                        <span style={{ display: 'block', fontSize: '14px', fontWeight: '800', color: '#1e293b' }}>{tx.user?.name || 'Community Member'}</span>
+                                                        <span style={{ display: 'block', fontSize: '14px', fontWeight: '800', color: '#1e293b' }}>{role === 'provider' ? tx.user?.name : tx.provider?.name || 'Professional'}</span>
                                                         <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>{tx.service?.title?.split(' ')?.slice(0, 3)?.join(' ') || 'Service Details'}...</span>
                                                     </div>
                                                 </td>
                                                 <td style={{ padding: '20px 8px' }}>
-                                                    <div style={{ fontSize: '15px', fontWeight: '900', color: '#059669' }}>+₹{tx.totalPrice?.toLocaleString()}</div>
+                                                    <div style={{ fontSize: '15px', fontWeight: '900', color: role === 'provider' ? '#059669' : '#1e293b' }}>{role === 'provider' ? '+' : '-'}₹{tx.totalPrice?.toLocaleString() || tx.price?.toLocaleString()}</div>
                                                 </td>
                                                 <td style={{ padding: '20px 8px' }}>
                                                     <span style={{
@@ -2198,6 +2467,126 @@ const DashboardDesktop = ({
             {['bids'].includes(activeTab) && (
                 <div className="animate-fade-in flex-center" style={{ height: '300px' }}>
                     <p className="text-body">Content for {activeTab.replace('_', ' ')} will appear here.</p>
+                </div>
+            )}
+
+            {activeTab === 'reviews' && (
+                <div className="animate-fade-in" style={{ width: '100%', padding: '0 10px' }}>
+                    <div style={{ marginBottom: '24px' }}></div>
+
+                    {myReviewsLoading ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><Loader className="animate-spin" /></div>
+                    ) : myReviews.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '100px', background: '#fff', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                            <Star size={48} color="#cbd5e1" style={{ marginBottom: '16px' }} />
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1e293b' }}>No reviews found</h3>
+                            <p style={{ color: '#64748b', margin: '8px 0 0' }}>{role === 'provider' ? 'You have not received any reviews yet.' : 'You have not written any reviews yet.'}</p>
+                        </div>
+                    ) : (
+                        <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', 
+                            gap: '32px', 
+                            width: '100%' 
+                        }}>
+                            {myReviews.map(review => (
+                                <div key={review._id} style={{ background: '#fff', borderRadius: '28px', padding: '32px', boxShadow: '0 10px 30px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', transition: 'all 0.3s ease', border: '1px solid #f1f5f9' }} onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.08)'; e.currentTarget.style.borderColor = 'var(--primary)'; }} onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = '#f1f5f9'; }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #f1f5f9' }}>
+                                                {role === 'provider' ? (
+                                                    <img src={review.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'U')}&background=ede9fe&color=4f46e5`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'U')}&background=ede9fe&color=4f46e5`; }} />
+                                                ) : (
+                                                    <img src={review.provider?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.provider?.name || 'P')}&background=f3e8ff&color=9333ea`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.provider?.name || 'P')}&background=f3e8ff&color=9333ea`; }} />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#1e293b' }}>{role === 'provider' ? review.user?.name : review.provider?.name || 'Professional'}</h4>
+                                                {review.service && (
+                                                    <div 
+                                                        onClick={() => navigate(`/services/${review.service._id}`)}
+                                                        style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--primary)', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0, 61, 155, 0.05)', padding: '4px 8px', borderRadius: '6px', width: 'fit-content' }}
+                                                        onMouseOver={e => e.currentTarget.style.background = 'rgba(0, 61, 155, 0.1)'}
+                                                        onMouseOut={e => e.currentTarget.style.background = 'rgba(0, 61, 155, 0.05)'}
+                                                    >
+                                                        <Briefcase size={12} />
+                                                        {review.service?.title}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#fffbeb', padding: '6px 10px', borderRadius: '10px' }}>
+                                            <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#d97706' }}>{review.rating}</span>
+                                            <Star size={16} fill="#d97706" color="#d97706" />
+                                        </div>
+                                    </div>
+                                    
+                                    {editingReviewId === review._id ? (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
+                                            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <Star 
+                                                        key={star}
+                                                        size={24} 
+                                                        fill={star <= editRating ? "#d97706" : "none"} 
+                                                        color={star <= editRating ? "#d97706" : "#cbd5e1"} 
+                                                        style={{ cursor: 'pointer' }}
+                                                        onClick={() => setEditRating(star)}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <textarea 
+                                                value={editComment}
+                                                onChange={(e) => setEditComment(e.target.value)}
+                                                style={{ width: '100%', height: '100px', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '12px', fontSize: '0.95rem', resize: 'none', outline: 'none', transition: 'border-color 0.2s' }}
+                                                placeholder="Write your review here..."
+                                                onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                                                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                                            />
+                                            <div style={{ display: 'flex', gap: '12px', marginTop: 'auto' }}>
+                                                <button 
+                                                    onClick={() => handleUpdateReview(review._id)}
+                                                    style={{ flex: 1, padding: '10px', borderRadius: '10px', background: 'var(--primary)', color: '#fff', border: 'none', fontWeight: '700', cursor: 'pointer' }}
+                                                >
+                                                    Save Changes
+                                                </button>
+                                                <button 
+                                                    onClick={() => setEditingReviewId(null)}
+                                                    style={{ flex: 1, padding: '10px', borderRadius: '10px', background: '#f1f5f9', color: '#64748b', border: 'none', fontWeight: '700', cursor: 'pointer' }}
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p style={{ color: '#334155', fontSize: '0.95rem', lineHeight: 1.6, flex: 1, margin: '0 0 20px', padding: '16px', background: '#f8fafc', borderRadius: '16px', position: 'relative', fontStyle: 'italic' }}>
+                                                <MessageSquare size={16} color="#cbd5e1" style={{ position: 'absolute', top: '16px', left: '16px', opacity: 0.5 }} />
+                                                <span style={{ paddingLeft: '28px', display: 'block' }}>"{review.comment}"</span>
+                                            </p>
+                                            
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <CalendarIcon size={14} />
+                                                    {new Date(review.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                                                </span>
+                                                {role === 'customer' && (
+                                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                                        <button onClick={() => handleEditReview(review)} style={{ padding: '8px 14px', borderRadius: '10px', background: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#dbeafe'} onMouseOut={e => e.currentTarget.style.background = '#eff6ff'}>
+                                                            <Edit size={14} /> Edit
+                                                        </button>
+                                                        <button onClick={() => handleDeleteReview(review._id)} style={{ padding: '8px 14px', borderRadius: '10px', background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#fee2e2'} onMouseOut={e => e.currentTarget.style.background = '#fef2f2'}>
+                                                            <Trash2 size={14} /> Delete
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
