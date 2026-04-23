@@ -12,6 +12,9 @@ const Transactions = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState('transactions');
+    const [withdrawals, setWithdrawals] = useState([]);
+    const [withdrawLoading, setWithdrawLoading] = useState(false);
     
     // Edit Modal State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -27,7 +30,6 @@ const Transactions = () => {
         setError(null);
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            // Using the bookings/all endpoint as it contains payment info
             const { data } = await api.get('/api/bookings/all', config);
             setTransactions(data);
         } catch (err) {
@@ -38,7 +40,36 @@ const Transactions = () => {
         }
     };
 
-    useEffect(() => { if (user) fetchTransactions(); }, [user]);
+    const fetchWithdrawals = async () => {
+        setWithdrawLoading(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.get('/api/admin/withdrawals', config);
+            setWithdrawals(data);
+        } catch (err) {
+            console.error('Failed to fetch withdrawals', err);
+        } finally {
+            setWithdrawLoading(false);
+        }
+    };
+
+    useEffect(() => { 
+        if (user) {
+            fetchTransactions();
+            fetchWithdrawals();
+        } 
+    }, [user]);
+
+    const handleUpdateWithdrawalStatus = async (id, status) => {
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.put(`/api/admin/withdrawals/${id}`, { status }, config);
+            fetchWithdrawals();
+            alert('Withdrawal status updated');
+        } catch (err) {
+            alert('Failed to update withdrawal status');
+        }
+    };
 
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this transaction record?')) return;
@@ -67,8 +98,9 @@ const Transactions = () => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data } = await api.put(`/api/bookings/${editingTx._id}`, editForm, config);
-            setTransactions(transactions.map(t => t._id === data._id ? { ...t, ...data } : t));
+            setTransactions(transactions.map(t => t._id === data._id ? data : t));
             setIsEditModalOpen(false);
+            fetchTransactions();
             alert('Payment updated successfully');
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to update payment');
@@ -116,10 +148,38 @@ const Transactions = () => {
                     </div>
                     <div style={{ borderLeft: '1px solid #f1f5f9' }}></div>
                     <div>
-                        <span style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', display: 'block' }}>Paid Amount</span>
+                        <span style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', display: 'block' }}>Successful Volume</span>
                         <span style={{ fontSize: '1.25rem', fontWeight: '900', color: '#059669' }}>₹{paidVolume.toLocaleString()}</span>
                     </div>
                 </div>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+                <button 
+                    onClick={() => setActiveTab('transactions')}
+                    style={{
+                        padding: '10px 24px', borderRadius: '12px', border: 'none',
+                        backgroundColor: activeTab === 'transactions' ? 'var(--primary)' : 'white',
+                        color: activeTab === 'transactions' ? 'white' : '#64748b',
+                        fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    All Transactions
+                </button>
+                <button 
+                    onClick={() => setActiveTab('withdrawals')}
+                    style={{
+                        padding: '10px 24px', borderRadius: '12px', border: 'none',
+                        backgroundColor: activeTab === 'withdrawals' ? 'var(--primary)' : 'white',
+                        color: activeTab === 'withdrawals' ? 'white' : '#64748b',
+                        fontWeight: '700', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    Withdrawal Requests {withdrawals.filter(w => w.status === 'pending').length > 0 && <span style={{ marginLeft: '8px', backgroundColor: '#ef4444', color: 'white', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '6px' }}>{withdrawals.filter(w => w.status === 'pending').length}</span>}
+                </button>
             </div>
 
             {/* Filters */}
@@ -128,7 +188,7 @@ const Transactions = () => {
                     <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                     <input
                         type="text"
-                        placeholder="Search by ID, User, or Payment Method..."
+                        placeholder={activeTab === 'transactions' ? "Search by ID, User, or Payment Method..." : "Search withdrawals..."}
                         className="input-field"
                         style={{ paddingLeft: '44px', width: '100%' }}
                         value={searchTerm}
@@ -137,69 +197,122 @@ const Transactions = () => {
                 </div>
             </div>
 
-            {/* Transaction List */}
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
-                        <tr style={{ textAlign: 'left' }}>
-                            <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>TRANSACTION ID</th>
-                            <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>USER / PROVIDER</th>
-                            <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>DATE</th>
-                            <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>AMOUNT</th>
-                            <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>METHOD</th>
-                            <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>STATUS</th>
-                            <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {displayList.map(tx => (
-                            <tr key={tx._id} style={{ borderBottom: '1px solid #f8fafc' }}>
-                                <td style={{ padding: '16px 20px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <ArrowUpRight size={14} color="#94a3b8" />
-                                        <code style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b' }}>#{tx._id.slice(-8).toUpperCase()}</code>
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px 20px' }}>
-                                    <div style={{ fontSize: '0.9rem', fontWeight: '700' }}>{tx.user?.name}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>To: {tx.provider?.name}</div>
-                                </td>
-                                <td style={{ padding: '16px 20px', fontSize: '0.9rem' }}>
-                                    {new Date(tx.createdAt).toLocaleDateString()}
-                                </td>
-                                <td style={{ padding: '16px 20px' }}>
-                                    <div style={{ fontWeight: '900', color: '#1e293b' }}>₹{tx.totalPrice?.toLocaleString()}</div>
-                                </td>
-                                <td style={{ padding: '16px 20px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '600', color: '#64748b', textTransform: 'capitalize' }}>
-                                        <Wallet size={14} />
-                                        {tx.paymentMethod?.replace(/_/g, ' ')}
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px 20px' }}>
-                                    <span style={{
-                                        padding: '4px 12px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase',
-                                        backgroundColor: tx.paymentStatus === 'paid' ? '#d1fae5' : tx.paymentStatus === 'failed' ? '#fee2e2' : '#fef3c7',
-                                        color: tx.paymentStatus === 'paid' ? '#065f46' : tx.paymentStatus === 'failed' ? '#991b1b' : '#92400e'
-                                    }}>
-                                        {tx.paymentStatus || 'pending'}
-                                    </span>
-                                </td>
-                                <td style={{ padding: '16px 20px' }}>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button onClick={() => handleEditClick(tx)} style={{ padding: '6px', backgroundColor: '#f1f5f9', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-                                            <Edit size={14} />
-                                        </button>
-                                        <button onClick={() => handleDelete(tx._id)} style={{ padding: '6px', backgroundColor: '#fff1f2', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#e11d48' }}>
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                </td>
+            {/* Main Content */}
+            {activeTab === 'transactions' ? (
+                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
+                            <tr style={{ textAlign: 'left' }}>
+                                <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>TRANSACTION ID</th>
+                                <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>USER / PROVIDER</th>
+                                <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>DATE</th>
+                                <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>AMOUNT</th>
+                                <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>METHOD</th>
+                                <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>STATUS</th>
+                                <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>ACTIONS</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {displayList.map(tx => (
+                                <tr key={tx._id} style={{ borderBottom: '1px solid #f8fafc' }}>
+                                    <td style={{ padding: '16px 20px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <ArrowUpRight size={14} color="#94a3b8" />
+                                            <code style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b' }}>#{tx._id.slice(-8).toUpperCase()}</code>
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '16px 20px' }}>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: '700' }}>{tx.user?.name}</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>To: {tx.provider?.name}</div>
+                                    </td>
+                                    <td style={{ padding: '16px 20px', fontSize: '0.9rem' }}>
+                                        {new Date(tx.createdAt).toLocaleDateString()}
+                                    </td>
+                                    <td style={{ padding: '16px 20px' }}>
+                                        <div style={{ fontWeight: '900', color: '#1e293b' }}>₹{tx.totalPrice?.toLocaleString()}</div>
+                                    </td>
+                                    <td style={{ padding: '16px 20px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: '600', color: '#64748b', textTransform: 'capitalize' }}>
+                                            <Wallet size={14} />
+                                            {tx.paymentMethod?.replace(/_/g, ' ')}
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '16px 20px' }}>
+                                        <span style={{
+                                            padding: '4px 12px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase',
+                                            backgroundColor: tx.paymentStatus === 'paid' ? '#d1fae5' : tx.paymentStatus === 'failed' ? '#fee2e2' : '#fef3c7',
+                                            color: tx.paymentStatus === 'paid' ? '#065f46' : tx.paymentStatus === 'failed' ? '#991b1b' : '#92400e'
+                                        }}>
+                                            {tx.paymentStatus === 'paid' ? 'Successful' : tx.paymentStatus || 'pending'}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: '16px 20px' }}>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button onClick={() => handleEditClick(tx)} style={{ padding: '6px', backgroundColor: '#f1f5f9', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                                                <Edit size={14} />
+                                            </button>
+                                            <button onClick={() => handleDelete(tx._id)} style={{ padding: '6px', backgroundColor: '#fff1f2', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#e11d48' }}>
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                    {withdrawLoading ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><Loader className="spin" /></div>
+                    ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
+                                <tr style={{ textAlign: 'left' }}>
+                                    <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>USER</th>
+                                    <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>AMOUNT</th>
+                                    <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>METHOD</th>
+                                    <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>DETAILS</th>
+                                    <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>STATUS</th>
+                                    <th style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b', textAlign: 'right' }}>ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {withdrawals.map(w => (
+                                    <tr key={w._id} style={{ borderBottom: '1px solid #f8fafc' }}>
+                                        <td style={{ padding: '16px 20px' }}>
+                                            <div style={{ fontSize: '0.9rem', fontWeight: '700' }}>{w.user?.name}</div>
+                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{w.user?.email}</div>
+                                        </td>
+                                        <td style={{ padding: '16px 20px' }}>
+                                            <div style={{ fontWeight: '900', color: '#1e293b' }}>₹{w.amount?.toLocaleString()}</div>
+                                        </td>
+                                        <td style={{ padding: '16px 20px', fontSize: '0.85rem', fontWeight: '600' }}>{w.method}</td>
+                                        <td style={{ padding: '16px 20px', fontSize: '0.85rem', color: '#64748b' }}>{w.details}</td>
+                                        <td style={{ padding: '16px 20px' }}>
+                                            <span style={{
+                                                padding: '4px 12px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase',
+                                                backgroundColor: w.status === 'successful' ? '#d1fae5' : w.status === 'rejected' ? '#fee2e2' : '#fef3c7',
+                                                color: w.status === 'successful' ? '#065f46' : w.status === 'rejected' ? '#991b1b' : '#92400e'
+                                            }}>
+                                                {w.status}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '16px 20px', textAlign: 'right' }}>
+                                            {w.status === 'pending' && (
+                                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                                    <button onClick={() => handleUpdateWithdrawalStatus(w._id, 'successful')} style={{ padding: '6px 12px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '700' }}>Approve</button>
+                                                    <button onClick={() => handleUpdateWithdrawalStatus(w._id, 'rejected')} style={{ padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '700' }}>Reject</button>
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            )}
 
             {/* Edit Modal */}
             {isEditModalOpen && (
@@ -232,7 +345,7 @@ const Transactions = () => {
                                     onChange={(e) => setEditForm({ ...editForm, paymentStatus: e.target.value })}
                                 >
                                     <option value="pending">Pending</option>
-                                    <option value="paid">Paid</option>
+                                    <option value="paid">Successful</option>
                                     <option value="failed">Failed</option>
                                 </select>
                             </div>

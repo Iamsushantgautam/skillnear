@@ -12,6 +12,7 @@ import {
     toggleFavorite,
     getFavorites
 } from '../controllers/userController.js';
+import { getUserFullDetails } from '../controllers/adminController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();

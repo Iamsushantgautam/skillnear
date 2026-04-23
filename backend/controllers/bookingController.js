@@ -296,7 +296,7 @@ export const deleteBooking = async (req, res) => {
 // @access  Private/Admin
 export const updateBooking = async (req, res) => {
     try {
-        const { date, timeSlot, totalPrice, status } = req.body;
+        const { date, timeSlot, totalPrice, status, paymentStatus, paymentMethod } = req.body;
         const booking = await Booking.findById(req.params.id);
 
         if (booking) {
@@ -304,9 +304,13 @@ export const updateBooking = async (req, res) => {
             booking.timeSlot = timeSlot || booking.timeSlot;
             booking.totalPrice = totalPrice || booking.totalPrice;
             booking.status = status || booking.status;
-
+            booking.paymentStatus = paymentStatus || booking.paymentStatus;
             const updatedBooking = await booking.save();
-            res.json(updatedBooking);
+            const populated = await Booking.findById(updatedBooking._id)
+                .populate('service', 'title category price images')
+                .populate('user', 'name email phone avatar')
+                .populate('provider', 'name email phone avatar');
+            res.json(populated);
         } else {
             res.status(404).json({ message: 'Booking not found' });
         }

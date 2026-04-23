@@ -48,6 +48,26 @@ const userSchema = new mongoose.Schema(
                 default: [0, 0]
             }
         },
+        locationHistory: [
+            {
+                latitude: Number,
+                longitude: Number,
+                address: String,
+                timestamp: { type: Date, default: Date.now }
+            }
+        ],
+        addressHistory: [
+            {
+                street: String,
+                city: String,
+                state: String,
+                pincode: String,
+                country: String,
+                label: { type: String, default: 'Home' }, // Home, Work, etc.
+                isDefault: { type: Boolean, default: false },
+                timestamp: { type: Date, default: Date.now }
+            }
+        ],
         avatar: {
             type: String,
             default: 'https://via.placeholder.com/150',

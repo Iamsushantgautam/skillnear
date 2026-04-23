@@ -24,6 +24,22 @@ export const updateLocation = async (req, res) => {
                 state: state || user.address?.state
             };
 
+            // Maintain movement history
+            if (lat && lng) {
+                user.locationHistory = user.locationHistory || [];
+                user.locationHistory.push({
+                    latitude: Number(lat),
+                    longitude: Number(lng),
+                    address: `${city || ''}, ${state || ''}`.replace(/^, /, ''),
+                    timestamp: new Date()
+                });
+
+                // Keep only last 50 locations to avoid document bloating
+                if (user.locationHistory.length > 50) {
+                    user.locationHistory.shift();
+                }
+            }
+
             await user.save();
             res.json({ message: 'Location updated successfully', location: user.address, geoCoordinates: user.geoCoordinates });
         } else {
@@ -109,6 +125,28 @@ export const updateUserProfile = async (req, res) => {
 
             if (req.body.address) {
                 user.address = { ...user.address, ...req.body.address };
+                
+                // Track address history
+                user.addressHistory = user.addressHistory || [];
+                const newEntry = {
+                    street: req.body.address.street || user.address.street,
+                    city: req.body.address.city || user.address.city,
+                    state: req.body.address.state || user.address.state,
+                    pincode: req.body.address.pincode || user.address.pincode,
+                    country: req.body.address.country || user.address.country,
+                    label: req.body.address.label || 'Updated Profile',
+                    timestamp: new Date()
+                };
+                
+                // Only add if it's different from the last one to avoid spam
+                const lastEntry = user.addressHistory[user.addressHistory.length - 1];
+                const isDifferent = !lastEntry || 
+                    lastEntry.street !== newEntry.street || 
+                    lastEntry.city !== newEntry.city;
+                
+                if (isDifferent) {
+                    user.addressHistory.push(newEntry);
+                }
             }
 
             if (req.body.password) {
@@ -207,6 +245,10 @@ export const updateUser = async (req, res) => {
             user.email = req.body.email || user.email;
             user.role = req.body.role || user.role;
             user.phone = req.body.phone || user.phone;
+
+            if (req.body.password) {
+                user.password = req.body.password;
+            }
 
             const updatedUser = await user.save();
             res.json({

@@ -8,7 +8,8 @@ import {
     MessageSquareWarning,
     LogOut,
     Bell,
-    CreditCard
+    CreditCard,
+    Images
 } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
 import api from '../utils/api';
@@ -41,6 +42,7 @@ const AdminLayout = () => {
         { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
         { name: 'User Management', path: '/users', icon: <Users size={20} />, badge: pendingCount },
         { name: 'Services & Gigs', path: '/services', icon: <Briefcase size={20} />, badge: pendingServices },
+        { name: 'Media Vault', path: '/gallery', icon: <Images size={20} /> },
         { name: 'Bookings & Projects', path: '/activity', icon: <Calendar size={20} /> },
         { name: 'Payments & Ledger', path: '/transactions', icon: <CreditCard size={20} /> },
         { name: 'Reports', path: '/reports', icon: <MessageSquareWarning size={20} /> },
@@ -50,9 +52,12 @@ const AdminLayout = () => {
         <div style={styles.layout}>
             {/* Sidebar */}
             <aside style={styles.sidebar}>
-                <div style={styles.sidebarHeader}>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>SkillNear</h1>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600' }}>ADMIN PANEL</span>
+                <div style={{ ...styles.sidebarHeader, display: 'flex', alignItems: 'center', gap: '12px', padding: '24px' }}>
+                    <img src="/logo.png" alt="SkillNear" style={{ width: '40px', height: '40px', borderRadius: '10px' }} />
+                    <div>
+                        <h1 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#1e293b', lineHeight: 1 }}>SkillNear</h1>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '800', letterSpacing: '0.5px' }}>ADMIN PANEL</span>
+                    </div>
                 </div>
 
                 <nav style={styles.nav}>
@@ -106,13 +111,18 @@ const AdminLayout = () => {
                                 <span style={styles.notificationBadge}>{pendingCount + pendingServices}</span>
                             )}
                         </button>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontWeight: '600', fontSize: '0.9rem', textTransform: 'capitalize' }}>{user?.name || 'Super Admin'}</div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{user?.email || 'admin@skillnear.com'}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginLeft: '12px', padding: '6px 12px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontWeight: '800', fontSize: '0.85rem', color: '#1e293b', lineHeight: '1.2' }}>{user?.name || 'Super Admin'}</div>
+                                    <div style={{ color: '#64748b', fontSize: '0.7rem', fontWeight: '600' }}>{user?.email || 'admin@skillnear.com'}</div>
+                                </div>
+                                <img 
+                                    src={user?.avatar || "/default-admin.png"} 
+                                    alt="Admin" 
+                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=6366f1&color=fff`; }}
+                                    style={{ borderRadius: '10px', width: '38px', height: '38px', objectFit: 'cover', flexShrink: 0, border: '1.5px solid #e2e8f0' }} 
+                                />
                             </div>
-                            <img src={user?.avatar || "https://via.placeholder.com/40"} alt="Admin" style={{ borderRadius: '50%', width: '40px', height: '40px' }} />
-                        </div>
                     </div>
                 </header>
 

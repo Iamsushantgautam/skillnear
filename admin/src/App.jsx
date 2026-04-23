@@ -6,9 +6,14 @@ import Users from './pages/Users';
 import AdminServices from './pages/AdminServices';
 import Bookings from './pages/Bookings';
 import Transactions from './pages/Transactions';
+import UserDetails from './pages/UserDetails';
+import UserGallery from './pages/UserGallery';
+import MediaGallery from './pages/MediaGallery';
+import UserTransactions from './pages/UserTransactions';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import useAuthStore from './store/useAuthStore';
+import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -30,6 +35,10 @@ function App() {
         <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="users" element={<Users />} />
+          <Route path="users/:id" element={<ErrorBoundary><UserDetails /></ErrorBoundary>} />
+          <Route path="users/:id/gallery" element={<UserGallery />} />
+          <Route path="gallery" element={<MediaGallery />} />
+          <Route path="users/:id/transactions" element={<UserTransactions />} />
           <Route path="services" element={<AdminServices />} />
           <Route path="categories" element={<AdminServices />} />
           <Route path="activity" element={<Bookings />} />

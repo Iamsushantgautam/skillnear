@@ -1,6 +1,76 @@
 import User from '../models/User.js';
 import Service from '../models/Service.js';
 import Booking from '../models/Booking.js';
+import Withdrawal from '../models/Withdrawal.js';
+import Review from '../models/Review.js';
+import { v2 as cloudinary } from 'cloudinary';
+
+// @desc    Get all media from Cloudinary folder
+// @route   GET /api/admin/media
+// @access  Private/Admin
+export const getGlobalMedia = async (req, res) => {
+    try {
+        // Configure cloudinary (assuming it might not be global yet)
+        cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET
+        });
+
+        // Strategy 1: Resources API with prefix (most reliable for all plans)
+        console.log("Attempting Strategy 1: Resources API with 'skillnear/' prefix...");
+        let result = await cloudinary.api.resources({
+            type: 'upload',
+            prefix: 'skillnear/', 
+            max_results: 500
+        });
+
+        // Strategy 2: If Strategy 1 failed, try without the trailing slash
+        if (!result.resources || result.resources.length === 0) {
+            console.log("Strategy 1 returned 0, attempting Strategy 2: Prefix 'skillnear' (no slash)...");
+            result = await cloudinary.api.resources({
+                type: 'upload',
+                prefix: 'skillnear',
+                max_results: 500
+            });
+        }
+
+        // Strategy 3: Search API (if enabled)
+        if (!result.resources || result.resources.length === 0) {
+            try {
+                console.log("Strategy 2 returned 0, attempting Strategy 3: Search API 'folder:skillnear'...");
+                const searchRes = await cloudinary.search
+                    .expression('folder:skillnear')
+                    .max_results(500)
+                    .execute();
+                if (searchRes.resources && searchRes.resources.length > 0) {
+                    result = searchRes;
+                }
+            } catch (searchErr) {
+                console.log("Search API Strategy failed or not available:", searchErr.message);
+            }
+        }
+
+        // Strategy 4: Final Fallback - Root assets
+        const isFallback = !result.resources || result.resources.length === 0;
+        if (isFallback) {
+            console.log("All folder strategies failed. Fetching root assets as final fallback...");
+            result = await cloudinary.api.resources({
+                type: 'upload',
+                max_results: 100
+            });
+        }
+
+        res.json({
+            success: true,
+            resources: result.resources || [],
+            isFallback
+        });
+    } catch (error) {
+        console.error("Cloudinary fetch error:", error);
+        res.status(500).json({ message: "Failed to fetch cloud media", error: error.message });
+    }
+};
 
 // @desc    Get dashboard analytics (real data)
 // @route   GET /api/admin/analytics
@@ -183,3 +253,145 @@ export const toggleUserBan = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// @desc    Create new user (Admin only)
+// @route   POST /api/admin/users
+// @access  Private/Admin
+export const createNewUser = async (req, res) => {
+    try {
+        const { name, email, password, role, phone } = req.body;
+
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        const user = await User.create({
+            name,
+            email,
+            password,
+            role: role || 'customer',
+            phone
+        });
+
+        if (user) {
+            res.status(201).json({
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                phone: user.phone
+            });
+        } else {
+            res.status(400).json({ message: 'Invalid user data' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get all withdrawals
+// @route   GET /api/admin/withdrawals
+// @access  Private/Admin
+export const getWithdrawals = async (req, res) => {
+    try {
+        const withdrawals = await Withdrawal.find({}).populate('user', 'name email avatar').sort({ createdAt: -1 });
+        res.json(withdrawals);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Update withdrawal status
+// @route   PUT /api/admin/withdrawals/:id
+// @access  Private/Admin
+export const updateWithdrawalStatus = async (req, res) => {
+    try {
+        const withdrawal = await Withdrawal.findById(req.params.id);
+        if (withdrawal) {
+            withdrawal.status = req.body.status || withdrawal.status;
+            if (req.body.status === 'successful') {
+                withdrawal.processedAt = new Date();
+            }
+            const updated = await withdrawal.save();
+            res.json(updated);
+        } else {
+            res.status(404).json({ message: 'Withdrawal not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get user full details including gigs, reviews, and bookings
+// @route   GET /api/admin/users/:userId/full-details
+// @access  Private/Admin
+export const getUserFullDetails = async (req, res) => {
+    try {
+        const userId = req.params.userId || req.params.id;
+        const user = await User.findById(userId).select('-password');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Fetch gigs (services) where this user is the provider
+        const gigs = await Service.find({ provider: user._id }).sort({ createdAt: -1 });
+
+        // Fetch bookings where this user is the customer OR the provider
+        const bookings = await Booking.find({
+            $or: [{ user: user._id }, { provider: user._id }]
+        })
+        .populate('service', 'title images price')
+        .populate('user', 'name email avatar')
+        .populate('provider', 'name email avatar')
+        .sort({ createdAt: -1 });
+
+        // Fetch reviews where this user is the provider OR the user who wrote it
+        const reviews = await Review.find({
+            $or: [{ provider: user._id }, { user: user._id }]
+        })
+        .populate('user', 'name avatar')
+        .populate('provider', 'name avatar')
+        .populate('service', 'title')
+        .sort({ createdAt: -1 });
+
+        res.json({
+            user,
+            gigs,
+            bookings,
+            reviews
+        });
+    } catch (error) {
+        console.error('getUserFullDetails error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Delete media from Cloudinary
+// @route   DELETE /api/admin/media/:publicId
+// @access  Private/Admin
+export const deleteMedia = async (req, res) => {
+    try {
+        const { publicId } = req.query;
+        
+        if (!publicId) {
+            return res.status(400).json({ message: "Public ID is required" });
+        }
+        
+        cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET
+        });
+
+        const result = await cloudinary.uploader.destroy(publicId);
+
+        if (result.result === 'ok') {
+            res.json({ success: true, message: "Media deleted successfully" });
+        } else {
+            res.status(400).json({ success: false, message: "Failed to delete media", result });
+        }
+    } catch (error) {
+        console.error("Cloudinary delete error:", error);
+        res.status(500).json({ message: "Failed to delete media", error: error.message });
+    }
+};
+
