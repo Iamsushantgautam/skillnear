@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Profile Information | The Curator</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#dae2ff",
+                        "on-background": "#191b23",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#a33500",
+                        "on-primary-fixed": "#001848",
+                        "tertiary": "#7b2600",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e7e7f2",
+                        "outline": "#737685",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#b6c8fe",
+                        "surface-container": "#ededf8",
+                        "secondary": "#4c5d8d",
+                        "tertiary-fixed-dim": "#ffb59b",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#c4d2ff",
+                        "tertiary-fixed": "#ffdbcf",
+                        "on-secondary-fixed-variant": "#344573",
+                        "surface": "#faf8ff",
+                        "primary": "#003d9b",
+                        "on-tertiary-fixed": "#380d00",
+                        "surface-tint": "#0c56d0",
+                        "outline-variant": "#c3c6d6",
+                        "on-secondary-container": "#415382",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "surface-dim": "#d9d9e4",
+                        "surface-container-highest": "#e1e2ec",
+                        "surface-variant": "#e1e2ec",
+                        "on-tertiary": "#ffffff",
+                        "background": "#faf8ff",
+                        "secondary-fixed": "#dae2ff",
+                        "on-surface-variant": "#434654",
+                        "inverse-surface": "#2e3038",
+                        "on-tertiary-fixed-variant": "#812800",
+                        "on-surface": "#191b23",
+                        "on-tertiary-container": "#ffc6b2",
+                        "surface-bright": "#faf8ff",
+                        "on-secondary-fixed": "#021945",
+                        "inverse-on-surface": "#f0f0fb",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#b4c5fb",
+                        "surface-container-low": "#f3f3fd",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "primary-container": "#0052cc",
+                        "inverse-primary": "#b2c5ff",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        .font-display {
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-background text-on-background selection:bg-primary-fixed selection:text-on-primary-fixed">
+    <!-- SideNavBar Component -->
+    <aside
+        class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200/10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[40px_0_40px_rgba(25,27,35,0.04)] flex flex-col py-8 px-4 z-50">
+        <div class="mb-10 px-2">
+            <h1 class="text-xl font-bold tracking-tight text-blue-800 dark:text-blue-300">The Curator</h1>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-widest mt-1">Premium Tier</p>
+        </div>
+        <nav class="flex-1 space-y-1">
+            <a class="flex items-center gap-3 px-3 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors rounded-lg group"
+                href="#">
+                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">dashboard</span>
+                <span class="font-medium text-sm">Dashboard</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors rounded-lg group"
+                href="#">
+                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">storefront</span>
+                <span class="font-medium text-sm">Marketplace</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors rounded-lg group"
+                href="#">
+                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">work</span>
+                <span class="font-medium text-sm">My Gigs</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors rounded-lg group"
+                href="#">
+                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">chat_bubble</span>
+                <span class="font-medium text-sm">Messages</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors rounded-lg group"
+                href="#">
+                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">insights</span>
+                <span class="font-medium text-sm">Analytics</span>
+            </a>
+        </nav>
+        <div class="mt-auto space-y-1 border-t border-slate-100 pt-6">
+            <a class="flex items-center gap-3 px-3 py-3 text-blue-700 dark:text-blue-400 font-semibold border-r-4 border-blue-600 rounded-l-lg bg-blue-50/50"
+                href="#">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings</span>
+                <span class="font-medium text-sm">Settings</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-3 text-slate-500 hover:text-blue-600 transition-colors rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">help_outline</span>
+                <span class="font-medium text-sm">Help</span>
+            </a>
+        </div>
+    </aside>
+    <!-- TopNavBar Component -->
+    <header
+        class="fixed top-0 right-0 left-64 h-20 z-40 bg-[#faf8ff]/80 dark:bg-slate-950/80 backdrop-blur-md flex justify-between items-center px-10 w-full">
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-6">
+                <a class="text-slate-600 hover:text-blue-500 transition-colors duration-200 text-sm font-medium"
+                    href="#">Discover</a>
+                <a class="text-slate-600 hover:text-blue-500 transition-colors duration-200 text-sm font-medium"
+                    href="#">Browse</a>
+                <a class="text-slate-600 hover:text-blue-500 transition-colors duration-200 text-sm font-medium"
+                    href="#">Pro Services</a>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <button class="text-blue-700 font-semibold text-sm hover:opacity-80 transition-opacity">Switch to
+                Buying</button>
+            <div class="flex items-center gap-4 border-l border-slate-200 pl-6">
+                <span
+                    class="material-symbols-outlined text-slate-600 cursor-pointer hover:text-primary transition-colors">notifications</span>
+                <span
+                    class="material-symbols-outlined text-slate-600 cursor-pointer hover:text-primary transition-colors">mail</span>
+                <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                    <img alt="Freelancer Profile" class="w-full h-full object-cover"
+                        data-alt="professional headshot of a smiling man with a neat beard in a minimalist grey studio background"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTfQzbJi1XaYUdWnj370nguU2a4um0nfs_4VBP_xUFCyHmTc-ezMEwxvDxXUab0ULvcJqfIOFjsPmQs2JKjqHVRLbqYXldk4kTValh5reX2mK7MaV1GPXIIwYBqLlqguIoq0SnlVG1GSreEiJuMUmyWJgKyDaWbYTTcuWz2ApymRoJ9wLlQ8WXj2XiX4qGeDS7DLFAwdxIuWBF46DVE-V79VIL8nmxIXfV-AnQlA2J1JYkkx4QqK3vFJiPcR_16NXnYc3lDBEVDctl" />
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Main Content Canvas -->
+    <main class="ml-64 pt-24 pb-12 px-10 min-h-screen">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header Section -->
+            <div class="flex justify-between items-end mb-10">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-on-background tracking-tight">Profile Settings</h2>
+                    <p class="text-on-surface-variant mt-1 text-lg">Manage your curator identity and professional
+                        presence.</p>
+                </div>
+                <div class="flex gap-4">
+                    <button
+                        class="px-6 py-2.5 rounded-full border border-outline-variant text-primary font-semibold text-sm hover:bg-surface-container transition-colors">
+                        Preview Mode
+                    </button>
+                    <button
+                        class="px-8 py-2.5 rounded-full bg-gradient-to-r from-primary to-primary-container text-white font-bold text-sm shadow-md hover:scale-[1.02] active:scale-95 transition-all">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+            <!-- Dashboard Layout: Bento Style -->
+            <div class="grid grid-cols-12 gap-8">
+                <!-- Profile Image & Quick Info -->
+                <div class="col-span-12 lg:col-span-4 space-y-8">
+                    <!-- User Card -->
+                    <div
+                        class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/10 shadow-sm relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-primary/10 to-transparent">
+                        </div>
+                        <div class="relative z-10 flex flex-col items-center">
+                            <div class="relative mb-4">
+                                <img alt="Alex Rivera"
+                                    class="w-32 h-32 rounded-2xl object-cover ring-4 ring-white shadow-xl"
+                                    data-alt="portrait of a young professional male Alex Rivera with dark hair and a confident expression"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUJ7XlYc0ntK8rLC4wJ9ucpcy_DUIPw5ytPuUuQUEgqdgSk9blxzHOYFyUW9Y5JbGRK5V5FofcwMqcVBf6gK-DPY-BGEOS4M8EtKJMFSOSNdGRt2N2ILiOA0MvUAfpe886cPyHUfSHpHqHGrverrleHSJIubU6tl4MLW5-lYMnOogJlhtbBnCQtvzrQfXV1itZvKvtr5fl0dZVNxX7WN6oxwFy1hkoMc-QWDDPecJ5MbG-BUt_kZ24lPCVxuQorNAU3-grKw4gkwEh" />
+                                <span
+                                    class="absolute -bottom-2 -right-2 bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full border-2 border-white tracking-widest uppercase">PRO</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-on-background">Alex Rivera</h3>
+                            <p class="text-on-surface-variant text-sm font-medium">Member since Oct 2021</p>
+                            <button
+                                class="mt-6 w-full py-2.5 border-2 border-dashed border-outline-variant rounded-lg text-outline font-medium text-sm hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">photo_camera</span>
+                                Change Photo
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Account Status Card -->
+                    <div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
+                        <h4 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">Account
+                            Status</h4>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                <span class="text-sm font-medium text-slate-600">Verification</span>
+                                <div class="flex items-center gap-1.5 text-blue-700 font-bold text-sm">
+                                    <span class="material-symbols-outlined text-sm"
+                                        style="font-variation-settings: 'FILL' 1;">verified</span>
+                                    Verified
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                <span class="text-sm font-medium text-slate-600">Status</span>
+                                <div class="flex items-center gap-1.5 text-emerald-600 font-bold text-sm">
+                                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                    Available
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Security Alert Card -->
+                    <div class="bg-error-container/20 p-6 rounded-xl border border-error/10 relative overflow-hidden">
+                        <div class="flex items-start gap-4">
+                            <div class="bg-white p-2 rounded-lg shadow-sm">
+                                <span class="material-symbols-outlined text-error">lock_reset</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-on-error-container text-sm">Security Tip</h4>
+                                <p class="text-xs text-on-error-container/80 mt-1 leading-relaxed">
+                                    Your password was last updated 4 months ago. We recommend refreshing it regularly to
+                                    keep your curator profile secure.
+                                </p>
+                                <button
+                                    class="mt-3 text-xs font-bold text-error uppercase tracking-wider hover:underline underline-offset-4">Update
+                                    Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Form Area -->
+                <div class="col-span-12 lg:col-span-8 space-y-8">
+                    <!-- Personal Info Section -->
+                    <section
+                        class="bg-surface-container-lowest p-10 rounded-xl border border-outline-variant/5 shadow-sm">
+                        <div class="flex items-center gap-3 mb-8">
+                            <span class="material-symbols-outlined text-primary">person</span>
+                            <h3 class="text-xl font-bold tracking-tight">Personal Information</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                            <div class="space-y-2">
+                                <label
+                                    class="text-xs font-bold text-on-surface-variant uppercase tracking-widest px-1">Full
+                                    Name</label>
+                                <input
+                                    class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all placeholder:text-outline-variant"
+                                    type="text" value="Alex Rivera" />
+                            </div>
+                            <div class="space-y-2">
+                                <label
+                                    class="text-xs font-bold text-on-surface-variant uppercase tracking-widest px-1">Username</label>
+                                <input
+                                    class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                                    type="text" value="arivera_pro" />
+                            </div>
+                            <div class="space-y-2">
+                                <label
+                                    class="text-xs font-bold text-on-surface-variant uppercase tracking-widest px-1">Email
+                                    Address</label>
+                                <div class="relative">
+                                    <input
+                                        class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                                        type="email" value="alex.rivera@curator.com" />
+                                    <span
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500 material-symbols-outlined text-sm"
+                                        style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label
+                                    class="text-xs font-bold text-on-surface-variant uppercase tracking-widest px-1">Phone
+                                    Number</label>
+                                <input
+                                    class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                                    type="tel" value="+1 (555) 012-3456" />
+                            </div>
+                        </div>
+                    </section>
+                    <!-- Professional Details Section -->
+                    <section
+                        class="bg-surface-container-lowest p-10 rounded-xl border border-outline-variant/5 shadow-sm">
+                        <div class="flex items-center gap-3 mb-8">
+                            <span class="material-symbols-outlined text-primary">badge</span>
+                            <h3 class="text-xl font-bold tracking-tight">Professional Details</h3>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="space-y-2">
+                                <label
+                                    class="text-xs font-bold text-on-surface-variant uppercase tracking-widest px-1">Public
+                                    Title / Headline</label>
+                                <input
+                                    class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface font-semibold focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                                    type="text" value="Professional Provider" />
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <label
+                                        class="text-xs font-bold text-on-surface-variant uppercase tracking-widest px-1">About
+                                        Me / Bio</label>
+                                    <span class="text-[10px] text-outline font-medium">350 / 1000 characters</span>
+                                </div>
+                                <textarea
+                                    class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all resize-none leading-relaxed"
+                                    rows="5">Ready to provide high-quality local services.</textarea>
+                            </div>
+                        </div>
+                    </section>
+                    <!-- Danger Zone or Preferences (Extra section for editorial balance) -->
+                    <section
+                        class="bg-surface-container-low p-10 rounded-xl border-2 border-dashed border-outline-variant/20 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center">
+                                <span class="material-symbols-outlined text-outline">history</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-on-surface">Activity Log</h4>
+                                <p class="text-sm text-on-surface-variant">Review your recent login and profile
+                                    activity.</p>
+                            </div>
+                        </div>
+                        <button
+                            class="px-6 py-2.5 bg-white text-on-surface font-bold text-sm rounded-full shadow-sm hover:shadow-md transition-all">
+                            View Logs
+                        </button>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Fixed Action Footer for focused journey -->
+    <div
+        class="fixed bottom-0 right-0 left-64 bg-white/80 backdrop-blur-lg border-t border-outline-variant/10 py-4 px-10 flex justify-end gap-4 z-30 lg:hidden">
+        <!-- Visible only on smaller screens where top buttons might be scrolled out of view -->
+        <button class="px-6 py-2.5 rounded-full border border-outline-variant text-primary font-semibold text-sm">
+            Cancel
+        </button>
+        <button class="px-8 py-2.5 rounded-full bg-primary text-white font-bold text-sm shadow-md">
+            Save Changes
+        </button>
+    </div>
+</body>
+
+</html>

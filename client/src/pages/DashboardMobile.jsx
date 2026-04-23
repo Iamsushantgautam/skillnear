@@ -1298,7 +1298,15 @@ function ProfileScreen({ user, profileAvatar, getAvatar, profileName, setProfile
                 </div>
                 <div>
                     <label style={labelStyle}>Phone Number</label>
-                    <input value={profilePhone} onChange={e => setProfilePhone(e.target.value)} style={inputStyle} placeholder="+91 00000 00000" />
+                    <input 
+                        value={profilePhone} 
+                        onChange={e => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            if (val.length <= 10) setProfilePhone(val);
+                        }} 
+                        style={inputStyle} 
+                        placeholder="10 digit number" 
+                    />
                 </div>
             </div>
 

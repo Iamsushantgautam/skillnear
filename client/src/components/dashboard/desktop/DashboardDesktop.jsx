@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, Search, Phone, Video, Lock, PlusCircle, ZoomIn, RotateCw } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, Search, Phone, Video, Lock, PlusCircle, ZoomIn, RotateCw, Camera, Award, History, BadgeCheck } from 'lucide-react';
 import ChatList from '../../ChatList';
 import { City } from 'country-state-city';
 import api from '../../../utils/api';
@@ -199,7 +199,9 @@ const DashboardDesktop = ({
     setGigTargetGender,
     favorites,
     favoritesLoading,
-    fetchFavorites
+    fetchFavorites,
+    handleSaveProfile,
+    savingProfile
 }) => {
     const [bookingForPayment, setBookingForPayment] = useState(null);
     const [activeService, setActiveService] = useState(null);
@@ -1340,79 +1342,218 @@ const DashboardDesktop = ({
             )}
 
             {activeTab === 'profile' && (
-                <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto' }}>
-                    <section style={{ backgroundColor: '#fff', borderRadius: '32px', padding: '40px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '40px' }}>
+                <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '40px' }}>
+                    {/* Header Section */}
+                    <div style={{ marginBottom: '40px' }}>
+                        <nav style={{ fontSize: '10px', fontWeight: '700', color: '#003d9b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>
+                            Account / Account Settings
+                        </nav>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                             <div>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>Full Name</label>
-                                    <input type="text" className="input-field" value={profileNameState} onChange={e => setProfileNameState(e.target.value)} />
-                                </div>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>Username</label>
-                                    <input type="text" className="input-field" placeholder="Choose a unique username" value={profileUsername} onChange={e => setProfileUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))} />
-                                    {profileUsername && (
-                                        <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                            Public URL: <span style={{ color: 'var(--primary)', fontWeight: '600' }}>{window.location.host}/u/{profileUsername}</span>
-                                        </div>
-                                    )}
+                                <h2 style={{ fontSize: '1.875rem', fontWeight: 800, color: '#191b23', letterSpacing: '-0.025em', margin: 0, fontFamily: 'Manrope, sans-serif' }}>Profile Settings</h2>
+                                <p style={{ color: '#434654', marginTop: '4px', fontSize: '1.125rem' }}>Manage your professional identity and presence.</p>
+                            </div>
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                            <button
+                                onClick={() => navigate(`/u/${profileUsername}`)}
+                                style={{ padding: '10px 24px', borderRadius: '9999px', border: '1px solid #c3c6d6', color: '#003d9b', fontWeight: 600, fontSize: '0.875rem', backgroundColor: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                            >
+                                <ZoomIn size={16} />
+                                Preview Mode
+                            </button>
+                            <button
+                                onClick={handleSaveProfile}
+                                disabled={savingProfile}
+                                style={{ padding: '10px 32px', borderRadius: '9999px', background: 'linear-gradient(to right, #003d9b, #0052cc)', color: 'white', fontWeight: 700, fontSize: '0.875rem', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', cursor: savingProfile ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                            >
+                                {savingProfile ? <Loader size={16} className="animate-spin" /> : 'Save Changes'}
+                            </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Dashboard Layout: Bento Style */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '32px' }}>
+                        {/* Profile Image & Quick Info */}
+                        <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                            {/* User Card */}
+                            <div style={{ backgroundColor: '#ffffff', padding: '32px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.2)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden' }}>
+                                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '96px', background: 'linear-gradient(to bottom right, rgba(0, 61, 155, 0.05), transparent)' }}></div>
+                                <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <div style={{ position: 'relative', marginBottom: '16px' }}>
+                                        <img
+                                            src={getAvatar({ avatar: profileAvatar, name: profileNameState })}
+                                            alt={profileNameState}
+                                            style={{ width: '128px', height: '128px', borderRadius: '24px', objectFit: 'cover', ring: '4px solid white', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
+                                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileNameState || 'U')}&background=ede9fe&color=4f46e5&size=120`; }}
+                                        />
+                                        <span style={{ position: 'absolute', bottom: '-8px', right: '-8px', backgroundColor: '#003d9b', color: 'white', fontSize: '10px', fontWeight: 900, padding: '4px 12px', borderRadius: '9999px', border: '2px solid white', letterSpacing: '0.1em' }}>{user?.role === 'provider' ? 'PRO' : 'USER'}</span>
+                                    </div>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#191b23', margin: 0 }}>{profileNameState}</h3>
+                                    <p style={{ color: '#434654', fontSize: '0.875rem', fontWeight: 500, marginTop: '4px' }}>Member since {new Date(user?.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</p>
+                                    
+                                    <label htmlFor="avatar-upload-bento" style={{ marginTop: '24px', width: '100%', padding: '10px 0', border: '2px dashed #c3c6d6', borderRadius: '12px', color: '#737685', fontWeight: 500, fontSize: '0.875rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        {uploadingAvatar ? <Loader size={16} className="animate-spin" /> : <Camera size={16} />}
+                                        {uploadingAvatar ? 'Uploading...' : 'Change Photo'}
+                                        <input id="avatar-upload-bento" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+                                    </label>
                                 </div>
                             </div>
 
-                            <div>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>Email Address</label>
-                                    <input type="email" className="input-field" defaultValue={user?.email || ''} readOnly style={{ opacity: 0.6, backgroundColor: '#f8fafc' }} />
-                                </div>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>Phone Number</label>
-                                    <input type="text" className="input-field" placeholder="Add phone number" value={profilePhone} onChange={e => setProfilePhone(e.target.value)} />
-                                </div>
-                                {/* Security Tip Panel */}
-                                <div style={{ padding: '24px', backgroundColor: '#f0f9ff', borderRadius: '20px', border: '1px solid #e0f2fe' }}>
-                                    <div style={{ display: 'flex', gap: '12px' }}>
-                                        <CheckCircle size={20} color="#0284c7" />
-                                        <div>
-                                            <p style={{ fontSize: '13px', fontWeight: '700', color: '#0369a1', marginBottom: '4px' }}>Security Tip</p>
-                                            <p style={{ fontSize: '12px', color: '#0c4a6e', lineHeight: '1.5' }}>Ensure your phone number is verified to receive SMS alerts for new bookings and messages.</p>
+                            {/* Account Status Card */}
+                            <div style={{ backgroundColor: '#f3f3fd', padding: '24px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.2)' }}>
+                                <h4 style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#434654', marginBottom: '16px' }}>Account Status</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ffffff', padding: '12px', borderRadius: '12px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                        <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#64748b' }}>Verification</span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#003d9b', fontWeight: 700, fontSize: '0.875rem' }}>
+                                            <BadgeCheck size={16} />
+                                            Verified
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ffffff', padding: '12px', borderRadius: '12px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                        <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#64748b' }}>Status</span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#059669', fontWeight: 700, fontSize: '0.875rem' }}>
+                                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', animation: 'pulse 2s infinite' }}></div>
+                                            Available
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '32px', borderTop: '1px solid #f1f5f9', paddingTop: '40px' }}>
-                                <div style={styles.formGroup}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <label style={styles.label}>{role === 'provider' ? 'Professional Title' : 'Public Title / Headline'}</label>
-                                        <span style={{ fontSize: '11px', color: (providerTitle?.length || 0) >= 25 ? '#ef4444' : '#94a3b8', fontWeight: '700' }}>{providerTitle?.length || 0}/25</span>
+                            {/* Security Alert Card */}
+                            <div style={{ backgroundColor: 'rgba(255, 218, 214, 0.2)', padding: '24px', borderRadius: '24px', border: '1px solid rgba(186, 26, 26, 0.1)', position: 'relative', overflow: 'hidden' }}>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                                    <div style={{ backgroundColor: '#ffffff', padding: '8px', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                        <Lock size={20} color="#ba1a1a" />
                                     </div>
-                                    <input
-                                        type="text"
-                                        className="input-field"
-                                        value={providerTitle}
-                                        maxLength={25}
-                                        onChange={(e) => setProviderTitle(e.target.value)}
-                                        placeholder="e.g. Expert Home Stylist or Senior Electrician"
-                                    />
-                                </div>
-                                <div style={styles.formGroup}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <label style={styles.label}>{role === 'provider' ? 'About / Professional Bio' : 'About Me / Bio'}</label>
-                                        <span style={{ fontSize: '11px', color: (providerAbout?.length || 0) >= 50 ? '#ef4444' : '#94a3b8', fontWeight: '700' }}>{providerAbout?.length || 0}/50</span>
+                                    <div>
+                                        <h4 style={{ fontWeight: 700, color: '#93000a', fontSize: '0.875rem', margin: 0 }}>Security Tip</h4>
+                                        <p style={{ fontSize: '0.75rem', color: 'rgba(147, 0, 10, 0.8)', marginTop: '4px', lineHeight: 1.5 }}>
+                                            Ensure your account remains secure by updating your password periodically and enabling two-factor authentication.
+                                        </p>
+                                        <button 
+                                            onClick={() => toast.info('Password reset link sent to your email')}
+                                            style={{ marginTop: '12px', fontSize: '0.75rem', fontWeight: 700, color: '#ba1a1a', textTransform: 'uppercase', letterSpacing: '0.05em', border: 'none', background: 'transparent', cursor: 'pointer', textDecoration: 'underline' }}
+                                        >
+                                            Update Now
+                                        </button>
                                     </div>
-                                    <textarea
-                                        className="input-field"
-                                        value={providerAbout}
-                                        maxLength={50}
-                                        onChange={(e) => setProviderAbout(e.target.value)}
-                                        placeholder="Describe your skills in 50 characters or less..."
-                                        rows={3}
-                                        style={{ resize: 'none', height: 'auto', minHeight: '100px', paddingTop: '16px' }}
-                                    />
                                 </div>
                             </div>
                         </div>
-                    </section>
+
+                        {/* Form Area */}
+                        <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                            {/* Personal Info Section */}
+                            <section style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.1)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+                                    <User size={24} color="#003d9b" />
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.025em', margin: 0 }}>Personal Information</h3>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>Full Name</label>
+                                        <input
+                                            style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 500, color: '#191b23', outline: 'none' }}
+                                            type="text"
+                                            value={profileNameState}
+                                            onChange={e => setProfileNameState(e.target.value)}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>Username</label>
+                                        <input
+                                            style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 500, color: '#191b23', outline: 'none' }}
+                                            type="text"
+                                            value={profileUsername}
+                                            onChange={e => setProfileUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>Email Address</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <input
+                                                style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 500, color: '#191b23', outline: 'none', opacity: 0.7 }}
+                                                type="email"
+                                                value={user?.email}
+                                                readOnly
+                                            />
+                                            <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#10b981' }}>
+                                                <CheckCircle size={16} />
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>Phone Number</label>
+                                        <input
+                                            style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 500, color: '#191b23', outline: 'none' }}
+                                            type="tel"
+                                            value={profilePhone}
+                                            onChange={e => {
+                                                const val = e.target.value.replace(/\D/g, '');
+                                                if (val.length <= 10) setProfilePhone(val);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Professional Details Section */}
+                            <section style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.1)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+                                    <Award size={24} color="#003d9b" />
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.025em', margin: 0 }}>Professional Details</h3>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>Public Title / Headline</label>
+                                        <input
+                                            style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 600, color: '#191b23', outline: 'none' }}
+                                            type="text"
+                                            value={providerTitle}
+                                            maxLength={25}
+                                            onChange={e => setProviderTitle(e.target.value)}
+                                            placeholder="e.g. Expert Home Stylist or Senior Electrician"
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#434654', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '4px' }}>About Me / Bio</label>
+                                            <span style={{ fontSize: '10px', color: '#737685', fontWeight: 500 }}>{providerAbout?.length || 0} / 50 characters</span>
+                                        </div>
+                                        <textarea
+                                            style={{ width: '100%', backgroundColor: '#f3f3fd', border: 'none', borderRadius: '12px', padding: '12px 16px', fontSize: '1rem', fontWeight: 500, color: '#191b23', outline: 'none', resize: 'none', lineHeight: 1.6 }}
+                                            rows="3"
+                                            value={providerAbout}
+                                            maxLength={50}
+                                            onChange={e => setProviderAbout(e.target.value)}
+                                            placeholder="Describe your skills in 50 characters or less..."
+                                        ></textarea>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Activity Log Card */}
+                            <section style={{ backgroundColor: '#f3f3fd', padding: '32px', borderRadius: '24px', border: '2px dashed rgba(195, 198, 214, 0.5)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '24px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#e1e2ec', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <History size={24} color="#737685" />
+                                    </div>
+                                    <div>
+                                        <h4 style={{ fontWeight: 700, color: '#191b23', margin: 0 }}>Activity Log</h4>
+                                        <p style={{ fontSize: '0.875rem', color: '#434654', marginTop: '2px' }}>Review your recent login and profile activity.</p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => toast.info('Activity log feature coming soon')}
+                                    style={{ padding: '10px 24px', backgroundColor: '#ffffff', color: '#191b23', fontWeight: 700, fontSize: '0.875rem', borderRadius: '9999px', border: 'none', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', cursor: 'pointer' }}
+                                >
+                                    View Logs
+                                </button>
+                            </section>
+                        </div>
+                    </div>
                 </div>
             )}
 

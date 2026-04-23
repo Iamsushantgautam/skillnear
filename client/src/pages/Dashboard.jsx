@@ -694,6 +694,10 @@ const Dashboard = () => {
 
     /* ── Save profile (name, phone, avatar) ── */
     const handleSaveProfile = async () => {
+        if (profilePhone && (profilePhone.length !== 10 || !/^\d+$/.test(profilePhone))) {
+            toast.error('Please enter a valid 10-digit phone number');
+            return;
+        }
         setSavingProfile(true);
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -1200,55 +1204,48 @@ const Dashboard = () => {
                             flex: 1,
                             minHeight: 0
                         }}>
-                            <header style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexShrink: 0 }}>
-                                <div>
-                                    <nav style={{ fontSize: '10px', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>
-                                        Account / {(() => {
-                                            const map = {
-                                                'overview': 'Personal',
-                                                'mygigs': 'My Gigs',
-                                                'become_provider': 'Become Provider',
-                                                'chat': 'Messages',
-                                                'requests': 'Booking Requests',
-                                                'bookings': 'Orders',
-                                                'profile': 'Account Settings',
-                                                'services': 'Manage Services'
-                                            };
-                                            return map[activeTab] || activeTab.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                                        })()}
-                                    </nav>
-                                    <h2 style={{ fontSize: '2.5rem', fontWeight: '800', letterSpacing: '-0.025em' }}>
-                                        {(() => {
-                                            const map = {
-                                                'overview': 'Public Profile',
-                                                'mygigs': 'My Gigs',
-                                                'become_provider': 'Become a Professional',
-                                                'chat': 'Messaging Center',
-                                                'requests': 'Incoming Orders',
-                                                'bookings': 'Orders',
-                                                'profile': 'Profile Information',
-                                                'services': 'Service Listings'
-                                            };
-                                            return map[activeTab] || activeTab.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                                        })()}
-                                    </h2>
-                                </div>
-                                {activeTab === 'mygigs' && (
-                                    <button className="btn-primary" style={{ borderRadius: '100px', padding: '10px 24px', fontSize: '0.875rem' }}
-                                        onClick={() => setActiveTab('services')}>
-                                        + New Gig
-                                    </button>
-                                )}
-                                {activeTab === 'profile' && (
-                                    <div style={{ display: 'flex', gap: '16px' }}>
-                                        <button className="btn-outline" onClick={() => window.open(`/u/${profileUsername}`, '_blank')} style={{ borderRadius: '100px', padding: '10px 24px' }}>Preview Mode</button>
-                                        <button className="btn-primary" onClick={handleSaveProfile} disabled={savingProfile} style={{ borderRadius: '100px', padding: '10px 32px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            {savingProfile ? <Loader size={16} className="animate-spin" /> : null}
-                                            {savingProfile ? 'Saving…' : 'Save Changes'}
-                                        </button>
+                            {activeTab !== 'profile' && (
+                                <header style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexShrink: 0 }}>
+                                    <div>
+                                        <nav style={{ fontSize: '10px', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>
+                                            Account / {(() => {
+                                                const map = {
+                                                    'overview': 'Personal',
+                                                    'mygigs': 'My Gigs',
+                                                    'become_provider': 'Become Provider',
+                                                    'chat': 'Messages',
+                                                    'requests': 'Booking Requests',
+                                                    'bookings': 'Orders',
+                                                    'profile': 'Account Settings',
+                                                    'services': 'Manage Services'
+                                                };
+                                                return map[activeTab] || activeTab.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                            })()}
+                                        </nav>
+                                        <h2 style={{ fontSize: '2.5rem', fontWeight: '800', letterSpacing: '-0.025em' }}>
+                                            {(() => {
+                                                const map = {
+                                                    'overview': 'Public Profile',
+                                                    'mygigs': 'My Gigs',
+                                                    'become_provider': 'Become a Professional',
+                                                    'chat': 'Messaging Center',
+                                                    'requests': 'Incoming Orders',
+                                                    'bookings': 'Orders',
+                                                    'profile': 'Profile Information',
+                                                    'services': 'Service Listings'
+                                                };
+                                                return map[activeTab] || activeTab.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                            })()}
+                                        </h2>
                                     </div>
-                                )}
-                            </header>
+                                    {activeTab === 'mygigs' && (
+                                        <button className="btn-primary" style={{ borderRadius: '100px', padding: '10px 24px', fontSize: '0.875rem' }}
+                                            onClick={() => setActiveTab('services')}>
+                                            + New Gig
+                                        </button>
+                                    )}
+                                </header>
+                            )}
 
                             <DashboardDesktop
                                 setActiveTab={setActiveTab}
@@ -1384,6 +1381,8 @@ const Dashboard = () => {
                                 favorites={favorites}
                                 favoritesLoading={favoritesLoading}
                                 fetchFavorites={fetchFavorites}
+                                handleSaveProfile={handleSaveProfile}
+                                savingProfile={savingProfile}
                             />
                         </div>
                     </main>
