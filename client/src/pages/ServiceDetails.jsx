@@ -152,10 +152,8 @@ const ServiceDetails = () => {
                 .sd-main-image {
                     width: 100%;
                     height: 450px;
-                    border-radius: 24px;
                     object-fit: contain;
-                    background-color: #f8fafc;
-                    border: 1px solid #f1f5f9;
+
                 }
                 .sd-sticky-card {
                     position: sticky;
@@ -564,8 +562,8 @@ const ServiceDetails = () => {
                                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>Rating</label>
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                     {[1, 2, 3, 4, 5].map(star => (
-                                        <button 
-                                            key={star} 
+                                        <button
+                                            key={star}
                                             type="button"
                                             onClick={() => setReviewForm({ ...reviewForm, rating: star })}
                                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -577,7 +575,7 @@ const ServiceDetails = () => {
                             </div>
                             <div style={{ marginBottom: '24px' }}>
                                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>Your Feedback</label>
-                                <textarea 
+                                <textarea
                                     value={reviewForm.comment}
                                     onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
                                     style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: '1rem', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
@@ -605,7 +603,7 @@ const ServiceDetails = () => {
                             <div key={review._id} className="review-card">
                                 <div className="review-card-top">
                                     <div className="review-user-info">
-                                        <img 
+                                        <img
                                             src={review.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'U')}&background=ede9fe&color=4f46e5`}
                                             style={{ width: '48px', height: '48px', borderRadius: '16px', objectFit: 'cover' }}
                                         />
@@ -634,7 +632,7 @@ const ServiceDetails = () => {
                                         )}
                                     </div>
                                 </div>
-                                
+
                                 {isEditing && userReview?._id === review._id ? (
                                     <form onSubmit={handleReviewSubmit} style={{ marginTop: '16px' }}>
                                         <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
@@ -644,7 +642,7 @@ const ServiceDetails = () => {
                                                 </button>
                                             ))}
                                         </div>
-                                        <textarea 
+                                        <textarea
                                             value={reviewForm.comment}
                                             onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
                                             style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1.5px solid var(--primary)', background: '#fff', fontSize: '0.95rem', outline: 'none', resize: 'none', fontFamily: 'inherit', marginBottom: '12px' }}
