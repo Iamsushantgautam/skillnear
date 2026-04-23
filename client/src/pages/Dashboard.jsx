@@ -203,6 +203,14 @@ const Dashboard = () => {
     const [dashMessages, setDashMessages] = useState([]);
     const [dashMessageInput, setDashMessageInput] = useState('');
     const [dashSocket, setDashSocket] = useState(null);
+    const [partnerTyping, setPartnerTyping] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const [uploadingFile, setUploadingFile] = useState(false);
+    const mediaRecorderRef = React.useRef(null);
+    const audioChunksRef = React.useRef([]);
+    const timerRef = React.useRef(null);
+    const fileInputRef = React.useRef(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
     const messagesEndRef = React.useRef(null);
     const activeRoomRef = React.useRef(null);
@@ -248,11 +256,9 @@ const Dashboard = () => {
             setDashSocket(socket);
 
             socket.on('receiveMessage', (data) => {
-                // Check if this message is for the currently viewed room
                 const activeRoom = activeRoomRef.current;
                 if (activeRoom && activeRoom.roomId === data.roomId) {
                     setDashMessages(prev => {
-                        // If we have a tempId match, replace the optimistic message
                         if (data.tempId) {
                             const exists = prev.findIndex(m => m._id === data.tempId || m.tempId === data.tempId);
                             if (exists !== -1) {
@@ -261,15 +267,33 @@ const Dashboard = () => {
                                 return newMsgs;
                             }
                         }
-                        // Fallback to ID check
                         if (prev.find(m => m._id === data._id)) return prev;
                         return [...prev, data];
                     });
+                    // Emit read event if we are in the room
+                    socket.emit('readMessages', { roomId: activeRoom.roomId, userId: user._id });
+                }
+            });
+
+            socket.on('typing', (data) => {
+                if (activeRoomRef.current?.roomId === data.roomId) setPartnerTyping(true);
+            });
+
+            socket.on('stopTyping', (data) => {
+                if (activeRoomRef.current?.roomId === data.roomId) setPartnerTyping(false);
+            });
+
+            socket.on('messagesRead', ({ roomId }) => {
+                if (activeRoomRef.current?.roomId === roomId) {
+                    setDashMessages(prev => prev.map(m => ({ ...m, isRead: true })));
                 }
             });
 
             return () => {
                 socket.off('receiveMessage');
+                socket.off('typing');
+                socket.off('stopTyping');
+                socket.off('messagesRead');
                 socket.disconnect();
             };
         }
@@ -319,8 +343,56 @@ const Dashboard = () => {
         }
     }, [activeTab, user?._id]);
 
-    const handleSendMessageDash = () => {
-        if (!dashMessageInput.trim() || !dashActiveRoom || !user || !dashSocket) return;
+    // Auto-open chat if room in URL
+    useEffect(() => {
+        const roomIdParam = queryParams.get('room');
+        if (roomIdParam && activeTab === 'chat' && !dashActiveRoom) {
+            const fetchRoomDetails = async () => {
+                try {
+                    if (roomIdParam.startsWith('direct_')) {
+                        const parts = roomIdParam.split('_');
+                        const otherId = parts[1] === user._id ? parts[2] : parts[1];
+                        const { data: otherUser } = await api.get(`/api/users/${otherId}`);
+                        setDashActiveRoom({
+                            roomId: roomIdParam,
+                            otherUser,
+                            title: 'General Chat',
+                            type: 'Direct'
+                        });
+                    } else {
+                        // Likely a booking room
+                        const { data: booking } = await api.get(`/api/bookings/${roomIdParam}`, {
+                            headers: { Authorization: `Bearer ${user.token}` }
+                        });
+                        const otherUser = booking.user._id === user._id ? booking.provider : booking.user;
+                        setDashActiveRoom({
+                            roomId: roomIdParam,
+                            otherUser,
+                            title: `Booking #${roomIdParam.slice(-6).toUpperCase()}`,
+                            type: 'Booking'
+                        });
+                    }
+                } catch (err) { console.error("Failed to auto-open room", err); }
+            };
+            fetchRoomDetails();
+        }
+    }, [activeTab, user?._id]);
+
+    const typingTimeoutRef = React.useRef(null);
+    const handleTypeDash = (val) => {
+        setDashMessageInput(val);
+        if (!dashSocket || !dashActiveRoom) return;
+
+        dashSocket.emit('typing', { roomId: dashActiveRoom.roomId });
+        
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+            dashSocket.emit('stopTyping', { roomId: dashActiveRoom.roomId });
+        }, 2000);
+    };
+
+    const handleSendMessageDash = (type = 'text', url = null) => {
+        if ((type === 'text' && !dashMessageInput.trim()) || !dashActiveRoom || !user || !dashSocket) return;
         
         const tempId = Date.now().toString();
         const msgData = {
@@ -328,9 +400,12 @@ const Dashboard = () => {
             senderId: user._id,
             receiverId: dashActiveRoom.otherUser._id,
             roomId: dashActiveRoom.roomId,
-            message: dashMessageInput,
+            message: type === 'text' ? dashMessageInput : '',
+            messageType: type,
+            fileUrl: url,
             createdAt: new Date().toISOString(),
-            optimistic: true
+            optimistic: true,
+            isRead: false
         };
 
         // Optimistic update
@@ -340,11 +415,81 @@ const Dashboard = () => {
             senderId: user._id,
             receiverId: dashActiveRoom.otherUser._id,
             roomId: dashActiveRoom.roomId,
-            message: dashMessageInput,
+            message: type === 'text' ? dashMessageInput : '',
+            messageType: type,
+            fileUrl: url,
             tempId: tempId
         });
         
-        setDashMessageInput('');
+        if (type === 'text') setDashMessageInput('');
+        dashSocket.emit('stopTyping', { roomId: dashActiveRoom.roomId });
+    };
+
+    const handleFileUploadDash = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploadingFile(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const config = { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.post('/api/upload', formData, config);
+            let type = 'file';
+            if (file.type.startsWith('image/')) type = 'image';
+            handleSendMessageDash(type, data.url);
+        } catch (error) {
+            toast.error('File upload failed');
+        } finally {
+            setUploadingFile(false);
+        }
+    };
+
+    const startRecordingDash = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderRef.current = new MediaRecorder(stream);
+            audioChunksRef.current = [];
+
+            mediaRecorderRef.current.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunksRef.current.push(e.data);
+            };
+
+            mediaRecorderRef.current.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+                const audioFile = new File([audioBlob], 'voice_message.wav', { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('file', audioFile);
+
+                setUploadingFile(true);
+                try {
+                    const config = { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${user.token}` } };
+                    const { data } = await api.post('/api/upload', formData, config);
+                    handleSendMessageDash('voice', data.url);
+                } catch (err) {
+                    toast.error('Voice upload failed');
+                } finally {
+                    setUploadingFile(false);
+                }
+            };
+
+            mediaRecorderRef.current.start();
+            setIsRecording(true);
+            setRecordingTime(0);
+            timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
+        } catch (err) {
+            toast.error('Microphone access denied');
+        }
+    };
+
+    const stopRecordingDash = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            clearInterval(timerRef.current);
+            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+        }
     };
 
     // Refresh fresh user data from server on mount to fix stale localStorage
@@ -420,10 +565,14 @@ const Dashboard = () => {
         }
     };
 
-    const updateBookingStatus = async (bookingId, status, note = '') => {
+    const updateBookingStatus = async (bookingId, status, note = '', paymentMode = '') => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await api.put(`/api/bookings/${bookingId}/status`, { status, revisionNote: note || revisionNote }, config);
+            await api.put(`/api/bookings/${bookingId}/status`, { 
+                status, 
+                revisionNote: note || revisionNote,
+                paymentMode: paymentMode 
+            }, config);
             fetchMyBookings();
             fetchProviderRequests();
             toast.success(`Booking status updated to ${status.replace('_', ' ')}`);
@@ -450,7 +599,7 @@ const Dashboard = () => {
     /* ── Upload a single file to Cloudinary via backend ── */
     const uploadSingleFile = async (file) => {
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('file', file);
         const config = {
             headers: {
                 Authorization: `Bearer ${user.token}`,
@@ -847,7 +996,7 @@ const Dashboard = () => {
             <style>{`
             .dashboard-mobile-only { display: block; }
             .dashboard-desktop-only { display: none; }
-            @media (min-width: 768px) {
+            @media (min-width: 1025px) {
                 .dashboard-mobile-only { display: none; }
                 .dashboard-desktop-only { display: block; }
             }
@@ -1016,181 +1165,208 @@ const Dashboard = () => {
                     </aside>
 
                     {/* Main Content Canvas */}
-                    <main style={{ marginLeft: '280px', padding: '48px' }}>
-                        <header style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                            <div>
-                                <nav style={{ fontSize: '10px', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>
-                                    Account / {(() => {
-                                        const map = {
-                                            'overview': 'Personal',
-                                            'mygigs': 'My Gigs',
-                                            'become_provider': 'Become Provider',
-                                            'chat': 'Messages',
-                                            'requests': 'Booking Requests',
-                                            'bookings': 'Orders',
-                                            'profile': 'Account Settings',
-                                            'services': 'Manage Services'
-                                        };
-                                        return map[activeTab] || activeTab.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                                    })()}
-                                </nav>
-                                <h2 style={{ fontSize: '2.5rem', fontWeight: '800', letterSpacing: '-0.025em' }}>
-                                    {(() => {
-                                        const map = {
-                                            'overview': 'Public Profile',
-                                            'mygigs': 'My Gigs',
-                                            'become_provider': 'Become a Professional',
-                                            'chat': 'Messaging Center',
-                                            'requests': 'Incoming Orders',
-                                            'bookings': 'My Bookings',
-                                            'profile': 'Profile Information',
-                                            'services': 'Service Listings'
-                                        };
-                                        return map[activeTab] || activeTab.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                                    })()}
-                                </h2>
-                            </div>
-                            {activeTab === 'mygigs' && (
-                                <button className="btn-primary" style={{ borderRadius: '100px', padding: '10px 24px', fontSize: '0.875rem' }}
-                                    onClick={() => setActiveTab('services')}>
-                                    + New Gig
-                                </button>
-                            )}
-                            {activeTab === 'profile' && (
-                                <div style={{ display: 'flex', gap: '16px' }}>
-                                    <button className="btn-outline" onClick={() => window.open(`/u/${profileUsername}`, '_blank')} style={{ borderRadius: '100px', padding: '10px 24px' }}>Preview Mode</button>
-                                    <button className="btn-primary" onClick={handleSaveProfile} disabled={savingProfile} style={{ borderRadius: '100px', padding: '10px 32px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        {savingProfile ? <Loader size={16} className="animate-spin" /> : null}
-                                        {savingProfile ? 'Saving…' : 'Save Changes'}
-                                    </button>
+                    <main style={{ 
+                        marginLeft: '280px', 
+                        padding: '48px', 
+                        height: '100vh', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        overflow: activeTab === 'chat' ? 'hidden' : 'auto',
+                        background: '#faf8ff'
+                    }}>
+                        <div style={{ 
+                            width: '100%', 
+                            maxWidth: '1400px', 
+                            margin: '0 auto',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            flex: 1,
+                            minHeight: 0
+                        }}>
+                            <header style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexShrink: 0 }}>
+                                <div>
+                                    <nav style={{ fontSize: '10px', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>
+                                        Account / {(() => {
+                                            const map = {
+                                                'overview': 'Personal',
+                                                'mygigs': 'My Gigs',
+                                                'become_provider': 'Become Provider',
+                                                'chat': 'Messages',
+                                                'requests': 'Booking Requests',
+                                                'bookings': 'Orders',
+                                                'profile': 'Account Settings',
+                                                'services': 'Manage Services'
+                                            };
+                                            return map[activeTab] || activeTab.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                        })()}
+                                    </nav>
+                                    <h2 style={{ fontSize: '2.5rem', fontWeight: '800', letterSpacing: '-0.025em' }}>
+                                        {(() => {
+                                            const map = {
+                                                'overview': 'Public Profile',
+                                                'mygigs': 'My Gigs',
+                                                'become_provider': 'Become a Professional',
+                                                'chat': 'Messaging Center',
+                                                'requests': 'Incoming Orders',
+                                                'bookings': 'Orders',
+                                                'profile': 'Profile Information',
+                                                'services': 'Service Listings'
+                                            };
+                                            return map[activeTab] || activeTab.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                        })()}
+                                    </h2>
                                 </div>
-                            )}
-                        </header>
+                                {activeTab === 'mygigs' && (
+                                    <button className="btn-primary" style={{ borderRadius: '100px', padding: '10px 24px', fontSize: '0.875rem' }}
+                                        onClick={() => setActiveTab('services')}>
+                                        + New Gig
+                                    </button>
+                                )}
+                                {activeTab === 'profile' && (
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <button className="btn-outline" onClick={() => window.open(`/u/${profileUsername}`, '_blank')} style={{ borderRadius: '100px', padding: '10px 24px' }}>Preview Mode</button>
+                                        <button className="btn-primary" onClick={handleSaveProfile} disabled={savingProfile} style={{ borderRadius: '100px', padding: '10px 32px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {savingProfile ? <Loader size={16} className="animate-spin" /> : null}
+                                            {savingProfile ? 'Saving…' : 'Save Changes'}
+                                        </button>
+                                    </div>
+                                )}
+                            </header>
 
-                        <DashboardDesktop
-                            activeTab={activeTab}
-                            role={role}
-                            user={user}
-                            profileAvatar={profileAvatar}
-                            profileName={profileName}
-                            getAvatar={getAvatar}
-                            uploadingAvatar={uploadingAvatar}
-                            handleAvatarUpload={handleAvatarUpload}
-                            providerTitle={providerTitle}
-                            providerAbout={providerAbout}
-                            myBookings={myBookings}
-                            myGigs={myGigs}
-                            stats={stats}
-                            providerStatus={providerStatus}
-                            handleApplyProvider={handleApplyProvider}
-                            isSubmitting={isSubmitting}
-                            bookingsLoading={bookingsLoading}
-                            updateBookingStatus={updateBookingStatus}
-                            bookingForRevision={bookingForRevision}
-                            setBookingForRevision={setBookingForRevision}
-                            revisionNote={revisionNote}
-                            setRevisionNote={setRevisionNote}
-                            editingGigId={editingGigId}
-                            gigStep={gigStep}
-                            setGigStep={setGigStep}
-                            gigBusinessType={gigBusinessType}
-                            setGigBusinessType={setGigBusinessType}
-                            gigTitle={gigTitle}
-                            setGigTitle={setGigTitle}
-                            gigCategory={gigCategory}
-                            setGigCategory={setGigCategory}
-                            gigCustomCategory={gigCustomCategory}
-                            setGigCustomCategory={setGigCustomCategory}
-                            gigTargetGender={gigTargetGender}
-                            setGigTargetGender={setGigTargetGender}
-                            gigExperience={gigExperience}
-                            setGigExperience={setGigExperience}
-                            gigJobsCompleted={gigJobsCompleted}
-                            setGigJobsCompleted={setGigJobsCompleted}
-                            shopAge={shopAge}
-                            setShopAge={setShopAge}
-                            gigDesc={gigDesc}
-                            setGigDesc={setGigDesc}
-                            gigServicesIncluded={gigServicesIncluded}
-                            setGigServicesIncluded={setGigServicesIncluded}
-                            usePlans={usePlans}
-                            setUsePlans={setUsePlans}
-                            gigPrice={gigPrice}
-                            setGigPrice={setGigPrice}
-                            gigPriceType={gigPriceType}
-                            setGigPriceType={setGigPriceType}
-                            gigPlans={gigPlans}
-                            setGigPlans={setGigPlans}
-                            shopOpeningTime={shopOpeningTime}
-                            setShopOpeningTime={setShopOpeningTime}
-                            shopClosingTime={shopClosingTime}
-                            setShopClosingTime={setShopClosingTime}
-                            shopIsHomeDelivery={shopIsHomeDelivery}
-                            setShopIsHomeDelivery={setShopIsHomeDelivery}
-                            shopIsHomeService={shopIsHomeService}
-                            setShopIsHomeService={setShopIsHomeService}
-                            shopHomeServiceFee={shopHomeServiceFee}
-                            setShopHomeServiceFee={setShopHomeServiceFee}
+                            <DashboardDesktop
+                                setActiveTab={setActiveTab}
+                                activeTab={activeTab}
+                                role={role}
+                                user={user}
+                                profileAvatar={profileAvatar}
+                                profileName={profileName}
+                                getAvatar={getAvatar}
+                                uploadingAvatar={uploadingAvatar}
+                                handleAvatarUpload={handleAvatarUpload}
+                                providerTitle={providerTitle}
+                                providerAbout={providerAbout}
+                                myBookings={myBookings}
+                                myGigs={myGigs}
+                                stats={stats}
+                                providerStatus={providerStatus}
+                                handleApplyProvider={handleApplyProvider}
+                                isSubmitting={isSubmitting}
+                                bookingsLoading={bookingsLoading}
+                                updateBookingStatus={updateBookingStatus}
+                                bookingForRevision={bookingForRevision}
+                                setBookingForRevision={setBookingForRevision}
+                                revisionNote={revisionNote}
+                                setRevisionNote={setRevisionNote}
+                                editingGigId={editingGigId}
+                                gigStep={gigStep}
+                                setGigStep={setGigStep}
+                                gigBusinessType={gigBusinessType}
+                                setGigBusinessType={setGigBusinessType}
+                                gigTitle={gigTitle}
+                                setGigTitle={setGigTitle}
+                                gigCategory={gigCategory}
+                                setGigCategory={setGigCategory}
+                                gigCustomCategory={gigCustomCategory}
+                                setGigCustomCategory={setGigCustomCategory}
+                                gigExperience={gigExperience}
+                                setGigExperience={setGigExperience}
+                                gigJobsCompleted={gigJobsCompleted}
+                                setGigJobsCompleted={setGigJobsCompleted}
+                                shopAge={shopAge}
+                                setShopAge={setShopAge}
+                                gigDesc={gigDesc}
+                                setGigDesc={setGigDesc}
+                                gigServicesIncluded={gigServicesIncluded}
+                                setGigServicesIncluded={setGigServicesIncluded}
+                                usePlans={usePlans}
+                                setUsePlans={setUsePlans}
+                                gigPrice={gigPrice}
+                                setGigPrice={setGigPrice}
+                                gigPriceType={gigPriceType}
+                                setGigPriceType={setGigPriceType}
+                                gigPlans={gigPlans}
+                                setGigPlans={setGigPlans}
+                                shopOpeningTime={shopOpeningTime}
+                                setShopOpeningTime={setShopOpeningTime}
+                                shopClosingTime={shopClosingTime}
+                                setShopClosingTime={setShopClosingTime}
+                                shopIsHomeDelivery={shopIsHomeDelivery}
+                                setShopIsHomeDelivery={setShopIsHomeDelivery}
+                                shopIsHomeService={shopIsHomeService}
+                                setShopIsHomeService={setShopIsHomeService}
+                                shopHomeServiceFee={shopHomeServiceFee}
+                                setShopHomeServiceFee={setShopHomeServiceFee}
 
-                            gigLat={gigLat}
-                            gigLng={gigLng}
-                            setGigLat={setGigLat}
-                            setGigLng={setGigLng}
-                            shopGoogleMapsLink={shopGoogleMapsLink}
-                            setShopGoogleMapsLink={setShopGoogleMapsLink}
-                            gigStateCode={gigStateCode}
-                            setGigStateCode={setGigStateCode}
-                            gigState={gigState}
-                            setGigState={setGigState}
-                            gigCity={gigCity}
-                            setGigCity={setGigCity}
-                            gigAddress={gigAddress}
-                            setGigAddress={setGigAddress}
-                            gigZipCode={gigZipCode}
-                            setGigZipCode={setGigZipCode}
-                            gigCoveragePincodes={gigCoveragePincodes}
-                            setGigCoveragePincodes={setGigCoveragePincodes}
-                            gigImages={gigImages}
-                            setGigImages={setGigImages}
-                            handleGigImageUpload={handleGigImageUpload}
-                            handleCreateGig={handleCreateGig}
-                            creatingGig={creatingGig}
-                            uploadingGigImages={uploadingGigImages}
-                            gigsLoading={gigsLoading}
-                            handleEditClick={handleEditClick}
-                            handleDeleteGig={handleDeleteGig}
-                            bookingRequests={bookingRequests}
-                            navigate={navigate}
-                            isMobile={isMobile}
-                            dashActiveRoom={dashActiveRoom}
-                            setDashActiveRoom={setDashActiveRoom}
-                            dashMessages={dashMessages}
-                            userLocation={userLocation}
-                            dashMessageInput={dashMessageInput}
-                            setDashMessageInput={setDashMessageInput}
-                            handleSendMessageDash={handleSendMessageDash}
-                            messagesEndRef={messagesEndRef}
-                            profileUsername={profileUsername}
-                            setProfileUsername={setProfileUsername}
-                            profilePhone={profilePhone}
-                            setProfilePhone={setProfilePhone}
-                            profileNameState={profileName}
-                            setProfileNameState={setProfileName}
-                            setProviderTitle={setProviderTitle}
-                            setProviderAbout={setProviderAbout}
-                            indianStates={indianStates}
-                            MapPicker={MapPicker}
-                            styles={styles}
-                            allUsers={allUsers}
-                            usersLoading={usersLoading}
-                            adminServices={adminServices}
-                            servicesLoading={servicesLoading}
-                            handleUpdateUserRole={handleUpdateUserRole}
-                            handleToggleUserBan={handleToggleUserBan}
-                            favorites={favorites}
-                            favoritesLoading={favoritesLoading}
-                            fetchFavorites={fetchFavorites}
-                        />
+                                gigLat={gigLat}
+                                gigLng={gigLng}
+                                setGigLat={setGigLat}
+                                setGigLng={setGigLng}
+                                shopGoogleMapsLink={shopGoogleMapsLink}
+                                setShopGoogleMapsLink={setShopGoogleMapsLink}
+                                gigStateCode={gigStateCode}
+                                setGigStateCode={setGigStateCode}
+                                gigState={gigState}
+                                setGigState={setGigState}
+                                gigCity={gigCity}
+                                setGigCity={setGigCity}
+                                gigAddress={gigAddress}
+                                setGigAddress={setGigAddress}
+                                gigZipCode={gigZipCode}
+                                setGigZipCode={setGigZipCode}
+                                gigCoveragePincodes={gigCoveragePincodes}
+                                setGigCoveragePincodes={setGigCoveragePincodes}
+                                gigImages={gigImages}
+                                setGigImages={setGigImages}
+                                handleGigImageUpload={handleGigImageUpload}
+                                handleCreateGig={handleCreateGig}
+                                creatingGig={creatingGig}
+                                uploadingGigImages={uploadingGigImages}
+                                gigsLoading={gigsLoading}
+                                handleEditClick={handleEditClick}
+                                handleDeleteGig={handleDeleteGig}
+                                bookingRequests={bookingRequests}
+                                navigate={navigate}
+                                isMobile={isMobile}
+                                dashActiveRoom={dashActiveRoom}
+                                setDashActiveRoom={setDashActiveRoom}
+                                dashMessages={dashMessages}
+                                userLocation={userLocation}
+                                dashMessageInput={dashMessageInput}
+                                handleSendMessageDash={handleSendMessageDash}
+                                handleTypeDash={handleTypeDash}
+                                messagesEndRef={messagesEndRef}
+                                partnerTyping={partnerTyping}
+                                isRecording={isRecording}
+                                recordingTime={recordingTime}
+                                uploadingFile={uploadingFile}
+                                handleFileUploadDash={handleFileUploadDash}
+                                startRecordingDash={startRecordingDash}
+                                stopRecordingDash={stopRecordingDash}
+                                fileInputRef={fileInputRef}
+                                profileUsername={profileUsername}
+                                setProfileUsername={setProfileUsername}
+                                profilePhone={profilePhone}
+                                setProfilePhone={setProfilePhone}
+                                profileNameState={profileName}
+                                setProfileNameState={setProfileName}
+                                setProviderTitle={setProviderTitle}
+                                setProviderAbout={setProviderAbout}
+                                indianStates={indianStates}
+                                MapPicker={MapPicker}
+                                styles={styles}
+                                allUsers={allUsers}
+                                usersLoading={usersLoading}
+                                adminServices={adminServices}
+                                servicesLoading={servicesLoading}
+                                handleUpdateUserRole={handleUpdateUserRole}
+                                handleToggleUserBan={handleToggleUserBan}
+                                gigTargetGender={gigTargetGender}
+                                setGigTargetGender={setGigTargetGender}
+                                favorites={favorites}
+                                favoritesLoading={favoritesLoading}
+                                fetchFavorites={fetchFavorites}
+                            />
+                        </div>
                     </main>
 
                 </div>

@@ -77,7 +77,7 @@ export const getMessages = async (req, res) => {
 // @access  Private
 export const sendMessage = async (req, res) => {
     try {
-        const { roomId, message, receiverId } = req.body;
+        const { roomId, message, receiverId, messageType, fileUrl } = req.body;
         const senderId = req.user._id;
 
         const roomValid = await validateRoom(roomId, senderId.toString());
@@ -90,6 +90,8 @@ export const sendMessage = async (req, res) => {
             receiverId,
             roomId,
             message,
+            messageType: messageType || 'text',
+            fileUrl
         });
 
         const createdMessage = await newMessage.save();

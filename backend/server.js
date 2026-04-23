@@ -13,8 +13,10 @@ import messageRoutes from './routes/messageRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 import Message from './models/Message.js';
 import User from './models/User.js';
+import Notification from './models/Notification.js';
 import sendEmail from './utils/sendEmail.js';
 
 // Load environment variables
@@ -50,11 +52,6 @@ const corsOptions = {
     credentials: true,
 };
 
-// Middleware
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // Initialize Socket.io (must be after corsOptions is defined)
 const io = new Server(server, {
     cors: {
@@ -67,6 +64,17 @@ const io = new Server(server, {
         },
         credentials: true
     }
+});
+
+// Middleware
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Attach Socket.io to req
+app.use((req, res, next) => {
+    req.io = io;
+    next();
 });
 
 // Socket.io connection handling
@@ -83,8 +91,27 @@ io.on('connection', (socket) => {
         socket.join(roomId);
     });
 
+    socket.on('typing', (data) => {
+        socket.to(data.roomId).emit('typing', { userId: data.userId });
+    });
+
+    socket.on('stopTyping', (data) => {
+        socket.to(data.roomId).emit('stopTyping', { userId: data.userId });
+    });
+
+    socket.on('readMessages', async (data) => {
+        const { roomId, userId } = data;
+        // Update DB
+        await Message.updateMany(
+            { roomId, receiverId: userId, read: false },
+            { $set: { read: true } }
+        );
+        // Emit to the other user in the room
+        socket.to(roomId).emit('messagesRead', { roomId, userId });
+    });
+
     socket.on('sendMessage', async (data) => {
-        const { senderId, receiverId, roomId, message } = data;
+        const { senderId, receiverId, roomId, message, messageType, fileUrl } = data;
 
         try {
             // Save to database first
@@ -92,7 +119,9 @@ io.on('connection', (socket) => {
                 senderId,
                 receiverId,
                 roomId,
-                message
+                message,
+                messageType: messageType || 'text',
+                fileUrl
             });
 
             // Emit to the specific room
@@ -100,6 +129,18 @@ io.on('connection', (socket) => {
             io.to(roomId).emit('receiveMessage', messageToEmit);
             // Also emit to the receiver personally
             io.to(receiverId).emit('receiveMessage', messageToEmit);
+
+            // Create notification for the receiver
+            const notification = await Notification.create({
+                recipient: receiverId,
+                sender: senderId,
+                type: 'new_message',
+                title: 'New Message',
+                message: messageType === 'text' ? (message.length > 50 ? message.substring(0, 50) + '...' : message) : `Sent an ${messageType}`,
+                link: `/dashboard?tab=chat&room=${roomId}`
+            });
+
+            io.to(receiverId).emit('newNotification', notification);
 
             // Fetch the receiver to check if they are offline and a provider
             if (!activeUsers.has(receiverId)) {
@@ -157,6 +198,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'SkillNear API is running' });

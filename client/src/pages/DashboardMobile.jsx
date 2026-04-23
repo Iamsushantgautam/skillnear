@@ -2,14 +2,66 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate as useNav } from 'react-router-dom';
 import {
     Briefcase, MessageSquare, Wallet, User,
-    Star, PlusCircle, ArrowLeft, Loader, CheckCircle,
+    Star, PlusCircle, ArrowLeft, Loader, CheckCircle, Calendar as CalendarIcon,
     ChevronRight, Edit3, Send, Search, ShoppingBag, MapPin, ChevronLeft, Plus as PlusIcon,
-    ShoppingCart, Video, Trash2, Heart
+    ShoppingCart, Video, Trash2, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, X, Phone, MoreVertical, CreditCard
 } from 'lucide-react';
 import io from 'socket.io-client';
 import api, { API_URL } from '../utils/api';
 import DashboardMobileNav from '../components/DashboardMobileNav';
 import useAuthStore from '../store/useAuthStore';
+
+const PC = '#003d9b';
+const PL = 'rgba(0,61,155,0.08)';
+
+/* ─── payment modal ─── */
+function PaymentModal({ isOpen, onClose, onSelect }) {
+    if (!isOpen) return null;
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 10000 }}>
+            <div className="animate-slide-up" style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: '32px 24px 48px', boxShadow: '0 -10px 40px rgba(0,0,0,0.1)' }}>
+                <div style={{ width: 40, height: 4, background: '#e2e8f0', borderRadius: 2, margin: '0 auto 24px' }}></div>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: 8, textAlign: 'center' }}>Service Completed?</h3>
+                <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center', marginBottom: 32, fontWeight: 500 }}>How did the customer pay for this service?</p>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <button 
+                        onClick={() => onSelect('Cash')}
+                        style={{ padding: 20, borderRadius: 20, border: '2px solid #f1f5f9', background: 'white', display: 'flex', alignItems: 'center', gap: 16, textAlign: 'left' }}
+                    >
+                        <div style={{ width: 48, height: 48, borderRadius: 14, background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Wallet size={24} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 800, fontSize: 16, color: '#1e293b' }}>Cash Payment</div>
+                            <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>Paid directly on-site</div>
+                        </div>
+                    </button>
+
+                    <button 
+                        onClick={() => onSelect('Online')}
+                        style={{ padding: 20, borderRadius: 20, border: '2px solid #f1f5f9', background: 'white', display: 'flex', alignItems: 'center', gap: 16, textAlign: 'left' }}
+                    >
+                        <div style={{ width: 48, height: 48, borderRadius: 14, background: '#eff6ff', color: '#0052cc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <CreditCard size={24} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 800, fontSize: 16, color: '#1e293b' }}>Online Payment</div>
+                            <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>Paid via SkillNear or UPI</div>
+                        </div>
+                    </button>
+
+                    <button 
+                        onClick={onClose}
+                        style={{ marginTop: 8, padding: 16, background: 'transparent', border: 'none', color: '#94a3b8', fontWeight: 800, fontSize: 14 }}
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -23,14 +75,14 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     return (R * c).toFixed(1);
 };
 
-const PC = '#003d9b';
-const PL = 'rgba(0,61,155,0.08)';
+
 
 /* ─── shared shell ─── */
 function Shell({ title, onBack, children, headerRight }) {
     return (
         <div style={{ minHeight: '100dvh', background: '#faf8ff', fontFamily: 'Inter, sans-serif', paddingBottom: 100 }}>
-            <div style={{ background: PC, padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ background: PC, display: 'flex', justifyContent: 'center' }}>
+                <div style={{ width: '100%', maxWidth: '800px', padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
                 {onBack && (
                     <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
                         <ArrowLeft size={18} color="white" />
@@ -38,8 +90,9 @@ function Shell({ title, onBack, children, headerRight }) {
                 )}
                 <h1 style={{ color: 'white', fontWeight: 900, fontSize: '1.25rem', flex: 1 }}>{title}</h1>
                 {headerRight}
+                </div>
             </div>
-            <div style={{ padding: '20px 16px' }}>{children}</div>
+            <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto', padding: '20px 16px' }}>{children}</div>
         </div>
     );
 }
@@ -47,14 +100,14 @@ function Shell({ title, onBack, children, headerRight }) {
 /* ─── status badge ─── */
 function Badge({ status }) {
     const map = {
-        pending: { label: 'Pending', bg: '#fef3c7', color: '#92400e' },
-        confirmed: { label: 'Confirmed', bg: '#d1fae5', color: '#065f46' },
-        in_progress: { label: 'In Progress', bg: '#dbeafe', color: '#1e40af' },
-        delivered: { label: 'Delivered', bg: '#e0e7ff', color: '#3730a3' },
+        pending: { label: 'Awaiting Confirmation', bg: '#f3f3fd', color: '#434654' },
+        confirmed: { label: 'Confirmed', bg: '#dae2ff', color: '#0040a2' },
+        in_progress: { label: 'In Progress', bg: '#dae2ff', color: '#344573' },
+        delivered: { label: 'Delivered', bg: '#ffdbcf', color: '#812800' },
         completed: { label: 'Completed', bg: '#d1fae5', color: '#065f46' },
-        cancelled: { label: 'Cancelled', bg: '#fee2e2', color: '#991b1b' },
+        cancelled: { label: 'Cancelled', bg: '#ffdad6', color: '#93000a' },
         live: { label: 'Live', bg: '#d1fae5', color: '#065f46' },
-        rejected: { label: 'Rejected', bg: '#fee2e2', color: '#991b1b' },
+        rejected: { label: 'Rejected', bg: '#ffdad6', color: '#93000a' },
         review: { label: 'Review', bg: '#fef3c7', color: '#92400e' },
     };
     const { label, bg, color } = map[status] || { label: status, bg: '#f3f4f6', color: '#374151' };
@@ -62,12 +115,14 @@ function Badge({ status }) {
         <span style={{ 
             background: bg, 
             color: color, 
-            padding: '4px 10px', 
-            borderRadius: 6, 
+            padding: '6px 14px', 
+            borderRadius: 9999, 
             fontSize: 10, 
             fontWeight: 800, 
             textTransform: 'uppercase', 
-            height: 'fit-content' 
+            letterSpacing: '0.05em',
+            height: 'fit-content',
+            display: 'inline-block'
         }}>{label}</span>
     );
 }
@@ -204,6 +259,14 @@ function ChatRoom({ user, room, onBack }) {
     const [socket, setSocket] = useState(null);
     const scrollRef = useRef(null);
     const [activeService, setActiveService] = useState(null);
+    const [partnerTyping, setPartnerTyping] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const [uploadingFile, setUploadingFile] = useState(false);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+    const timerRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     // Fetch active service if serviceId in URL
     useEffect(() => {
@@ -246,10 +309,17 @@ function ChatRoom({ user, room, onBack }) {
                     if (prev.find(m => m._id === msg._id)) return prev;
                     return [...prev, msg];
                 });
+                newSocket.emit('readMessages', { roomId: room.roomId, userId: user._id });
             }
         });
-        setSocket(newSocket);
 
+        newSocket.on('typing', (data) => { if (data.roomId === room.roomId) setPartnerTyping(true); });
+        newSocket.on('stopTyping', (data) => { if (data.roomId === room.roomId) setPartnerTyping(false); });
+        newSocket.on('messagesRead', ({ roomId }) => {
+            if (roomId === room.roomId) setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
+        });
+
+        setSocket(newSocket);
         return () => newSocket.disconnect();
     }, [room.roomId, user]);
 
@@ -257,8 +327,16 @@ function ChatRoom({ user, room, onBack }) {
         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const handleSend = () => {
-        if (!input.trim() || !socket) return;
+    const handleType = (val) => {
+        setInput(val);
+        if (!socket) return;
+        socket.emit('typing', { roomId: room.roomId });
+        const timeout = setTimeout(() => socket.emit('stopTyping', { roomId: room.roomId }), 2000);
+        return () => clearTimeout(timeout);
+    };
+
+    const handleSend = (type = 'text', url = null) => {
+        if ((type === 'text' && !input.trim()) || !socket) return;
         
         const tempId = Date.now().toString();
         const msgData = {
@@ -266,73 +344,113 @@ function ChatRoom({ user, room, onBack }) {
             senderId: user._id,
             receiverId: room.otherUser._id,
             roomId: room.roomId,
-            message: input,
+            message: type === 'text' ? input : '',
+            messageType: type,
+            fileUrl: url,
             createdAt: new Date().toISOString(),
-            optimistic: true
+            optimistic: true,
+            isRead: false
         };
 
-        // Optimistic update
         setMessages(prev => [...prev, msgData]);
-
         socket.emit('sendMessage', {
             senderId: user._id,
             receiverId: room.otherUser._id,
             roomId: room.roomId,
-            message: input,
+            message: type === 'text' ? input : '',
+            messageType: type,
+            fileUrl: url,
             tempId: tempId
         });
         
-        setInput('');
+        if (type === 'text') setInput('');
+        socket.emit('stopTyping', { roomId: room.roomId });
+    };
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setUploadingFile(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const config = { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.post('/api/upload', formData, config);
+            let type = 'file';
+            if (file.type.startsWith('image/')) type = 'image';
+            handleSend(type, data.url);
+        } catch (error) { console.error(error); } finally { setUploadingFile(false); }
+    };
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderRef.current = new MediaRecorder(stream);
+            audioChunksRef.current = [];
+            mediaRecorderRef.current.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+            mediaRecorderRef.current.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+                const audioFile = new File([audioBlob], 'voice_message.wav', { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('file', audioFile);
+                setUploadingFile(true);
+                try {
+                    const config = { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${user.token}` } };
+                    const { data } = await api.post('/api/upload', formData, config);
+                    handleSend('voice', data.url);
+                } catch (err) { console.error(err); } finally { setUploadingFile(false); }
+            };
+            mediaRecorderRef.current.start();
+            setIsRecording(true);
+            setRecordingTime(0);
+            timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
+        } catch (err) { console.error(err); }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            clearInterval(timerRef.current);
+            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+        }
     };
 
     return (
         <div style={{ position: 'fixed', inset: 0, background: '#f0f2f5', zIndex: 1100, display: 'flex', flexDirection: 'column' }}>
             {/* ── Header ── */}
             <div style={{
-                background: `linear-gradient(135deg, ${PC} 0%, #0052cc 100%)`,
+                background: '#ffffff',
                 padding: '52px 16px 14px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 10,
-                boxShadow: '0 4px 20px rgba(0,61,155,0.25)'
+                gap: 12,
+                borderBottom: '1px solid #f1f5f9'
             }}>
-                <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <ArrowLeft size={20} />
+                <button onClick={onBack} style={{ background: 'transparent', border: 'none', color: '#475569', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <ArrowLeft size={24} />
                 </button>
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                     <img
                         src={room.otherUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(room.otherUser?.name || 'U')}&background=ede9fe&color=4f46e5`}
-                        style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.4)' }}
+                        style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }}
                         alt=""
                         onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(room.otherUser?.name || 'U')}&background=ede9fe&color=4f46e5`; }}
                     />
-                    <div style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: '#22c55e', border: '1.5px solid white' }} />
+                    <div style={{ position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: '#22c55e', border: '2px solid white' }} />
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <h4 style={{ color: 'white', margin: 0, fontSize: '1rem', fontWeight: 800, letterSpacing: '-0.01em' }}>{room.otherUser?.name}</h4>
-                    <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: 500 }}>● Online</span>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <h4 style={{ color: '#0f172a', margin: 0, fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.01em' }}>{room.otherUser?.name}</h4>
+                    <span style={{ color: '#22c55e', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        ACTIVE NOW
+                    </span>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                    <button 
-                        onClick={() => {
-                                if (window.confirm('Are you sure you want to delete this chat history?')) {
-                                    api.delete(`/api/messages/${room.roomId}`)
-                                        .then(() => {
-                                            setMessages([]);
-                                            alert('Chat history deleted');
-                                        })
-                                        .catch(err => {
-                                            const errorMsg = err.response?.data?.message || err.message || 'Failed to delete chat';
-                                            alert(`Delete failed: ${errorMsg}`);
-                                        });
-                                }
-                        }}
-                        style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#ff4d4d', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                        <Trash2 size={18} />
+                <div style={{ display: 'flex', gap: 16 }}>
+                    <button style={{ background: 'transparent', border: 'none', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Phone size={22} />
                     </button>
-                    <button style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Video size={18} />
+                    <button style={{ background: 'transparent', border: 'none', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <MoreVertical size={22} />
                     </button>
                 </div>
             </div>
@@ -370,11 +488,10 @@ function ChatRoom({ user, room, onBack }) {
                 flex: 1,
                 padding: '16px 12px',
                 overflowY: 'auto',
-                background: '#e5ddd5',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                background: '#faf8ff',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 3
+                gap: 16
             }}>
                 {loading ? (
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, height: '100%' }}>
@@ -386,83 +503,147 @@ function ChatRoom({ user, room, onBack }) {
                         <p style={{ fontSize: '0.85rem', color: '#555', fontWeight: 600 }}>Say hello to start chatting!</p>
                     </div>
                 ) : (
-                    messages.map((m, i) => {
-                        const isMe = m.senderId === user._id;
-                        const showDate = i === 0 || new Date(m.createdAt).toDateString() !== new Date(messages[i-1]?.createdAt).toDateString();
-                        return (
-                            <div key={m._id || i}>
-                                {showDate && (
-                                    <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
-                                        <span style={{ background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(8px)', fontSize: 11, color: '#666', padding: '3px 12px', borderRadius: 20, fontWeight: 600 }}>
-                                            {new Date(m.createdAt).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}
-                                        </span>
-                                    </div>
-                                )}
-                                <div style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start', marginBottom: 2 }}>
-                                    <div style={{
-                                        background: isMe ? '#d9fdd3' : '#ffffff',
-                                        padding: '7px 12px 5px',
-                                        borderRadius: isMe ? '12px 2px 12px 12px' : '2px 12px 12px 12px',
-                                        maxWidth: '80%',
-                                        boxShadow: '0 1px 2px rgba(0,0,0,0.12)',
-                                        position: 'relative',
-                                        minWidth: 60
-                                    }}>
-                                        <p style={{ margin: 0, fontSize: '0.92rem', color: '#111', lineHeight: 1.45, wordBreak: 'break-word' }}>{m.message}</p>
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3, marginTop: 3 }}>
-                                            <span style={{ fontSize: 10, color: '#8aa', fontWeight: 500 }}>
-                                                {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <>
+                        {messages.map((m, i) => {
+                            const isMe = m.senderId === user._id;
+                            const showDate = i === 0 || new Date(m.createdAt).toDateString() !== new Date(messages[i-1]?.createdAt).toDateString();
+                            return (
+                                <div key={m._id || i}>
+                                    {showDate && (
+                                        <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0 24px' }}>
+                                            <span style={{ background: '#f1f5f9', fontSize: 10, color: '#64748b', padding: '6px 16px', borderRadius: 20, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                {new Date(m.createdAt).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
                                             </span>
-                                            {isMe && <span style={{ fontSize: 11, color: '#53bdeb' }}>✓✓</span>}
+                                        </div>
+                                    )}
+                                    <div style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start', marginBottom: 6 }}>
+                                        <div style={{
+                                            background: isMe ? '#0052cc' : '#f8f9fc',
+                                            color: isMe ? '#ffffff' : '#1e293b',
+                                            padding: '12px 16px',
+                                            borderRadius: isMe ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                                            maxWidth: '85%',
+                                            position: 'relative',
+                                            minWidth: 80
+                                        }}>
+                                            {m.messageType === 'image' && (
+                                                <img src={m.fileUrl} style={{ width: '100%', borderRadius: 8, marginBottom: 4, display: 'block' }} alt="Sent image" />
+                                            )}
+                                            {m.messageType === 'file' && (
+                                                <a href={m.fileUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.05)', padding: 8, borderRadius: 8, textDecoration: 'none', color: '#1e293b', marginBottom: 4 }}>
+                                                    <FileText size={20} />
+                                                    <span style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis' }}>Document</span>
+                                                </a>
+                                            )}
+                                            {m.messageType === 'voice' && (
+                                                <audio src={m.fileUrl} controls style={{ width: '100%', height: 32, marginBottom: 4 }} />
+                                            )}
+                                            {m.message && (
+                                                <p style={{ margin: 0, fontSize: '0.9rem', color: isMe ? '#ffffff' : '#1e293b', lineHeight: 1.5, wordBreak: 'break-word', fontWeight: 500 }}>{m.message}</p>
+                                            )}
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, marginTop: 4 }}>
+                                                <span style={{ fontSize: 9, color: isMe ? 'rgba(255,255,255,0.7)' : '#94a3b8', fontWeight: 500 }}>
+                                                    {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                {isMe && (
+                                                    m.isRead ? <CheckCheck size={12} color="#ffffff" /> : <Check size={12} color="rgba(255,255,255,0.7)" />
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                            );
+                        })}
+                        {partnerTyping && (
+                            <div style={{ alignSelf: 'flex-start', padding: '6px 12px', background: 'white', borderRadius: '12px', fontSize: '11px', color: '#64748b', marginBottom: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <div style={{ display: 'flex', gap: 2 }}>
+                                    <span className="dot-typing" style={{ width: 4, height: 4 }}></span>
+                                    <span className="dot-typing" style={{ width: 4, height: 4, animationDelay: '0.2s' }}></span>
+                                    <span className="dot-typing" style={{ width: 4, height: 4, animationDelay: '0.4s' }}></span>
+                                </div>
+                                typing...
                             </div>
-                        );
-                    })
+                        )}
+                    </>
                 )}
                 <div ref={scrollRef} />
             </div>
 
             {/* ── Input Area ── */}
             <div style={{
-                padding: '10px 12px',
-                paddingBottom: 28,
-                background: '#f0f2f5',
+                padding: '12px 16px',
+                paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
+                background: '#ffffff',
+                borderTop: '1px solid #f1f5f9',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 12,
+                position: 'relative'
             }}>
-                <div style={{ flex: 1, background: 'white', borderRadius: 28, display: 'flex', alignItems: 'center', padding: '4px 16px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-                    <input
-                        value={input}
-                        onChange={e => setInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleSend()}
-                        placeholder="Message..."
-                        style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.95rem', padding: '8px 0', background: 'transparent', color: '#1e293b' }}
-                    />
-                </div>
-                <button
-                    onClick={handleSend}
-                    disabled={!input.trim()}
-                    style={{
-                        background: input.trim() ? `linear-gradient(135deg, ${PC} 0%, #0052cc 100%)` : '#cbd5e1',
-                        border: 'none',
-                        width: 46,
-                        height: 46,
-                        borderRadius: '50%',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        boxShadow: input.trim() ? '0 4px 12px rgba(0,61,155,0.3)' : 'none',
-                        transition: 'all 0.2s',
-                        transform: input.trim() ? 'scale(1)' : 'scale(0.95)'
-                    }}
-                >
-                    <Send size={19} />
-                </button>
+                <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} />
+                
+                {!isRecording ? (
+                    <>
+                        <button 
+                            onClick={() => fileInputRef.current.click()}
+                            style={{ background: 'white', border: 'none', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}
+                        >
+                            <Paperclip size={20} />
+                        </button>
+                        
+                        <div style={{ flex: 1, background: 'white', borderRadius: 24, display: 'flex', alignItems: 'center', padding: '2px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                            <input
+                                value={input}
+                                onChange={e => handleType(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                                placeholder="Type a message..."
+                                style={{ flex: 1, border: 'none', outline: 'none', fontSize: '0.9rem', padding: '10px 0', background: 'transparent', color: '#1e293b' }}
+                            />
+                            <button onClick={() => fileInputRef.current.click()} style={{ border: 'none', background: 'transparent', color: '#94a3b8', padding: '4px' }}>
+                                <ImageIcon size={20} />
+                            </button>
+                        </div>
+
+                        {input.trim() ? (
+                            <button
+                                onClick={() => handleSend()}
+                                style={{ background: PC, border: 'none', width: 46, height: 46, borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,61,155,0.3)' }}
+                            >
+                                <Send size={20} />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={startRecording}
+                                style={{ background: 'white', border: 'none', width: 46, height: 46, borderRadius: '50%', color: PC, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+                            >
+                                <Mic size={22} />
+                            </button>
+                        )}
+                    </>
+                ) : (
+                    <div style={{ flex: 1, background: '#fee2e2', borderRadius: 24, display: 'flex', alignItems: 'center', padding: '8px 16px', gap: 12, border: '1px solid #fecaca' }}>
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444', animation: 'pulse 1s infinite' }}></div>
+                        <span style={{ flex: 1, color: '#991b1b', fontWeight: 700, fontSize: '0.9rem' }}>
+                            Recording... {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+                        </span>
+                        <button onClick={() => { setIsRecording(false); clearInterval(timerRef.current); if (mediaRecorderRef.current) mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop()); }} style={{ color: '#64748b', background: 'none', border: 'none' }}>
+                            <X size={20} />
+                        </button>
+                        <button 
+                            onClick={stopRecording}
+                            style={{ background: '#ef4444', color: 'white', border: 'none', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                            <Send size={18} />
+                        </button>
+                    </div>
+                )}
+
+                {uploadingFile && (
+                    <div style={{ position: 'absolute', top: -40, left: 0, right: 0, background: 'rgba(255,255,255,0.9)', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, borderTop: '1px solid #e2e8f0', zIndex: 10 }}>
+                        <Loader size={16} className="animate-spin" color={PC} />
+                        <span style={{ fontSize: 12, fontWeight: 700, color: PC }}>Uploading media...</span>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -520,61 +701,312 @@ function GigsScreen({ myGigs, gigsLoading, setActiveTab, navigate, handleEditCli
 }
 
 /* ─── Requests Screen ─── */
-function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus, setActiveTab, navigate, onSelectRoom, onSelectBooking, onMenuClick }) {
+function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus, setActiveTab, navigate, onSelectRoom, onSelectBooking, onMenuClick, onDeliverClick }) {
+    const [bookingFilter, setBookingFilter] = useState('all');
+
+    const filteredBookings = (bookingRequests || []).filter(b => {
+        if (bookingFilter === 'all') return true;
+        if (bookingFilter === 'pending') return b.status === 'pending';
+        if (bookingFilter === 'confirmed') return b.status === 'confirmed';
+        if (bookingFilter === 'in_progress') return ['in_progress', 'revision_requested', 'delivered'].includes(b.status);
+        if (bookingFilter === 'completed') return ['completed', 'cancelled', 'rejected'].includes(b.status);
+        return true;
+    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
     return (
         <Shell title="Booking Requests" onBack={() => setActiveTab('overview')} onMenuClick={onMenuClick}>
-            {bookingsLoading ? (
-                <div style={{ textAlign: 'center', padding: 48 }}><Loader size={28} color={PC} className="animate-spin" /></div>
-            ) : bookingRequests.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '48px 24px' }}><p style={{ color: '#94a3b8' }}>No requests yet</p></div>
-            ) : bookingRequests.map(req => (
-                <div key={req._id} onClick={() => onSelectBooking(req)} style={{ background: 'white', borderRadius: 24, padding: 20, marginBottom: 16, boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                        <div style={{ flex: 1 }}>
-                            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800 }}>{req.service?.title}</h4>
-                            <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>₹{req.price || req.totalPrice || '0'} · {req.user?.name || req.user?.username || 'User'}</p>
-                        </div>
-                        <Badge status={req.status} />
-                    </div>
-                    {req.status === 'pending' && (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                            <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'confirmed'); }} style={{ flex: 1, background: PC, color: 'white', border: 'none', borderRadius: 12, padding: '10px 0', fontWeight: 700 }}>Accept</button>
-                            <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'cancelled'); }} style={{ flex: 1, background: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: 12, padding: '10px 0', fontWeight: 700 }}>Decline</button>
-                        </div>
-                    )}
-                    <button onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: req._id, otherUser: req.user }); }} style={{ width: '100%', background: '#f3f3fd', color: PC, border: 'none', borderRadius: 12, padding: '10px 0', fontWeight: 700, marginTop: 8 }}>Message Customer</button>
+            <div style={{ padding: '0 4px' }}>
+                {/* Editorial Header */}
+                <div style={{ marginBottom: 32 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', color: PC, textTransform: 'uppercase', marginBottom: 8 }}>Portfolio Manager</p>
+                    <h2 style={{ fontSize: 32, fontWeight: 800, color: '#191b23', lineHeight: 1.2 }}>Incoming <br /><span style={{ color: '#0052cc' }}>requests.</span></h2>
                 </div>
-            ))}
+
+                {/* Filter Tabs */}
+                <div style={{ display: 'flex', gap: 12, marginBottom: 32, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
+                    {['all', 'pending', 'confirmed', 'in_progress', 'completed'].map(filter => (
+                        <button
+                            key={filter}
+                            onClick={() => setBookingFilter(filter)}
+                            style={{
+                                padding: '10px 24px',
+                                borderRadius: 9999,
+                                background: bookingFilter === filter ? PC : '#e7e7f2',
+                                color: bookingFilter === filter ? 'white' : '#434654',
+                                fontWeight: 700,
+                                fontSize: 13,
+                                border: 'none',
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.2s',
+                                boxShadow: bookingFilter === filter ? '0 10px 20px rgba(0,61,155,0.2)' : 'none'
+                            }}
+                        >
+                            {filter.charAt(0).toUpperCase() + filter.slice(1).replace('_', ' ')}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Bookings List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                    {bookingsLoading ? (
+                        <div style={{ textAlign: 'center', padding: 48 }}><Loader size={28} color={PC} className="animate-spin" /></div>
+                    ) : filteredBookings.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: 24, border: '1px solid #f1f5f9' }}>
+                            <p style={{ color: '#94a3b8' }}>No {bookingFilter === 'all' ? '' : bookingFilter} requests found</p>
+                        </div>
+                    ) : filteredBookings.map(req => (
+                        <div key={req._id} onClick={() => onSelectBooking(req)} style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid rgba(195, 198, 214, 0.1)' }}>
+                            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+                                <img 
+                                    src={req.service?.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.service?.title || 'S')}&background=f3f3fd&color=003d9b`} 
+                                    style={{ width: 80, height: 80, borderRadius: 16, objectFit: 'cover', flexShrink: 0, border: '1px solid #f1f5f9' }}
+                                    alt=""
+                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(req.service?.title || 'S')}&background=f3f3fd&color=003d9b`; }}
+                                />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                        <Badge status={req.status} />
+                                    </div>
+                                    <h3 style={{ fontSize: 18, fontWeight: 800, color: '#191b23', marginBottom: 4, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.service?.title}</h3>
+                                    <p style={{ fontSize: 14, color: '#434654', margin: 0, fontWeight: 500 }}>Customer: {req.user?.name || req.user?.username || 'User'}</p>
+                                </div>
+                            </div>
+                            
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
+                                        <CalendarIcon size={16} />
+                                        <span style={{ fontSize: 12, fontWeight: 500 }}>{new Date(req.createdAt).toLocaleDateString()} | {req.slot || 'TBA'}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
+                                        <MapPin size={16} />
+                                        <span style={{ fontSize: 12, fontWeight: 500 }}>
+                                            {typeof req.address === 'object' 
+                                                ? (`${req.address?.street || ''}, ${req.address?.city || ''}`.trim() || 'Location TBA')
+                                                : (req.address || 'Location TBA')}
+                                        </span>
+                                    </div>
+                                </div>
+                                <p style={{ fontSize: 24, fontWeight: 900, color: PC, margin: 0 }}>₹{req.price || req.totalPrice || '0'}</p>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onSelectBooking(req); }} 
+                                    style={{ width: '100%', padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.2)', borderRadius: 16, color: '#434654', background: '#f8f9fc', fontWeight: 800, fontSize: 12 }}
+                                >View Order Details</button>
+
+                                {req.status === 'pending' && (
+                                    <div style={{ display: 'flex', gap: 12 }}>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'cancelled'); }} 
+                                            style={{ flex: 1, padding: '12px 0', borderRadius: 16, background: '#ffdad6', color: '#93000a', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                        >Decline</button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'confirmed'); }} 
+                                            style={{ flex: 1, padding: '12px 0', borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                        >Accept Request</button>
+                                    </div>
+                                )}
+
+                                {req.status === 'confirmed' && (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'in_progress'); }} 
+                                            style={{ width: '100%', padding: '12px 0', borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                        >Mark In Progress</button>
+                                        <button 
+                                            onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                const link = req.address?.googleMapLink || (req.address?.lat && req.address?.lng ? `https://www.google.com/maps?q=${req.address.lat},${req.address.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.address?.street || ''} ${req.address?.city || ''} ${req.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
+                                                window.open(link, '_blank'); 
+                                            }} 
+                                            style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '1px solid #e2e8f0', color: '#1e293b', background: '#f8f9fc', fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                                        >
+                                            <MapPin size={16} /> Show Live Location
+                                        </button>
+                                    </div>
+                                )}
+
+                                {['in_progress', 'revision_requested'].includes(req.status) && (
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); onDeliverClick(req._id); }} 
+                                        style={{ width: '100%', padding: '12px 0', borderRadius: 16, background: '#059669', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                    >Deliver Service</button>
+                                )}
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: req._id, otherUser: req.user }); }} 
+                                    style={{ width: '100%', padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.3)', borderRadius: 16, color: PC, background: 'transparent', fontWeight: 800, fontSize: 12 }}
+                                >Message Customer</button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Decorative Help Card */}
+                <div style={{ marginTop: 48, marginBottom: 16, padding: 32, borderRadius: 32, background: '#0052cc', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'relative', zIndex: 10 }}>
+                        <h4 style={{ color: 'white', fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Need Help?</h4>
+                        <p style={{ color: '#c4d2ff', fontSize: 14, lineHeight: 1.5, marginBottom: 24, maxWidth: 200 }}>Our support team is available 24/7 for booking disputes.</p>
+                        <button style={{ padding: '8px 24px', background: 'white', color: PC, fontWeight: 800, fontSize: 14, borderRadius: 9999, border: 'none' }}>Contact Support</button>
+                    </div>
+                    <div style={{ position: 'absolute', bottom: -32, right: -32, width: 128, height: 128, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(32px)' }} />
+                    <div style={{ position: 'absolute', top: -16, right: -16, width: 96, height: 96, background: 'rgba(0,0,0,0.2)', borderRadius: '50%', filter: 'blur(24px)' }} />
+                </div>
+            </div>
         </Shell>
     );
 }
 
 /* ─── Orders Screen ─── */
-function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onSelectRoom, onSelectBooking, onMenuClick }) {
+function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onSelectRoom, onSelectBooking, onMenuClick, updateBookingStatus }) {
+    const [bookingFilter, setBookingFilter] = useState('all');
+
+    const filteredBookings = (myBookings || []).filter(b => {
+        if (bookingFilter === 'all') return true;
+        if (bookingFilter === 'pending') return b.status === 'pending';
+        if (bookingFilter === 'confirmed') return b.status === 'confirmed';
+        if (bookingFilter === 'in_progress') return ['in_progress', 'revision_requested', 'delivered'].includes(b.status);
+        if (bookingFilter === 'completed') return ['completed', 'cancelled', 'rejected'].includes(b.status);
+        return true;
+    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
     return (
-        <Shell title="My Orders" onBack={() => setActiveTab('overview')} onMenuClick={onMenuClick}>
-            {bookingsLoading ? (
-                <div style={{ textAlign: 'center', padding: 48 }}><Loader size={28} color={PC} className="animate-spin" /></div>
-            ) : myBookings.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '48px 24px' }}><p style={{ color: '#94a3b8' }}>No orders yet</p></div>
-            ) : myBookings.map(b => (
-                <div key={b._id} onClick={() => onSelectBooking(b)} style={{ background: 'white', borderRadius: 24, padding: 20, marginBottom: 16, boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                        <div style={{ flex: 1 }}>
-                            <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>{b.service?.title}</h4>
-                            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#64748b' }}>₹{b.price || b.totalPrice || '0'} · {new Date(b.createdAt).toLocaleDateString()}</p>
-                        </div>
-                        <Badge status={b.status} />
-                    </div>
-                    <button onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: b._id, otherUser: b.provider }); }} style={{ marginTop: 10, width: '100%', background: '#f3f3fd', color: PC, border: 'none', borderRadius: 12, padding: '10px 0', fontWeight: 700 }}>Message Provider</button>
+        <Shell title="My Bookings" onBack={() => setActiveTab('overview')} onMenuClick={onMenuClick}>
+            <div style={{ padding: '0 4px' }}>
+                {/* Editorial Header */}
+                <div style={{ marginBottom: 32 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', color: PC, textTransform: 'uppercase', marginBottom: 8 }}>Portfolio Manager</p>
+                    <h2 style={{ fontSize: 32, fontWeight: 800, color: '#191b23', lineHeight: 1.2 }}>Your ongoing <br /><span style={{ color: '#0052cc' }}>collaborations.</span></h2>
                 </div>
-            ))}
+
+                {/* Filter Tabs */}
+                <div style={{ display: 'flex', gap: 12, marginBottom: 32, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
+                    {['all', 'pending', 'confirmed', 'in_progress', 'completed'].map(filter => (
+                        <button
+                            key={filter}
+                            onClick={() => setBookingFilter(filter)}
+                            style={{
+                                padding: '10px 24px',
+                                borderRadius: 9999,
+                                background: bookingFilter === filter ? PC : '#e7e7f2',
+                                color: bookingFilter === filter ? 'white' : '#434654',
+                                fontWeight: 700,
+                                fontSize: 13,
+                                border: 'none',
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.2s',
+                                boxShadow: bookingFilter === filter ? '0 10px 20px rgba(0,61,155,0.2)' : 'none'
+                            }}
+                        >
+                            {filter.charAt(0).toUpperCase() + filter.slice(1).replace('_', ' ')}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Bookings List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                    {bookingsLoading ? (
+                        <div style={{ textAlign: 'center', padding: 48 }}><Loader size={28} color={PC} className="animate-spin" /></div>
+                    ) : filteredBookings.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: 24, border: '1px solid #f1f5f9' }}>
+                            <p style={{ color: '#94a3b8' }}>No {bookingFilter === 'all' ? '' : bookingFilter} orders found</p>
+                        </div>
+                    ) : filteredBookings.map(b => (
+                        <div key={b._id} onClick={() => onSelectBooking(b)} style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid rgba(195, 198, 214, 0.2)' }}>
+                            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+                                <img 
+                                    src={b.service?.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(b.service?.title || 'S')}&background=f3f3fd&color=003d9b`} 
+                                    style={{ width: 80, height: 80, borderRadius: 16, objectFit: 'cover', flexShrink: 0, border: '1px solid #f1f5f9' }}
+                                    alt=""
+                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(b.service?.title || 'S')}&background=f3f3fd&color=003d9b`; }}
+                                />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                        <Badge status={b.status} />
+                                    </div>
+                                    <h3 style={{ fontSize: 18, fontWeight: 800, color: '#191b23', marginBottom: 4, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.service?.title}</h3>
+                                    <p style={{ fontSize: 14, color: '#434654', margin: 0, fontWeight: 500 }}>Provider: {b.provider?.name || 'Sushant'}</p>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
+                                        <CalendarIcon size={16} />
+                                        <span style={{ fontSize: 12, fontWeight: 500 }}>{new Date(b.createdAt).toLocaleDateString()} | {b.slot || 'TBA'}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
+                                        <MapPin size={16} />
+                                        <span style={{ fontSize: 12, fontWeight: 500 }}>
+                                            {typeof b.address === 'object' 
+                                                ? (`${b.address?.street || ''}, ${b.address?.city || ''}`.trim() || 'Location TBA')
+                                                : (b.address || 'Location TBA')}
+                                        </span>
+                                    </div>
+                                </div>
+                                <p style={{ fontSize: 24, fontWeight: 900, color: PC, margin: 0 }}>₹{b.price || b.totalPrice || '0'}</p>
+                            </div>
+
+                            {/* Buttons based on status */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onSelectBooking(b); }} 
+                                    style={{ width: '100%', height: 44, padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.2)', borderRadius: 16, color: '#434654', background: '#f8f9fc', fontWeight: 800, fontSize: 12 }}
+                                >View Details</button>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: (b.status === 'delivered' || b.status === 'completed') ? '1fr 1fr' : '1fr', gap: 12 }}>
+                                    {b.status === 'delivered' ? (
+                                        <>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); /* revision logic */ }} 
+                                                style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                            >Request Revision</button>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); updateBookingStatus(b._id, 'completed'); }} 
+                                                style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                            >Accept & Complete</button>
+                                        </>
+                                    ) : b.status === 'completed' ? (
+                                        <>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); navigate(`/invoice/${b._id}`); }} 
+                                                style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                            >View Receipt</button>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); navigate(`/services/${b.service?._id || b.service}`); }} 
+                                                style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                            >Rate Professional</button>
+                                        </>
+                                    ) : (
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: b._id, otherUser: b.provider }); }} 
+                                            style={{ width: '100%', height: 44, padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.3)', borderRadius: 16, color: PC, background: 'transparent', fontWeight: 800, fontSize: 12 }}
+                                        >Message Provider</button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Decorative Help Card */}
+                <div style={{ marginTop: 48, marginBottom: 16, padding: 32, borderRadius: 32, background: '#0052cc', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'relative', zIndex: 10 }}>
+                        <h4 style={{ color: 'white', fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Need Help?</h4>
+                        <p style={{ color: '#c4d2ff', fontSize: 14, lineHeight: 1.5, marginBottom: 24, maxWidth: 200 }}>Our support team is available 24/7 for booking disputes.</p>
+                        <button style={{ padding: '8px 24px', background: 'white', color: PC, fontWeight: 800, fontSize: 14, borderRadius: 9999, border: 'none' }}>Contact Support</button>
+                    </div>
+                    <div style={{ position: 'absolute', bottom: -32, right: -32, width: 128, height: 128, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(32px)' }} />
+                    <div style={{ position: 'absolute', top: -16, right: -16, width: 96, height: 96, background: 'rgba(0,0,0,0.2)', borderRadius: '50%', filter: 'blur(24px)' }} />
+                </div>
+            </div>
         </Shell>
     );
 }
 
 /* ─── Booking Details Screen ─── */
-function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, updateBookingStatus }) {
+function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, updateBookingStatus, onDeliverClick, navigate }) {
     if (!booking) return null;
 
     const otherUser = role === 'provider' ? booking.user : booking.provider;
@@ -690,10 +1122,43 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                     </div>
                 </div>
 
+                 {booking.status === 'completed' && (
+                    <div style={{ marginTop: 12 }}>
+                        <button 
+                            onClick={() => navigate(`/invoice/${booking._id}`)} 
+                            style={{ width: '100%', padding: '16px', borderRadius: 16, background: '#f1f5f9', color: '#1e293b', border: '1px solid #e2e8f0', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+                        >
+                            <Download size={20} /> View & Download Invoice
+                        </button>
+                    </div>
+                )}
+
                 {role === 'provider' && booking.status === 'pending' && (
                     <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
                         <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(booking._id, 'confirmed'); }} style={{ flex: 1, padding: '16px', borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 900, boxShadow: '0 10px 20px rgba(0, 61, 155, 0.2)' }}>Accept Order</button>
                         <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(booking._id, 'cancelled'); }} style={{ flex: 1, padding: '16px', borderRadius: 16, background: '#fee2e2', color: '#ef4444', border: 'none', fontWeight: 900 }}>Decline</button>
+                    </div>
+                )}
+
+                {role === 'provider' && booking.status === 'confirmed' && (
+                    <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(booking._id, 'in_progress'); }} style={{ width: '100%', padding: '16px', borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 900 }}>Start Service</button>
+                        <button 
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                const link = booking.address?.googleMapLink || (booking.address?.lat && booking.address?.lng ? `https://www.google.com/maps?q=${booking.address.lat},${booking.address.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${booking.address?.street || ''} ${booking.address?.city || ''} ${booking.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
+                                window.open(link, '_blank'); 
+                            }} 
+                            style={{ width: '100%', padding: '16px', borderRadius: 16, background: '#f1f5f9', color: '#1e293b', border: '1px solid #e2e8f0', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+                        >
+                            <MapPin size={20} /> Show Live Location
+                        </button>
+                    </div>
+                )}
+
+                {role === 'provider' && ['in_progress', 'revision_requested'].includes(booking.status) && (
+                    <div style={{ marginTop: 12 }}>
+                        <button onClick={(e) => { e.stopPropagation(); onDeliverClick(booking._id); }} style={{ width: '100%', padding: '16px', borderRadius: 16, background: '#059669', color: 'white', border: 'none', fontWeight: 900 }}>Deliver & Request Payment</button>
                     </div>
                 )}
             </div>
@@ -1429,7 +1894,7 @@ function FavoritesScreen({ favorites, favoritesLoading, fetchFavorites, setActiv
                         <button onClick={() => navigate('/services')} style={{ background: PC, color: 'white', border: 'none', borderRadius: 100, padding: '14px 28px', fontWeight: 800, fontSize: '0.9rem', boxShadow: '0 10px 20px rgba(0,61,155,0.2)' }}>Browse Services</button>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                         {favorites.map(srv => (
                             <div 
                                 key={srv._id} 
@@ -1444,7 +1909,7 @@ function FavoritesScreen({ favorites, favoritesLoading, fetchFavorites, setActiv
                                     boxShadow: '0 10px 25px rgba(0,0,0,0.05)' 
                                 }}
                             >
-                                <div style={{ position: 'relative', width: '100%', height: 200 }}>
+                                <div style={{ position: 'relative', width: '100%', height: 130 }}>
                                     <img 
                                         src={srv.images && srv.images.length > 0 ? srv.images[0] : (srv.provider?.avatar && srv.provider.avatar.startsWith('http') ? srv.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`)} 
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
@@ -1469,7 +1934,7 @@ function FavoritesScreen({ favorites, favoritesLoading, fetchFavorites, setActiv
                                         <Heart size={16} fill="#fff" color="#fff" />
                                     </button>
                                 </div>
-                                <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ padding: 12, flex: 1, display: 'flex', flexDirection: 'column' }}>
                                     <h4 style={{ margin: '0 0 8px', fontSize: '1.05rem', fontWeight: 800, color: '#1e293b', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>{srv.title || 'Untitled Service'}</h4>
                                     
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
@@ -1555,6 +2020,23 @@ export default function DashboardMobile(props) {
     const navigate = navProp || navHook;
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [selectedBooking, setSelectedBooking] = useState(null);
+    const [bookingForPayment, setBookingForPayment] = useState(null);
+
+    const handleDeliverClick = (booking) => {
+        setBookingForPayment(booking);
+    };
+
+    const confirmDelivery = async (paymentMode) => {
+        if (!bookingForPayment) return;
+        try {
+            // updateBookingStatus(bookingId, status, note, paymentMode)
+            await updateBookingStatus(bookingForPayment, 'delivered', '', paymentMode);
+            setBookingForPayment(null);
+            setSelectedBooking(null);
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     // Auto-open chat if provider/service ID in URL
     useEffect(() => {
@@ -1581,7 +2063,50 @@ export default function DashboardMobile(props) {
 
     const renderScreen = () => {
         if (selectedRoom) return <ChatRoom user={user} room={selectedRoom} onBack={() => setSelectedRoom(null)} />;
-        if (selectedBooking) return <BookingDetailsScreen booking={selectedBooking} userLocation={userLocation} onBack={() => setSelectedBooking(null)} onMessage={() => { setSelectedRoom({ roomId: selectedBooking._id, otherUser: role === 'provider' ? selectedBooking.user : selectedBooking.provider }); setSelectedBooking(null); }} role={role} updateBookingStatus={updateBookingStatus} />;
+        
+        if (activeTab === 'requests') {
+            return (
+                <>
+                    <RequestsScreen 
+                        bookingRequests={bookingRequests} 
+                        bookingsLoading={bookingsLoading} 
+                        updateBookingStatus={updateBookingStatus} 
+                        setActiveTab={setActiveTab} 
+                        navigate={navigate} 
+                        onSelectRoom={setSelectedRoom}
+                        onSelectBooking={setSelectedBooking}
+                        onDeliverClick={handleDeliverClick}
+                    />
+                    <PaymentModal 
+                        isOpen={!!bookingForPayment} 
+                        onClose={() => setBookingForPayment(null)} 
+                        onSelect={confirmDelivery} 
+                    />
+                </>
+            );
+        }
+
+        if (selectedBooking) {
+            return (
+                <>
+                    <BookingDetailsScreen 
+                        booking={selectedBooking} 
+                        userLocation={userLocation} 
+                        onBack={() => setSelectedBooking(null)} 
+                        onMessage={() => { setSelectedRoom({ roomId: selectedBooking._id, otherUser: role === 'provider' ? selectedBooking.user : selectedBooking.provider }); setSelectedBooking(null); }} 
+                        role={role}
+                        updateBookingStatus={updateBookingStatus}
+                        onDeliverClick={handleDeliverClick}
+                        navigate={navigate}
+                    />
+                    <PaymentModal 
+                        isOpen={!!bookingForPayment} 
+                        onClose={() => setBookingForPayment(null)} 
+                        onSelect={confirmDelivery} 
+                    />
+                </>
+            );
+        }
 
         switch (activeTab) {
             case 'mygigs': return <GigsScreen myGigs={myGigs} gigsLoading={gigsLoading} setActiveTab={setActiveTab} navigate={navigate} handleEditClick={handleEditClick} />;
@@ -1589,7 +2114,7 @@ export default function DashboardMobile(props) {
             case 'become_provider': return <BecomeProviderScreen handleApplyProvider={props.handleApplyProvider} isSubmitting={props.isSubmitting} setActiveTab={setActiveTab} />;
             case 'admin': return <AdminScreen allUsers={props.allUsers} usersLoading={props.usersLoading} handleUpdateUserRole={props.handleUpdateUserRole} handleToggleUserBan={props.handleToggleUserBan} setActiveTab={setActiveTab} />;
             case 'requests': return <RequestsScreen bookingRequests={bookingRequests} bookingsLoading={bookingsLoading} updateBookingStatus={updateBookingStatus} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking} />;
-            case 'bookings': return <OrdersScreen myBookings={myBookings} bookingsLoading={bookingsLoading} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking} />;
+            case 'bookings': return <OrdersScreen myBookings={myBookings} bookingsLoading={bookingsLoading} updateBookingStatus={updateBookingStatus} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking} />;
             case 'chat': return <InboxScreen user={user} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} />;
             case 'payments': return <PaymentsScreen stats={stats} bookingRequests={bookingRequests} setActiveTab={setActiveTab} />;
             case 'profile': return <ProfileScreen user={user} profileAvatar={profileAvatar} getAvatar={getAvatar} profileName={profileName} setProfileName={setProfileName} profilePhone={profilePhone} setProfilePhone={setProfilePhone} profileUsername={profileUsername} setProfileUsername={setProfileUsername} providerTitle={providerTitle} providerAbout={providerAbout} providerTitleSetter={providerTitleSetter} providerAboutSetter={providerAboutSetter} handleSaveProfile={handleSaveProfile} savingProfile={savingProfile} uploadingAvatar={uploadingAvatar} handleAvatarUpload={handleAvatarUpload} role={role} setActiveTab={setActiveTab} />;

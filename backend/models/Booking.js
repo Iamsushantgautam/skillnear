@@ -62,6 +62,9 @@ const bookingSchema = new mongoose.Schema(
         }],
         deliveryProof: {
             type: String, // optional image or note from provider when delivering
+        },
+        paymentMode: {
+            type: String, // "Cash" or "Online" (Captured at completion)
         }
     },
     {

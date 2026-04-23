@@ -1,23 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, Menu, MapPin, ChevronDown, X, LocateFixed, Info, Mail, Shield, FileText, LogOut, Zap, Award } from 'lucide-react';
+import { Search, User, Menu, MapPin, ChevronDown, X, LocateFixed, Info, Mail, Shield, FileText, LogOut, Zap, Award, Bell, Trash } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
+import useNotificationStore from '../store/useNotificationStore';
 import { State, City } from 'country-state-city';
-import api from '../utils/api';
+import api, { API_URL } from '../utils/api';
 import { toast } from 'react-hot-toast';
+import io from 'socket.io-client';
 
 const Navbar = () => {
     const { user, logout, userLocation, setLocation } = useAuthStore();
+    const { notifications, unreadCount, fetchNotifications, addNotification, markAllAsRead } = useNotificationStore();
     const navigate = useNavigate();
-
     // Location Modal State
     const [showLocationModal, setShowLocationModal] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const notificationRef = useRef(null);
     const [selectedStateCode, setSelectedStateCode] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
     const [selectedPincode, setSelectedPincode] = useState(userLocation?.pincode || '');
     const [searchKeyword, setSearchKeyword] = useState('');
     const [isDetecting, setIsDetecting] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+    // Socket Setup for Notifications
+    useEffect(() => {
+        if (user) {
+            fetchNotifications(user.token);
+            
+            const socket = io(API_URL);
+            socket.emit('setup', user._id);
+            
+            socket.on('newNotification', (notif) => {
+                addNotification(notif);
+                toast(notif.title, {
+                    icon: '🔔',
+                    style: {
+                        borderRadius: '10px',
+                        background: '#333',
+                        color: '#fff',
+                    },
+                });
+            });
+
+            return () => socket.disconnect();
+        }
+    }, [user]);
+
+    // Close notifications on click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+                setShowNotifications(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleSearch = (e) => {
         if (e.key === 'Enter' && searchKeyword.trim()) {
@@ -158,7 +197,67 @@ const Navbar = () => {
                     </div>
 
                     {user ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                            {/* Notification Bell */}
+                            <div style={{ position: 'relative' }} ref={notificationRef}>
+                                <button 
+                                    onClick={() => {
+                                        setShowNotifications(!showNotifications);
+                                        if (!showNotifications && unreadCount > 0) markAllAsRead(user.token);
+                                    }}
+                                    style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}
+                                >
+                                    <Bell size={22} />
+                                    {unreadCount > 0 && (
+                                        <span style={{ position: 'absolute', top: -5, right: -5, background: '#ef4444', color: '#fff', fontSize: '10px', fontWeight: '800', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff' }}>
+                                            {unreadCount}
+                                        </span>
+                                    )}
+                                </button>
+
+                                {showNotifications && (
+                                    <div className="animate-fade-in" style={{ position: 'absolute', top: '40px', right: '-10px', width: '320px', background: '#fff', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', border: '1px solid #f1f5f9', zIndex: 100, overflow: 'hidden' }}>
+                                        <div style={{ padding: '16px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <h4 style={{ margin: 0, fontWeight: '800' }}>Notifications</h4>
+                                            <span style={{ fontSize: '12px', color: '#94a3b8' }}>{notifications.length} total</span>
+                                        </div>
+                                        <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                            {notifications.length === 0 ? (
+                                                <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8' }}>
+                                                    <Bell size={32} style={{ opacity: 0.2, marginBottom: '12px' }} />
+                                                    <p style={{ margin: 0, fontSize: '0.9rem' }}>No notifications yet</p>
+                                                </div>
+                                            ) : (
+                                                notifications.map((notif) => (
+                                                    <div 
+                                                        key={notif._id} 
+                                                        onClick={() => {
+                                                            if (notif.link) navigate(notif.link);
+                                                            setShowNotifications(false);
+                                                        }}
+                                                        style={{ padding: '16px', borderBottom: '1px solid #f8fafc', cursor: 'pointer', transition: 'background 0.2s', backgroundColor: notif.isRead ? '#fff' : '#f0f9ff' }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notif.isRead ? '#fff' : '#f0f9ff'}
+                                                    >
+                                                        <div style={{ fontWeight: '700', fontSize: '0.9rem', color: '#1e293b', marginBottom: '4px' }}>{notif.title}</div>
+                                                        <div style={{ fontSize: '0.85rem', color: '#64748b', lineHeight: '1.4' }}>{notif.message}</div>
+                                                        <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '8px' }}>{new Date(notif.createdAt).toLocaleDateString()}</div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                        {notifications.length > 0 && (
+                                            <button 
+                                                onClick={() => markAllAsRead(user.token)}
+                                                style={{ width: '100%', padding: '12px', background: '#f8fafc', border: 'none', color: '#003d9b', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer' }}
+                                            >
+                                                Mark all as read
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
                             <Link to="/dashboard" className="user-profile-link hide-on-mobile">
                                 <img src={getAvatar(user)} alt="Profile" className="nav-avatar" onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=ede9fe&color=4f46e5&size=80`; }} />
                                 <span className="nav-username hide-on-mobile">{user.name}</span>

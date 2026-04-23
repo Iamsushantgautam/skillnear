@@ -1,5 +1,5 @@
-import React from 'react';
-import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight, Heart } from 'lucide-react';
+import React, { useState } from 'react';
+import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, Search, Phone, Video, Lock, PlusCircle, ZoomIn } from 'lucide-react';
 import ChatList from '../../ChatList';
 import { City } from 'country-state-city';
 import api from '../../../utils/api';
@@ -10,13 +10,64 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return (R * c).toFixed(1);
 };
 
+/* ─── payment modal ─── */
+function PaymentModal({ isOpen, onClose, onSelect }) {
+    if (!isOpen) return null;
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }}>
+            <div className="animate-scale-in" style={{ backgroundColor: 'white', width: '100%', maxWidth: '450px', borderRadius: 24, padding: '32px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>Service Completed?</h3>
+                    <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                        <X size={16} />
+                    </button>
+                </div>
+                <p style={{ color: '#64748b', fontSize: 14, marginBottom: 32, fontWeight: 500 }}>Select the payment method used by the customer to finalize this order.</p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <button
+                        onClick={() => onSelect('Cash')}
+                        style={{ padding: 16, borderRadius: 16, border: '1px solid #e2e8f0', background: 'white', display: 'flex', alignItems: 'center', gap: 16, textAlign: 'left', cursor: 'pointer' }}
+                        onMouseOver={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+                        onMouseOut={e => e.currentTarget.style.borderColor = '#e2e8f0'}
+                    >
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Wallet size={20} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 800, fontSize: 15, color: '#1e293b' }}>Cash Payment</div>
+                            <div style={{ fontSize: 12, color: '#64748b' }}>Paid directly on-site</div>
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={() => onSelect('Online')}
+                        style={{ padding: 16, borderRadius: 16, border: '1px solid #e2e8f0', background: 'white', display: 'flex', alignItems: 'center', gap: 16, textAlign: 'left', cursor: 'pointer' }}
+                        onMouseOver={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+                        onMouseOut={e => e.currentTarget.style.borderColor = '#e2e8f0'}
+                    >
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eff6ff', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <CreditCard size={20} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 800, fontSize: 15, color: '#1e293b' }}>Online Payment</div>
+                            <div style={{ fontSize: 12, color: '#64748b' }}>Paid via UPI or Net Banking</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 const DashboardDesktop = ({
+    setActiveTab,
     activeTab,
     role,
     user,
@@ -115,9 +166,17 @@ const DashboardDesktop = ({
     dashMessages,
     userLocation,
     dashMessageInput,
-    setDashMessageInput,
     handleSendMessageDash,
+    handleTypeDash,
     messagesEndRef,
+    partnerTyping,
+    isRecording,
+    recordingTime,
+    uploadingFile,
+    handleFileUploadDash,
+    startRecordingDash,
+    stopRecordingDash,
+    fileInputRef,
     profileUsername,
     setProfileUsername,
     profilePhone,
@@ -139,22 +198,32 @@ const DashboardDesktop = ({
     favoritesLoading,
     fetchFavorites
 }) => {
-    const [activeService, setActiveService] = React.useState(null);
+    const [bookingForPayment, setBookingForPayment] = useState(null);
+    const [activeService, setActiveService] = useState(null);
+    const [bookingFilter, setBookingFilter] = useState('all');
 
+    const handleDeliverClick = (bookingId) => {
+        setBookingForPayment(bookingId);
+    };
+
+    const confirmDelivery = (paymentMode) => {
+        updateBookingStatus(bookingForPayment, 'delivered', '', paymentMode);
+        setBookingForPayment(null);
+    };
     React.useEffect(() => {
         const queryParams = new URLSearchParams(window.location.search);
         const serviceId = queryParams.get('service');
         if (serviceId) {
-            api.get(`/api/services/${serviceId}`).then(({ data }) => setActiveService(data)).catch(() => {});
+            api.get(`/api/services/${serviceId}`).then(({ data }) => setActiveService(data)).catch(() => { });
         }
     }, []);
     // Note: profileNameState and setProfileNameState are used because profileName is already used in props
     // Actually, I'll just use the props directly. But if I need to update them, I need the setters.
 
     return (
-        <div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             {activeTab === 'overview' && (
-                <div id="account-settings-section" className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px', maxWidth: '1200px' }}>
+                <div id="account-settings-section" className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px', maxWidth: '1200px', margin: '0 auto' }}>
                     {/* Bio & Avatar Card */}
                     <section style={{ gridColumn: 'span 8', backgroundColor: '#fff', borderRadius: '24px', padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', gap: '32px', alignItems: 'flex-start', position: 'relative', overflow: 'hidden' }}>
                         <div style={{ position: 'absolute', top: 0, right: 0, width: '128px', height: '128px', backgroundColor: 'rgba(0, 61, 155, 0.05)', borderRadius: '0 0 0 100%' }}></div>
@@ -229,38 +298,38 @@ const DashboardDesktop = ({
                             </div>
                         </div>
                     </section>
- 
+
                     {role === 'customer' && (
-                        <section style={{ 
-                            gridColumn: 'span 4', 
-                            background: 'linear-gradient(135deg, #003d9b 0%, #0052cc 100%)', 
-                            borderRadius: '24px', 
-                            padding: '32px', 
+                        <section style={{
+                            gridColumn: 'span 4',
+                            background: 'linear-gradient(135deg, #003d9b 0%, #0052cc 100%)',
+                            borderRadius: '24px',
+                            padding: '32px',
                             color: 'white',
-                            display: 'flex', 
-                            flexDirection: 'column', 
+                            display: 'flex',
+                            flexDirection: 'column',
                             justifyContent: 'center',
                             boxShadow: '0 20px 40px rgba(0, 61, 155, 0.2)',
                             position: 'relative',
                             overflow: 'hidden',
                             cursor: 'pointer'
                         }} onClick={() => setActiveTab('become_provider')}>
-                             <div style={{ position: 'absolute', right: -20, top: -20, opacity: 0.1 }}>
+                            <div style={{ position: 'absolute', right: -20, top: -20, opacity: 0.1 }}>
                                 <Briefcase size={120} />
                             </div>
                             <h3 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '12px', position: 'relative' }}>Join as a Seller</h3>
                             <p style={{ fontSize: '0.9rem', opacity: 0.9, lineHeight: '1.6', marginBottom: '24px', position: 'relative' }}>
                                 Unlock professional features, reach local customers, and start earning by offering your services today.
                             </p>
-                            <div 
-                                style={{ 
-                                    backgroundColor: 'white', 
-                                    color: '#003d9b', 
-                                    border: 'none', 
-                                    padding: '14px 24px', 
-                                    borderRadius: '100px', 
-                                    fontWeight: '800', 
-                                    fontSize: '0.9rem', 
+                            <div
+                                style={{
+                                    backgroundColor: 'white',
+                                    color: '#003d9b',
+                                    border: 'none',
+                                    padding: '14px 24px',
+                                    borderRadius: '100px',
+                                    fontWeight: '800',
+                                    fontSize: '0.9rem',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
@@ -312,7 +381,7 @@ const DashboardDesktop = ({
                         </section>
                     )}
 
-                     {/* Quick Links / Actions */}
+                    {/* Quick Links / Actions */}
                     {role === 'provider' && (
                         <div style={{ gridColumn: 'span 12', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
                             <div onClick={() => setActiveTab('mygigs')} className="group" style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '24px', border: '1px solid rgba(0,0,0,0.05)', cursor: 'pointer', transition: 'all 0.3s' }}>
@@ -406,87 +475,223 @@ const DashboardDesktop = ({
             )}
 
             {activeTab === 'bookings' && (
-                <div className="animate-fade-in">
+                <div className="animate-fade-in" style={{ padding: '0px', maxWidth: '1200px', margin: '0 auto' }}>
+                    {/* Header & Filter */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '24px', marginBottom: '48px', marginTop: '-40px' }}>
+                        <div>
+                            <p style={{ color: '#64748b', fontWeight: '500', maxWidth: '450px' }}>Manage your active collaborations and professional service records from one central hub.</p>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', background: '#e7e7f2', padding: '6px', borderRadius: '100px', gap: '4px' }}>
+                            <button onClick={() => setBookingFilter('all')} style={{ padding: '8px 20px', borderRadius: '100px', background: bookingFilter === 'all' ? '#ffffff' : 'transparent', color: bookingFilter === 'all' ? '#003d9b' : '#64748b', fontWeight: bookingFilter === 'all' ? '700' : '600', border: 'none', boxShadow: bookingFilter === 'all' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}>All</button>
+                            <button onClick={() => setBookingFilter('pending')} style={{ padding: '8px 20px', borderRadius: '100px', background: bookingFilter === 'pending' ? '#ffffff' : 'transparent', color: bookingFilter === 'pending' ? '#003d9b' : '#64748b', fontWeight: bookingFilter === 'pending' ? '700' : '600', border: 'none', boxShadow: bookingFilter === 'pending' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}>Pending</button>
+                            <button onClick={() => setBookingFilter('confirmed')} style={{ padding: '8px 20px', borderRadius: '100px', background: bookingFilter === 'confirmed' ? '#ffffff' : 'transparent', color: bookingFilter === 'confirmed' ? '#003d9b' : '#64748b', fontWeight: bookingFilter === 'confirmed' ? '700' : '600', border: 'none', boxShadow: bookingFilter === 'confirmed' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}>Confirmed</button>
+                            <button onClick={() => setBookingFilter('in_progress')} style={{ padding: '8px 20px', borderRadius: '100px', background: bookingFilter === 'in_progress' ? '#ffffff' : 'transparent', color: bookingFilter === 'in_progress' ? '#003d9b' : '#64748b', fontWeight: bookingFilter === 'in_progress' ? '700' : '600', border: 'none', boxShadow: bookingFilter === 'in_progress' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}>In Progress</button>
+                            <button onClick={() => setBookingFilter('completed')} style={{ padding: '8px 20px', borderRadius: '100px', background: bookingFilter === 'completed' ? '#ffffff' : 'transparent', color: bookingFilter === 'completed' ? '#003d9b' : '#64748b', fontWeight: bookingFilter === 'completed' ? '700' : '600', border: 'none', boxShadow: bookingFilter === 'completed' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px' }}>Completed</button>
+                        </div>
+                    </div>
 
-                    {bookingsLoading ? (
-                        <p>Loading bookings...</p>
-                    ) : myBookings.length === 0 ? (
-                        <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>You haven't booked any services yet.</p>
-                    ) : (
-                        myBookings.map(b => (
-                            <div key={b._id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: '16px' }}>
-                                <div className="flex-between" style={{ marginBottom: '12px' }}>
-                                    <span style={{ fontWeight: '600' }}>{b.service?.title}</span>
-                                    <span style={{
-                                        color: ['pending', 'in_progress', 'revision_requested'].includes(b.status) ? '#f59e0b' : ['confirmed', 'delivered'].includes(b.status) ? '#2563eb' : b.status === 'completed' ? '#059669' : '#dc2626',
-                                        backgroundColor: ['pending', 'in_progress', 'revision_requested'].includes(b.status) ? '#fef3c7' : ['confirmed', 'delivered'].includes(b.status) ? '#dbeafe' : b.status === 'completed' ? '#d1fae5' : '#fee2e2',
-                                        padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase'
-                                    }}>{b.status.replace('_', ' ')}</span>
-                                </div>
-                                <div className="text-body" style={{ marginBottom: '4px' }}><CalendarIcon size={14} style={{ display: 'inline', marginRight: '8px' }} /> {new Date(b.date).toLocaleDateString()} | {b.timeSlot}</div>
-                                <div className="text-body" style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <span><MapPin size={14} style={{ display: 'inline', marginRight: '8px' }} /> {b.address?.street}, {b.address?.city}</span>
-                                        {calculateDistance(userLocation?.latitude, userLocation?.longitude, b.address?.lat, b.address?.lng) && (
-                                            <span style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: '100px', fontSize: '10px', fontWeight: '700' }}>
-                                                {calculateDistance(userLocation?.latitude, userLocation?.longitude, b.address?.lat, b.address?.lng)} km away
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        {b.address?.googleMapLink && (
-                                            <a href={b.address.googleMapLink} target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', fontSize: '0.7rem', fontWeight: 'bold', textDecoration: 'none' }}>Link 🔗</a>
-                                        )}
-                                        {(b.address?.googleMapLink || (b.address?.lat && b.address?.lng)) && (
-                                            <button 
-                                                onClick={() => window.open(b.address.googleMapLink || `https://www.google.com/maps?q=${b.address.lat},${b.address.lng}`, '_blank')}
-                                                style={{ background: '#f0f9ff', color: '#0ea5e9', border: 'none', padding: '4px 10px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' }}
-                                            >View Map 📍</button>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex-between" style={{ paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
-                                    <span className="text-small" style={{ color: 'var(--text-muted)' }}>Provider: {b.provider?.name}</span>
-                                    <span style={{ fontWeight: 'bold' }}>₹{b.totalPrice}</span>
-                                </div>
-                                {b.status === 'delivered' && (
-                                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button onClick={() => updateBookingStatus(b._id, 'completed')} className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem', flex: 1 }}>Accept & Mark Complete</button>
-                                            <button onClick={() => setBookingForRevision(b._id)} className="btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem', flex: 1, borderColor: '#f59e0b', color: '#f59e0b' }}>Request Revision</button>
-                                        </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '32px' }}>
+                        {/* Bookings List Column (col-span-8) */}
+                        <div style={{ gridColumn: 'span 8', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                            {bookingsLoading ? (
+                                <p>Loading bookings...</p>
+                            ) : (() => {
+                                const filteredBookings = myBookings.filter(b => {
+                                    if (bookingFilter === 'all') return true;
+                                    if (bookingFilter === 'pending') return b.status === 'pending';
+                                    if (bookingFilter === 'confirmed') return b.status === 'confirmed';
+                                    if (bookingFilter === 'in_progress') return ['in_progress', 'revision_requested', 'delivered'].includes(b.status);
+                                    if (bookingFilter === 'completed') return ['completed', 'cancelled', 'rejected'].includes(b.status);
+                                    return true;
+                                }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-                                        {bookingForRevision === b._id && (
-                                            <div className="animate-fade-in" style={{ marginTop: '12px', padding: '12px', backgroundColor: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
-                                                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '8px', color: '#92400e' }}>Revision Details:</label>
-                                                <textarea
-                                                    className="input-field"
-                                                    placeholder="What needs to be changed?"
-                                                    value={revisionNote}
-                                                    onChange={(e) => setRevisionNote(e.target.value)}
-                                                    style={{ fontSize: '0.85rem', marginBottom: '8px' }}
-                                                />
-                                                <div style={{ display: 'flex', gap: '8px' }}>
-                                                    <button onClick={() => updateBookingStatus(b._id, 'revision_requested')} className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem', backgroundColor: '#f59e0b' }}>Submit Revision Request</button>
-                                                    <button onClick={() => setBookingForRevision(null)} className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Cancel</button>
+                                return filteredBookings.length === 0 ? (
+                                    <p style={{ textAlign: 'center', padding: '40px', color: '#64748b', background: '#ffffff', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.2)' }}>No {bookingFilter} bookings found.</p>
+                                ) : (
+                                    filteredBookings.map(b => {
+                                        // Status Logic
+                                        let statusColor = '#dc2626'; let statusBg = '#fee2e2';
+                                        if (b.status === 'pending') { statusColor = '#b45309'; statusBg = '#fef3c7'; }
+                                        if (b.status === 'confirmed') { statusColor = '#1d4ed8'; statusBg = '#dbeafe'; }
+                                        if (['in_progress', 'revision_requested', 'delivered'].includes(b.status)) { statusColor = '#7c3aed'; statusBg = '#f5f3ff'; }
+                                        if (b.status === 'completed') { statusColor = '#047857'; statusBg = '#d1fae5'; }
+                                        if (['cancelled', 'rejected'].includes(b.status)) { statusColor = '#dc2626'; statusBg = '#fee2e2'; }
+                                        if (b.status === 'completed') { statusColor = '#047857'; statusBg = '#d1fae5'; }
+
+                                        const isCompleted = b.status === 'completed';
+
+                                        return (
+                                            <div key={b._id} style={{
+                                                background: isCompleted ? '#faf8ff' : '#ffffff',
+                                                padding: '24px',
+                                                borderRadius: '24px',
+                                                border: '1px solid rgba(195, 198, 214, 0.2)',
+                                                boxShadow: isCompleted ? 'none' : '0 10px 30px rgba(0,61,155,0.03)',
+                                                transition: 'all 0.3s',
+                                                opacity: 1,
+                                                filter: 'none'
+                                            }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.boxShadow = '0 15px 40px rgba(0,61,155,0.08)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,61,155,0.03)';
+                                                }}>
+                                                <div style={{ display: 'flex', gap: '24px' }}>
+                                                    {/* Image */}
+                                                    <div style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '16px', overflow: 'hidden', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', flexShrink: 0 }}>
+                                                        <img
+                                                            src={b.service?.images?.[0]?.url || b.service?.images?.[0] || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1000&auto=format&fit=crop'}
+                                                            alt={b.service?.title}
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                            onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1000&auto=format&fit=crop'; }}
+                                                        />
+                                                    </div>
+
+                                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                            <div>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                                                    <span style={{ fontSize: '10px', fontWeight: '800', padding: '2px 8px', borderRadius: '4px', background: statusBg, color: statusColor, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                                                                        {b.status.replace('_', ' ')}
+                                                                    </span>
+                                                                    <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '600' }}>ID: #{b._id.slice(-6).toUpperCase()}</span>
+                                                                </div>
+                                                                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#191b23', lineHeight: '1.2' }}>{b.service?.title}</h3>
+                                                                <p style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                    <User size={14} /> Provider: <span style={{ fontWeight: '600', color: '#434654' }}>{b.provider?.name}</span>
+                                                                </p>
+                                                            </div>
+                                                            <div style={{ textAlign: 'right' }}>
+                                                                <p style={{ fontSize: '1.5rem', fontWeight: '900', color: isCompleted ? '#94a3b8' : '#003d9b' }}>₹{b.totalPrice}</p>
+                                                                <p style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '800', textTransform: 'uppercase' }}>
+                                                                    {isCompleted ? 'Paid' : 'Escrow Secured'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', paddingTop: '12px', marginTop: '12px', borderTop: '1px solid #f8fafc' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '600', color: '#475569' }}>
+                                                                <CalendarIcon size={16} color="#94a3b8" /> {new Date(b.date).toLocaleDateString()}
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '600', color: '#475569' }}>
+                                                                <CalendarIcon size={16} color="#94a3b8" /> {b.timeSlot}
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '600', color: '#475569' }}>
+                                                                <MapPin size={16} color="#94a3b8" /> {b.address?.city || 'Remote Delivery'}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Actions */}
+                                                        <div style={{ display: 'flex', gap: '12px', paddingTop: '16px', marginTop: 'auto' }}>
+                                                            {b.status === 'delivered' ? (
+                                                                <>
+                                                                    <button onClick={() => updateBookingStatus(b._id, 'completed')} style={{ flex: 1, background: '#003d9b', color: 'white', padding: '10px 0', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', border: 'none', cursor: 'pointer' }}>Accept & Mark Complete</button>
+                                                                    <button onClick={() => setBookingForRevision(b._id)} style={{ padding: '10px 24px', border: '1px solid #c3c6d6', color: '#475569', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', background: 'transparent', cursor: 'pointer' }}>Review Changes</button>
+                                                                </>
+                                                            ) : isCompleted ? (
+                                                                <>
+                                                                    <button onClick={() => navigate(`/invoice/${b._id}`)} style={{ flex: 1, background: '#e1e2ec', color: '#434654', padding: '10px 0', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', border: 'none', cursor: 'pointer' }}>View Invoice</button>
+                                                                    <button onClick={() => navigate(`/services/${b.service?._id || b.service}`)} style={{ padding: '10px 24px', border: '1px solid #c3c6d6', color: '#475569', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', background: 'transparent', cursor: 'pointer' }}>Rate Professional</button>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <button style={{ flex: 1, background: '#003d9b', color: 'white', padding: '10px 0', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', border: 'none', cursor: 'pointer' }}>View Details & Tracking</button>
+                                                                    <button onClick={() => { setDashActiveRoom({ roomId: b._id, otherUser: role === 'provider' ? b.user : b.provider, title: b.service?.title }); setActiveTab('chat'); }} style={{ padding: '10px 24px', border: '1px solid #c3c6d6', color: '#475569', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', background: 'transparent', cursor: 'pointer' }}>Message</button>
+                                                                </>
+                                                            )}
+                                                        </div>
+
+                                                        {b.status === 'delivered' && bookingForRevision === b._id && (
+                                                            <div className="animate-fade-in" style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fffbeb', borderRadius: '12px', border: '1px solid #fde68a' }}>
+                                                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', marginBottom: '8px', color: '#92400e' }}>Revision Details:</label>
+                                                                <textarea
+                                                                    className="input-field"
+                                                                    placeholder="What needs to be changed?"
+                                                                    value={revisionNote}
+                                                                    onChange={(e) => setRevisionNote(e.target.value)}
+                                                                    style={{ fontSize: '0.875rem', marginBottom: '12px', background: '#ffffff', width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #fcd34d', outline: 'none' }}
+                                                                />
+                                                                <div style={{ display: 'flex', gap: '12px' }}>
+                                                                    <button onClick={() => updateBookingStatus(b._id, 'revision_requested')} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', fontSize: '0.875rem', fontWeight: '700', backgroundColor: '#f59e0b', color: '#ffffff', cursor: 'pointer' }}>Submit Request</button>
+                                                                    <button onClick={() => setBookingForRevision(null)} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.875rem', fontWeight: '700', backgroundColor: 'transparent', color: '#4b5563', cursor: 'pointer' }}>Cancel</button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {b.revisions && b.revisions.length > 0 && (
+                                                            <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#fef3c7', borderRadius: '12px', fontSize: '0.875rem', color: '#92400e' }}>
+                                                                <strong>Latest Revision Note:</strong> {b.revisions[b.revisions.length - 1].note}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        )}
+                                        );
+                                    })
+                                );
+                            })()}
+                        </div>
+
+                        {/* Sidebar Widgets (col-span-4) */}
+                        <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                            {/* Analytics Quick Look */}
+                            <div style={{ background: '#003d9b', padding: '32px', borderRadius: '32px', color: 'white', position: 'relative', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,61,155,0.25)' }}>
+                                <div style={{ position: 'relative', zIndex: 10 }}>
+                                    <h4 style={{ fontSize: '0.875rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.7, marginBottom: '24px' }}>Activity Summary</h4>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                        <div>
+                                            <p style={{ fontSize: '2.25rem', fontWeight: '900', lineHeight: 1 }}>₹{myBookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0)}</p>
+                                            <p style={{ fontSize: '0.75rem', fontWeight: '600', opacity: 0.8, marginTop: '4px' }}>Total Bookings Value</p>
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '16px', borderRadius: '16px', backdropFilter: 'blur(4px)' }}>
+                                                <p style={{ fontSize: '1.25rem', fontWeight: '700' }}>{myBookings.length}</p>
+                                                <p style={{ fontSize: '0.625rem', fontWeight: '700', opacity: 0.7, textTransform: 'uppercase', marginTop: '2px' }}>Bookings</p>
+                                            </div>
+                                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '16px', borderRadius: '16px', backdropFilter: 'blur(4px)' }}>
+                                                <p style={{ fontSize: '1.25rem', fontWeight: '700' }}>98%</p>
+                                                <p style={{ fontSize: '0.625rem', fontWeight: '700', opacity: 0.7, textTransform: 'uppercase', marginTop: '2px' }}>Rating</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                )}
-                                {b.revisions && b.revisions.length > 0 && (
-                                    <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#fffbeb', borderRadius: '8px', fontSize: '0.85rem' }}>
-                                        <strong>Revision Note:</strong> {b.revisions[b.revisions.length - 1].note}
-                                    </div>
-                                )}
+                                </div>
+                                {/* Decorative elements */}
+                                <div style={{ position: 'absolute', bottom: '-40px', right: '-40px', width: '160px', height: '160px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
+                                <div style={{ position: 'absolute', top: '-40px', left: '-40px', width: '160px', height: '160px', background: 'rgba(96,165,250,0.2)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
                             </div>
-                        ))
-                    )}
+
+                            {/* Help Widget */}
+                            <div style={{ background: 'rgba(231,231,242,0.5)', padding: '32px', borderRadius: '32px', border: '1px solid rgba(195,198,214,0.1)', textAlign: 'center' }}>
+                                <div style={{ width: '64px', height: '64px', background: 'white', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                                    <MessageSquare size={28} color="#003d9b" />
+                                </div>
+                                <h4 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#191b23', marginBottom: '8px' }}>Need Help?</h4>
+                                <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '32px', lineHeight: 1.6 }}>Having trouble with a booking or a provider? Our 24/7 support team is here to assist you.</p>
+                                <button style={{ width: '100%', background: 'white', border: '1px solid rgba(0,61,155,0.2)', color: '#003d9b', padding: '16px', borderRadius: '100px', fontWeight: '700', fontSize: '0.875rem', cursor: 'pointer', transition: 'all 0.3s' }}>
+                                    Contact Support
+                                </button>
+                                <a href="#" style={{ display: 'inline-block', marginTop: '24px', fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', textDecoration: 'none' }}>Read FAQs</a>
+                            </div>
+
+                            {/* Location Guide */}
+                            <div style={{ background: '#ffffff', borderRadius: '32px', overflow: 'hidden', border: '1px solid rgba(195,198,214,0.1)' }}>
+                                <div style={{ height: '160px', background: '#e2e8f0', position: 'relative' }}>
+                                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDumgvZRnAdjKdSpoi1hW5XIMySFxWlGa75ikgHZd-2xzcEXyd3bL7xtwmn5kmk8q3Bn6LLaGhr2hDW7jCvc1GbRZBvGR1T2pMITl2bV-p8inCVbnpxSoBA1c3xfXryNthNFH67Onyaij8YeBXML_2ct_0CEKlCVFVbPNAREVDJ0zEGhFyBrvtb1DSwtBYiRfRah64QrCoLAS_0lNSb2yNoRt1ykJbuXLr47Y6h-nbVo88MLBW1I_V003ysDMCGaFG87BI55AC_r8W2" alt="Map" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4), transparent)' }}></div>
+                                </div>
+                                <div style={{ padding: '24px' }}>
+                                    <h5 style={{ fontWeight: '700', fontSize: '0.875rem', marginBottom: '4px' }}>Service Coverage</h5>
+                                    <p style={{ fontSize: '0.75rem', color: '#64748b' }}>You are viewing bookings relative to your current location area.</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
             )}
 
             {activeTab === 'services' && (
-                <div className="animate-fade-in" style={{ maxWidth: '900px', margin: '0 auto' }}>
+                <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto' }}>
                     <div className="flex-between" style={{ marginBottom: '24px' }}>
                         <div>
                             <h2 className="text-h2">
@@ -565,7 +770,7 @@ const DashboardDesktop = ({
                                         <label style={{ ...styles.label, marginBottom: '12px', display: 'block' }}>Who is this service for?</label>
                                         <div style={{ display: 'flex', gap: '15px' }}>
                                             {['male', 'female', 'unisex'].map(gender => (
-                                                <div 
+                                                <div
                                                     key={gender}
                                                     onClick={() => setGigTargetGender(gender)}
                                                     style={{
@@ -805,10 +1010,10 @@ const DashboardDesktop = ({
                                     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: '12px' }}>
                                         {gigImages.map((url, i) => (
                                             <div key={i} style={{ position: 'relative' }}>
-                                                <img 
-                                                    src={url} 
-                                                    alt={`gig-${i}`} 
-                                                    style={{ width: 100, height: 80, objectFit: 'cover', borderRadius: 8, border: '1.5px solid #e2e8f0' }} 
+                                                <img
+                                                    src={url}
+                                                    alt={`gig-${i}`}
+                                                    style={{ width: 100, height: 80, objectFit: 'cover', borderRadius: 8, border: '1.5px solid #e2e8f0' }}
                                                     onError={(e) => { e.target.src = 'https://via.placeholder.com/100x80?text=Service'; }}
                                                 />
                                                 <button onClick={() => setGigImages(prev => prev.filter((_, idx) => idx !== i))} style={{ position: 'absolute', top: -5, right: -5, width: 22, height: 22, background: '#ef4444', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>×</button>
@@ -847,7 +1052,7 @@ const DashboardDesktop = ({
 
             {/* ── MY GIGS TAB ── */}
             {activeTab === 'mygigs' && (
-                <div className="animate-fade-in">
+                <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto' }}>
                     {/* Status legend */}
                     <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
                         {[['🟡 Pending', '#fef3c7', '#92400e'], ['🟢 Live', '#d1fae5', '#065f46'], ['🔴 Rejected', '#fee2e2', '#991b1b']].map(([l, bg, c]) => (
@@ -945,142 +1150,194 @@ const DashboardDesktop = ({
 
             {/* ── BOOKING REQUESTS TAB (PROVIDER) ── */}
             {activeTab === 'requests' && (
-                <div className="animate-fade-in">
+                <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
                     {bookingsLoading ? (
                         <p>Loading requests...</p>
                     ) : bookingRequests.length === 0 ? (
                         <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>No requests found.</p>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            {bookingRequests.map(req => (
-                                <div key={req._id} style={{ border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px', backgroundColor: '#fff' }}>
-                                    <div className="flex-between" style={{ marginBottom: '16px' }}>
-                                        <div>
-                                            <span style={{
-                                                color: ['pending', 'in_progress', 'revision_requested'].includes(req.status) ? '#f59e0b' : ['confirmed', 'delivered'].includes(req.status) ? '#2563eb' : req.status === 'completed' ? '#059669' : '#dc2626',
-                                                backgroundColor: ['pending', 'in_progress', 'revision_requested'].includes(req.status) ? '#fef3c7' : ['confirmed', 'delivered'].includes(req.status) ? '#dbeafe' : req.status === 'completed' ? '#d1fae5' : '#fee2e2',
-                                                padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700'
-                                            }}>{req.status.replace('_', ' ').toUpperCase()}</span>
-                                            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginTop: '8px' }}>{req.service?.title}</h3>
-                                        </div>
-                                        {req.service?.businessType === 'shop' ? (
-                                            <button 
-                                                style={{ 
-                                                    backgroundColor: 'var(--primary)', 
-                                                    color: '#fff', 
-                                                    padding: '8px 16px', 
-                                                    borderRadius: '100px', 
-                                                    fontSize: '0.8rem', 
-                                                    fontWeight: '700',
-                                                    border: 'none',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '6px',
-                                                    cursor: 'pointer'
-                                                }}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    const lat = req.service.geoCoordinates?.coordinates?.[1];
-                                                    const lng = req.service.geoCoordinates?.coordinates?.[0];
-                                                    const link = req.service.shopDetails?.googleMapsLink || (lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : null);
-                                                    if (link) window.open(link, '_blank');
-                                                }}
-                                            >
-                                                <MapPin size={14} /> Direction
-                                            </button>
-                                        ) : (
-                                            <div style={{ textAlign: 'right' }}>
-                                                <div style={{ fontWeight: '800', fontSize: '1.2rem', color: 'var(--primary)' }}>₹{req.totalPrice}</div>
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{req.paymentMethod}</div>
-                                            </div>
-                                        )}
-                                    </div>
+                        <>
+                            <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+                                {['all', 'pending', 'confirmed', 'in_progress', 'delivered', 'completed', 'cancelled'].map(f => (
+                                    <button
+                                        key={f}
+                                        onClick={() => setBookingFilter(f)}
+                                        style={{
+                                            padding: '8px 16px',
+                                            borderRadius: '100px',
+                                            fontSize: '0.8rem',
+                                            fontWeight: '700',
+                                            border: '1px solid ' + (bookingFilter === f ? 'var(--primary)' : '#e2e8f0'),
+                                            backgroundColor: bookingFilter === f ? 'var(--primary)' : '#fff',
+                                            color: bookingFilter === f ? '#fff' : '#64748b',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {f.replace('_', ' ').toUpperCase()}
+                                    </button>
+                                ))}
+                            </div>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={16} /></div>
-                                            <div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Customer</div>
-                                                <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>{req.user?.name}</div>
-                                            </div>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CalendarIcon size={16} /></div>
-                                            <div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Scheduled For</div>
-                                                <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>{new Date(req.date).toLocaleDateString()} | {req.timeSlot}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                Address 
-                                                {calculateDistance(userLocation?.latitude, userLocation?.longitude, req.address?.lat, req.address?.lng) && (
-                                                    <span style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', padding: '1px 6px', borderRadius: '100px', fontSize: '9px', fontWeight: '800' }}>
-                                                        {calculateDistance(userLocation?.latitude, userLocation?.longitude, req.address?.lat, req.address?.lng)} KM AWAY
-                                                    </span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                {bookingRequests
+                                    .filter(b => bookingFilter === 'all' || b.status === bookingFilter)
+                                    .map(req => (
+                                        <div key={req._id} style={{ border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px', backgroundColor: '#fff' }}>
+                                            <div className="flex-between" style={{ marginBottom: '16px' }}>
+                                                <div style={{ display: 'flex', gap: '16px' }}>
+                                                    <div style={{ width: '64px', height: '64px', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#f8fafc', border: '1px solid #f1f5f9', flexShrink: 0 }}>
+                                                        <img
+                                                            src={req.service?.images?.[0]?.url || req.service?.images?.[0] || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=500&auto=format&fit=crop'}
+                                                            alt={req.service?.title}
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                            onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=500&auto=format&fit=crop'; }}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <span style={{
+                                                            color: ['pending', 'in_progress', 'revision_requested'].includes(req.status) ? '#f59e0b' : ['confirmed', 'delivered'].includes(req.status) ? '#2563eb' : req.status === 'completed' ? '#059669' : '#dc2626',
+                                                            backgroundColor: ['pending', 'in_progress', 'revision_requested'].includes(req.status) ? '#fef3c7' : ['confirmed', 'delivered'].includes(req.status) ? '#dbeafe' : req.status === 'completed' ? '#d1fae5' : '#fee2e2',
+                                                            padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700'
+                                                        }}>{req.status.replace('_', ' ').toUpperCase()}</span>
+                                                        <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginTop: '8px' }}>{req.service?.title}</h3>
+                                                    </div>
+                                                </div>
+                                                {req.service?.businessType === 'shop' ? (
+                                                    <button
+                                                        style={{
+                                                            backgroundColor: 'var(--primary)',
+                                                            color: '#fff',
+                                                            padding: '8px 16px',
+                                                            borderRadius: '100px',
+                                                            fontSize: '0.8rem',
+                                                            fontWeight: '700',
+                                                            border: 'none',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const lat = req.service.geoCoordinates?.coordinates?.[1];
+                                                            const lng = req.service.geoCoordinates?.coordinates?.[0];
+                                                            if (lat && lng) {
+                                                                window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+                                                            } else {
+                                                                toast.error("Location not available for this shop");
+                                                            }
+                                                        }}
+                                                    >
+                                                        Get Directions <MapPin size={14} />
+                                                    </button>
+                                                ) : (
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <div style={{ fontSize: '1.25rem', fontWeight: '900', color: 'var(--primary)' }}>₹{req.totalPrice}</div>
+                                                        <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>{new Date(req.date).toLocaleDateString()}</div>
+                                                    </div>
                                                 )}
                                             </div>
-                                            <div style={{ fontSize: '0.85rem' }}>{req.address?.street}, {req.address?.city}</div>
-                                            {req.address?.googleMapLink && (
-                                                <a href={req.address.googleMapLink} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', color: '#0ea5e9', textDecoration: 'none', marginTop: '4px', display: 'block' }}>Open Link 🔗</a>
+
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '12px', marginBottom: '16px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
+                                                        <User size={16} />
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Customer</div>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{req.user?.name}</div>
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
+                                                        <CalendarIcon size={16} />
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Schedule</div>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{req.timeSlot}</div>
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
+                                                        <MapPin size={16} />
+                                                    </div>
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>Location</div>
+                                                        <div style={{ fontSize: '0.85rem', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.address?.city}, {req.address?.zipCode}</div>
+                                                    </div>
+                                                    {req.address?.lat && req.address?.lng && (
+                                                        <button
+                                                            onClick={() => window.open(`https://www.google.com/maps?q=${req.address.lat},${req.address.lng}`, '_blank')}
+                                                            style={{ background: '#f0f9ff', color: '#0ea5e9', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}
+                                                        >View Map 📍</button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div style={{ display: 'flex', gap: '12px' }}>
+                                                {req.status === 'pending' && (
+                                                    <>
+                                                        <button onClick={() => updateBookingStatus(req._id, 'confirmed')} className="btn-primary" style={{ flex: 1, padding: '10px' }}>Accept Booking</button>
+                                                        <button onClick={() => updateBookingStatus(req._id, 'cancelled')} className="btn-outline" style={{ flex: 1, padding: '10px', borderColor: '#ef4444', color: '#ef4444' }}>Decline</button>
+                                                    </>
+                                                )}
+                                                {req.status === 'confirmed' && (
+                                                    <>
+                                                        <button onClick={() => updateBookingStatus(req._id, 'in_progress')} className="btn-primary" style={{ flex: 1, padding: '10px' }}>Mark In Progress</button>
+                                                        <button 
+                                                            onClick={() => {
+                                                                const link = req.address?.googleMapLink || (req.address?.lat && req.address?.lng ? `https://www.google.com/maps?q=${req.address.lat},${req.address.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.address?.street || ''} ${req.address?.city || ''} ${req.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
+                                                                window.open(link, '_blank');
+                                                            }}
+                                                            className="btn-outline" 
+                                                            style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                                        >
+                                                            <MapPin size={16} /> Show Live Location
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {['in_progress', 'revision_requested'].includes(req.status) && (
+                                                    <button onClick={() => handleDeliverClick(req._id)} className="btn-primary" style={{ flex: 1, padding: '10px', backgroundColor: '#059669' }}>Deliver Service</button>
+                                                )}
+                                                {['confirmed', 'in_progress', 'revision_requested', 'delivered'].includes(req.status) && (
+                                                    <button onClick={() => navigate(`/chat?roomId=${req._id}`)} className="btn-outline" style={{ flex: 1, padding: '10px' }}>Chat with Customer</button>
+                                                )}
+                                                {req.status === 'completed' && (
+                                                    <p style={{ color: '#059669', fontWeight: '600', fontSize: '0.9rem' }}>✓ Service completed & accepted</p>
+                                                )}
+                                                {req.status === 'cancelled' && (
+                                                    <p style={{ color: '#dc2626', fontWeight: '600', fontSize: '0.9rem' }}>This booking was cancelled</p>
+                                                )}
+                                            </div>
+
+                                            {req.status === 'revision_requested' && req.revisions?.length > 0 && (
+                                                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', borderRadius: '4px' }}>
+                                                    <strong style={{ color: '#92400e', fontSize: '0.9rem' }}>Customer requested revision:</strong>
+                                                    <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem' }}>{req.revisions[req.revisions.length - 1].note}</p>
+                                                </div>
+                                            )}
+                                            {req.status === 'delivered' && (
+                                                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '4px', fontSize: '0.85rem', color: '#1e40af' }}>
+                                                    Waiting for customer to accept or request a revision.
+                                                </div>
                                             )}
                                         </div>
-                                        {(req.address?.googleMapLink || (req.address?.lat && req.address?.lng)) && (
-                                            <button 
-                                                onClick={() => window.open(req.address.googleMapLink || `https://www.google.com/maps?q=${req.address.lat},${req.address.lng}`, '_blank')}
-                                                style={{ background: '#f0f9ff', color: '#0ea5e9', border: 'none', padding: '6px 12px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '800', cursor: 'pointer' }}
-                                            >View Map 📍</button>
-                                        )}
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '12px' }}>
-                                        {req.status === 'pending' && (
-                                            <>
-                                                <button onClick={() => updateBookingStatus(req._id, 'confirmed')} className="btn-primary" style={{ flex: 1, padding: '10px' }}>Accept Booking</button>
-                                                <button onClick={() => updateBookingStatus(req._id, 'cancelled')} className="btn-outline" style={{ flex: 1, padding: '10px', borderColor: '#ef4444', color: '#ef4444' }}>Decline</button>
-                                            </>
-                                        )}
-                                        {req.status === 'confirmed' && (
-                                            <button onClick={() => updateBookingStatus(req._id, 'in_progress')} className="btn-primary" style={{ flex: 1, padding: '10px' }}>Mark In Progress</button>
-                                        )}
-                                        {['in_progress', 'revision_requested'].includes(req.status) && (
-                                            <button onClick={() => updateBookingStatus(req._id, 'delivered')} className="btn-primary" style={{ flex: 1, padding: '10px', backgroundColor: '#059669' }}>Deliver Service</button>
-                                        )}
-                                        {['confirmed', 'in_progress', 'revision_requested', 'delivered'].includes(req.status) && (
-                                            <button onClick={() => navigate(`/chat?roomId=${req._id}`)} className="btn-outline" style={{ flex: 1, padding: '10px' }}>Chat with Customer</button>
-                                        )}
-                                        {req.status === 'completed' && (
-                                            <p style={{ color: '#059669', fontWeight: '600', fontSize: '0.9rem' }}>✓ Service completed & accepted</p>
-                                        )}
-                                        {req.status === 'cancelled' && (
-                                            <p style={{ color: '#dc2626', fontWeight: '600', fontSize: '0.9rem' }}>This booking was cancelled</p>
-                                        )}
-                                    </div>
-
-                                    {req.status === 'revision_requested' && req.revisions?.length > 0 && (
-                                        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#fffbeb', borderLeft: '4px solid #f59e0b', borderRadius: '4px' }}>
-                                            <strong style={{ color: '#92400e', fontSize: '0.9rem' }}>Customer requested revision:</strong>
-                                            <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem' }}>{req.revisions[req.revisions.length - 1].note}</p>
-                                        </div>
-                                    )}
-                                    {req.status === 'delivered' && (
-                                        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '4px', fontSize: '0.85rem', color: '#1e40af' }}>
-                                            Waiting for customer to accept or request a revision.
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                                    ))}
+                            </div>
+                        </>
                     )}
+
+                    <PaymentModal
+                        isOpen={!!bookingForPayment}
+                        onClose={() => setBookingForPayment(null)}
+                        onSelect={confirmDelivery}
+                    />
                 </div>
             )}
 
             {activeTab === 'profile' && (
-                <div className="animate-fade-in" style={{ maxWidth: '1000px' }}>
+                <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto' }}>
                     <section style={{ backgroundColor: '#fff', borderRadius: '32px', padding: '40px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '40px' }}>
                             <div>
@@ -1157,65 +1414,81 @@ const DashboardDesktop = ({
             )}
 
             {activeTab === 'chat' && (
-                <div className="animate-fade-in" style={{ 
-                    display: 'flex', 
-                    flexDirection: isMobile ? 'column' : 'row',
-                    gap: '24px', 
-                    height: isMobile ? 'auto' : 'calc(100vh - 250px)', 
-                    minHeight: isMobile ? 'none' : '600px' 
+                <div className="animate-fade-in" style={{
+                    display: 'flex',
+                    height: 'calc(100vh - 100px)',
+                    overflow: 'hidden',
+                    borderRadius: '24px',
+                    border: '1px solid #e1e2ec',
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                    fontFamily: 'Inter, sans-serif',
+                    backgroundColor: '#faf8ff'
                 }}>
-                    {/* Left Side: Room List */}
-                    <div style={{ 
-                        width: isMobile ? '100%' : '350px', 
-                        display: (isMobile && dashActiveRoom) ? 'none' : 'flex',
-                        flexDirection: 'column', 
-                        gap: '16px', 
-                        borderRight: isMobile ? 'none' : '1px solid #f1f5f9', 
-                        paddingRight: isMobile ? '0' : '24px', 
-                        overflowY: 'auto' 
+                    {/* 2. Conversation List Pane */}
+                    <div style={{
+                        width: '384px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        backgroundColor: '#f3f3fd',
+                        borderRight: '1px solid rgba(195, 198, 214, 0.2)'
                     }}>
-                        <h2 className="text-h2" style={{ marginBottom: '8px', fontSize: '1.5rem' }}>Messages</h2>
-                        <ChatList
-                            onSelect={(room) => setDashActiveRoom(room)}
-                        />
+                        <div style={{ padding: '32px 32px 16px' }}>
+                            <h2 style={{ fontSize: '1.875rem', fontWeight: 900, color: '#191b23', marginBottom: '24px', letterSpacing: '-0.025em', fontFamily: 'Manrope, sans-serif' }}>Messages</h2>
+                            <div style={{ position: 'relative', marginBottom: '24px' }}>
+                                <div style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+                                    <Search size={20} color="#737685" />
+                                </div>
+                                <input
+                                    style={{ width: '100%', backgroundColor: '#ffffff', border: 'none', borderRadius: '12px', padding: '16px 16px 16px 48px', fontSize: '14px', outline: 'none', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)' }}
+                                    placeholder="Search conversations..." type="text"
+                                />
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', padding: '4px', backgroundColor: '#ededf8', borderRadius: '9999px' }}>
+                                <button style={{ flex: 1, padding: '8px', fontSize: '12px', fontWeight: 700, borderRadius: '9999px', backgroundColor: '#ffffff', color: '#003d9b', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)' }}>All</button>
+                                <button style={{ flex: 1, padding: '8px', fontSize: '12px', fontWeight: 700, borderRadius: '9999px', color: '#434654' }}>Unread</button>
+                                <button style={{ flex: 1, padding: '8px', fontSize: '12px', fontWeight: 700, borderRadius: '9999px', color: '#434654' }}>Archived</button>
+                            </div>
+                        </div>
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 32px' }}>
+                            <ChatList
+                                onSelect={(room) => setDashActiveRoom(room)}
+                                activeRoomId={dashActiveRoom?.roomId}
+                            />
+                        </div>
                     </div>
 
-                    {/* Right Side: Chat Area */}
-                    <div style={{ 
-                        flex: 1, 
-                        display: (isMobile && !dashActiveRoom) ? 'none' : 'flex',
-                        backgroundColor: '#fff', 
-                        borderRadius: '24px', 
-                        flexDirection: 'column', 
-                        overflow: 'hidden', 
-                        border: '1px solid #f1f5f9', 
-                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-                        minHeight: isMobile ? '500px' : 'none'
-                    }}>
+                    {/* 3. Primary Chat Area */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                         {dashActiveRoom ? (
                             <>
-                                {/* Window Header */}
-                                <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: '#fff' }}>
-                                    {isMobile && (
-                                        <button 
-                                            onClick={() => setDashActiveRoom(null)}
-                                            style={{ background: 'none', border: 'none', marginRight: '8px', cursor: 'pointer', color: '#64748b' }}
-                                        >
-                                            <X size={20} />
-                                        </button>
-                                    )}
-                                    <img
-                                        src={getAvatar(dashActiveRoom.otherUser)}
-                                        alt="Avatar"
-                                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
-                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(dashActiveRoom.otherUser?.name || 'U')}&background=ede9fe&color=4f46e5`; }}
-                                    />
-                                    <div>
-                                        <h4 style={{ fontSize: '14px', fontWeight: '800' }}>{dashActiveRoom.otherUser?.name || 'User'}</h4>
-                                        <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: '700' }}>Active Conversation</span>
+                                {/* Chat Header */}
+                                <div style={{ height: '96px', padding: '0 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(250, 248, 255, 0.8)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #ededf8', zIndex: 40 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                        <div style={{ position: 'relative' }}>
+                                            <img
+                                                alt={dashActiveRoom.otherUser?.name || 'User'}
+                                                style={{ width: '48px', height: '48px', borderRadius: '50%', border: '2px solid #e1e2ec', objectFit: 'cover' }}
+                                                src={getAvatar(dashActiveRoom.otherUser)}
+                                                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(dashActiveRoom.otherUser?.name || 'U')}&background=ede9fe&color=4f46e5`; }}
+                                            />
+                                            <span style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '16px', height: '16px', backgroundColor: '#22c55e', border: '3px solid #faf8ff', borderRadius: '50%' }}></span>
+                                        </div>
+                                        <div>
+                                            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#191b23', fontFamily: 'Manrope, sans-serif', margin: 0 }}>{dashActiveRoom.otherUser?.name || 'User'}</h2>
+                                            <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px', letterSpacing: '0.025em' }}>
+                                                <span className="animate-pulse" style={{ width: '6px', height: '6px', backgroundColor: '#22c55e', borderRadius: '50%' }}></span>
+                                                ACTIVE NOW
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px' }}>
-                                        <button 
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                        <button style={{ padding: '12px', color: '#434654', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Phone size={20} />
+                                        </button>
+                                        <button style={{ padding: '12px', color: '#434654', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Video size={20} />
+                                        </button>
+                                        <button
                                             onClick={() => {
                                                 if (window.confirm('Are you sure you want to delete this chat history?')) {
                                                     api.delete(`/api/messages/${dashActiveRoom.roomId}`)
@@ -1223,105 +1496,195 @@ const DashboardDesktop = ({
                                                             setDashMessages([]);
                                                             alert('Chat history deleted');
                                                         })
-                                                        .catch(err => {
-                                                            const errorMsg = err.response?.data?.message || err.message || 'Failed to delete chat';
-                                                            alert(`Delete failed: ${errorMsg}`);
-                                                        });
+                                                        .catch(err => alert('Failed to delete chat'));
                                                 }
                                             }}
-                                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                            style={{ padding: '12px', color: '#ef4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                             title="Delete Chat"
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash2 size={20} />
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Service Context Card */}
                                 {activeService && (
-                                    <div style={{ 
-                                        padding: '12px 24px', 
-                                        backgroundColor: '#fff', 
-                                        borderBottom: '1px solid #f1f5f9', 
-                                        display: 'flex', 
-                                        gap: 16, 
-                                        alignItems: 'center',
-                                        position: 'relative'
-                                    }}>
-                                        <img 
-                                            src={activeService.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeService.title)}&background=f8fafc&color=4f46e5`} 
-                                            style={{ width: 60, height: 45, borderRadius: 10, objectFit: 'cover', border: '1px solid #f1f5f9' }} 
+                                    <div style={{ padding: '12px 40px', backgroundColor: '#faf8ff', borderBottom: '1px solid #ededf8', display: 'flex', gap: '16px', alignItems: 'center', position: 'relative', zIndex: 30 }}>
+                                        <img
+                                            src={activeService.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeService.title)}&background=f8fafc&color=4f46e5`}
+                                            style={{ width: '64px', height: '48px', borderRadius: '12px', objectFit: 'cover', border: '1px solid #e1e2ec' }}
                                             alt=""
                                         />
                                         <div style={{ flex: 1, overflow: 'hidden' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                <span style={{ fontSize: '10px', fontWeight: 900, color: '#003d9b', textTransform: 'uppercase', letterSpacing: '0.5px', backgroundColor: 'rgba(0,61,155,0.05)', padding: '2px 8px', borderRadius: 4 }}>Inquiry Context</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ fontSize: '10px', fontWeight: 900, color: '#003d9b', textTransform: 'uppercase', letterSpacing: '0.025em', backgroundColor: 'rgba(0,61,155,0.05)', padding: '2px 8px', borderRadius: '4px' }}>Inquiry Context</span>
                                             </div>
-                                            <h4 style={{ fontSize: '14px', fontWeight: 800, margin: '4px 0 0', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeService.title}</h4>
+                                            <h4 style={{ fontSize: '14px', fontWeight: 800, marginTop: '4px', color: '#191b23', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeService.title}</h4>
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => setActiveService(null)}
-                                            style={{ background: '#f8fafc', border: 'none', color: '#94a3b8', cursor: 'pointer', width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', transition: 'all 0.2s' }}
+                                            style={{ width: '32px', height: '32px', backgroundColor: '#ededf8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#737685' }}
                                         >✕</button>
                                     </div>
                                 )}
 
-                                {/* Messages Container */}
-                                <div className="no-scrollbar" style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: '#f8fafc' }}>
+                                {/* Chat History */}
+                                <div style={{ flex: 1, overflowY: 'auto', padding: '40px', display: 'flex', flexDirection: 'column', gap: '32px', scrollBehavior: 'smooth' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#737685', backgroundColor: '#ededf8', padding: '4px 12px', borderRadius: '9999px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                            {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                        </span>
+                                    </div>
+
                                     {dashMessages.length === 0 ? (
-                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '14px' }}>
+                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#737685', fontSize: '14px' }}>
                                             No messages yet. Say hi!
                                         </div>
                                     ) : (
                                         dashMessages.map((msg, idx) => {
                                             const isMe = msg.senderId === user?._id;
-                                            return (
-                                                <div key={idx} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
-                                                    <div style={{
-                                                        padding: '10px 14px',
-                                                        borderRadius: isMe ? '18px 18px 2px 18px' : '18px 18px 18px 2px',
-                                                        backgroundColor: isMe ? '#003d9b' : '#fff',
-                                                        color: isMe ? '#fff' : '#1e293b',
-                                                        fontSize: '13px',
-                                                        lineHeight: '1.4',
-                                                        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-                                                    }}>
-                                                        {msg.message}
+                                            return isMe ? (
+                                                <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', marginLeft: 'auto', maxWidth: '70%' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                                        <span style={{ fontSize: '10px', color: 'rgba(115,118,133,0.5)', fontWeight: 500 }}>
+                                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#003d9b', fontFamily: 'Manrope, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>You</span>
                                                     </div>
-                                                    <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '4px', textAlign: isMe ? 'right' : 'left' }}>
-                                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    <div style={{ backgroundColor: '#0052cc', color: '#ffffff', padding: '20px', borderRadius: '16px 16px 0 16px', boxShadow: '0 4px 6px -1px rgba(0,61,155,0.1)', fontSize: '14px', lineHeight: 1.6 }}>
+                                                        {(!msg.messageType || msg.messageType === 'text') && msg.message}
+                                                        {msg.messageType === 'image' && (
+                                                            <div style={{ marginTop: '8px', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer' }}>
+                                                                <img src={msg.fileUrl} alt="Shared" style={{ maxWidth: '320px', objectFit: 'cover' }} onClick={() => window.open(msg.fileUrl, '_blank')} />
+                                                            </div>
+                                                        )}
+                                                        {msg.messageType === 'file' && (
+                                                            <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'underline', fontWeight: 600, marginTop: '8px', color: '#fff' }}>
+                                                                <FileText size={16} /> View Document
+                                                            </a>
+                                                        )}
+                                                        {msg.messageType === 'voice' && (
+                                                            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px' }}>
+                                                                <audio controls src={msg.fileUrl} style={{ height: '32px', width: '100%' }} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <span style={{ fontSize: '10px', color: 'rgba(115,118,133,0.6)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        {msg.isRead ? 'Read' : 'Delivered'}
+                                                        {msg.isRead ? <CheckCheck size={12} /> : <Check size={12} />}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px', maxWidth: '70%' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#191b23', fontFamily: 'Manrope, sans-serif' }}>{dashActiveRoom.otherUser?.name || 'User'}</span>
+                                                        <span style={{ fontSize: '10px', color: 'rgba(115,118,133,0.5)', fontWeight: 500 }}>
+                                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                    <div style={{ backgroundColor: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.4)', padding: '20px', borderRadius: '16px 16px 16px 0', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)', fontSize: '14px', color: '#191b23', lineHeight: 1.6 }}>
+                                                        {(!msg.messageType || msg.messageType === 'text') && msg.message}
+                                                        {msg.messageType === 'image' && (
+                                                            <div style={{ marginTop: '8px', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer' }}>
+                                                                <img src={msg.fileUrl} alt="Shared" style={{ maxWidth: '320px', objectFit: 'cover' }} onClick={() => window.open(msg.fileUrl, '_blank')} />
+                                                            </div>
+                                                        )}
+                                                        {msg.messageType === 'file' && (
+                                                            <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#003d9b', textDecoration: 'underline', fontWeight: 600, marginTop: '8px' }}>
+                                                                <FileText size={16} /> View Document
+                                                            </a>
+                                                        )}
+                                                        {msg.messageType === 'voice' && (
+                                                            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px' }}>
+                                                                <audio controls src={msg.fileUrl} style={{ height: '32px', width: '100%' }} />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             );
                                         })
                                     )}
+
+                                    {partnerTyping && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px', maxWidth: '70%' }}>
+                                            <div style={{ backgroundColor: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.4)', padding: '12px 16px', borderRadius: '16px 16px 16px 0', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#737685' }}>
+                                                <div style={{ display: 'flex', gap: '2px' }}>
+                                                    <span className="dot-typing" style={{ width: '6px', height: '6px', backgroundColor: '#737685', borderRadius: '50%' }}></span>
+                                                    <span className="dot-typing" style={{ width: '6px', height: '6px', backgroundColor: '#737685', borderRadius: '50%', animationDelay: '0.1s' }}></span>
+                                                    <span className="dot-typing" style={{ width: '6px', height: '6px', backgroundColor: '#737685', borderRadius: '50%', animationDelay: '0.2s' }}></span>
+                                                </div>
+                                                Typing...
+                                            </div>
+                                        </div>
+                                    )}
                                     <div ref={messagesEndRef} />
                                 </div>
 
-                                {/* Input Area */}
-                                <div style={{ padding: '16px', backgroundColor: '#fff', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '10px' }}>
-                                    <input
-                                        type="text"
-                                        className="input-field"
-                                        placeholder="Write a message..."
-                                        value={dashMessageInput}
-                                        onChange={e => setDashMessageInput(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && handleSendMessageDash()}
-                                        style={{ borderRadius: '100px', padding: '10px 20px', fontSize: '13px', flex: 1 }}
-                                    />
-                                    <button
-                                        onClick={handleSendMessageDash}
-                                        style={{ width: '40px', height: '40px', borderRadius: '50%', border: 'none', backgroundColor: '#003d9b', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-                                    >
-                                        <Send size={18} />
-                                    </button>
+                                {/* Chat Input */}
+                                <div style={{ padding: '0 32px 32px' }}>
+                                    {isRecording ? (
+                                        <div style={{ backgroundColor: '#ffffff', boxShadow: '0 -10px 30px rgba(25,27,35,0.02)', borderRadius: '24px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid #fecaca' }}>
+                                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '16px', padding: '0 16px', color: '#ef4444' }}>
+                                                <div className="animate-pulse" style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ef4444' }}></div>
+                                                <span style={{ fontWeight: 700 }}>Recording: {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}</span>
+                                            </div>
+                                            <button onClick={stopRecordingDash} style={{ backgroundColor: '#fef2f2', color: '#ef4444', padding: '12px 24px', borderRadius: '16px', fontWeight: 700, fontSize: '14px' }}>
+                                                Stop & Send
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div style={{ backgroundColor: '#ffffff', boxShadow: '0 -10px 30px rgba(25,27,35,0.02)', borderRadius: '24px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(195,198,214,0.1)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <button onClick={() => fileInputRef.current?.click()} style={{ padding: '12px', color: '#737685', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Attach Image">
+                                                    <PlusCircle size={20} />
+                                                </button>
+                                                <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUploadDash} />
+                                                <button onClick={startRecordingDash} style={{ padding: '12px', color: '#737685', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Voice Message">
+                                                    <Mic size={20} />
+                                                </button>
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <input
+                                                    style={{ width: '100%', backgroundColor: 'transparent', border: 'none', outline: 'none', fontSize: '14px', padding: '12px 0', color: '#191b23', fontWeight: 500 }}
+                                                    placeholder={`Message ${dashActiveRoom.otherUser?.name || '...'}`}
+                                                    type="text"
+                                                    value={dashMessageInput}
+                                                    onChange={e => handleTypeDash(e.target.value)}
+                                                    onKeyDown={e => e.key === 'Enter' && handleSendMessageDash()}
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <button onClick={() => fileInputRef.current?.click()} style={{ padding: '12px', color: '#737685', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Attach File">
+                                                    <Paperclip size={20} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleSendMessageDash()}
+                                                    disabled={!dashMessageInput.trim() || uploadingFile}
+                                                    style={{ backgroundColor: '#0052cc', color: '#ffffff', padding: '12px 24px', borderRadius: '16px', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 10px 15px -3px rgba(0,82,204,0.2)', opacity: (!dashMessageInput.trim() || uploadingFile) ? 0.5 : 1, cursor: (!dashMessageInput.trim() || uploadingFile) ? 'not-allowed' : 'pointer' }}
+                                                >
+                                                    {uploadingFile ? <Loader size={18} className="animate-spin" /> : (
+                                                        <>
+                                                            Send
+                                                            <Send size={18} />
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center' }}>
+                                        <p style={{ fontSize: '10px', color: 'rgba(115,118,133,0.4)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Lock size={12} />
+                                            Messages are secured with end-to-end encryption
+                                        </p>
+                                    </div>
                                 </div>
                             </>
                         ) : (
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', padding: '40px', textAlign: 'center' }}>
-                                <MessageSquare size={40} style={{ opacity: 0.15, marginBottom: '16px' }} />
-                                <h3 style={{ fontSize: '1rem', color: '#1e293b', marginBottom: '8px' }}>Your Messages</h3>
-                                <p style={{ fontSize: '13px' }}>Select a conversation from the list to start chatting.</p>
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#737685' }}>
+                                <MessageSquare size={60} opacity={0.2} style={{ marginBottom: '16px' }} />
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#191b23', marginBottom: '8px', fontFamily: 'Manrope, sans-serif' }}>Your Messages</h3>
+                                <p style={{ fontSize: '14px' }}>Select a conversation from the list to start chatting.</p>
                             </div>
                         )}
                     </div>
@@ -1330,7 +1693,7 @@ const DashboardDesktop = ({
 
 
             {activeTab === 'payments' && (
-                <div className="animate-fade-in" style={{ maxWidth: '1200px' }}>
+                <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px', marginBottom: '32px' }}>
                         {/* Balance Overview */}
                         <div style={{ gridColumn: 'span 4', backgroundColor: '#003d9b', borderRadius: '24px', padding: '32px', color: 'white', position: 'relative', overflow: 'hidden' }}>
@@ -1434,9 +1797,9 @@ const DashboardDesktop = ({
                                                     <div style={{ fontSize: '15px', fontWeight: '900', color: '#059669' }}>+₹{tx.totalPrice?.toLocaleString()}</div>
                                                 </td>
                                                 <td style={{ padding: '20px 8px' }}>
-                                                    <span style={{ 
-                                                        backgroundColor: tx.paymentStatus === 'paid' ? '#d1fae5' : '#fef3c7', 
-                                                        color: tx.paymentStatus === 'paid' ? '#065f46' : '#92400e', 
+                                                    <span style={{
+                                                        backgroundColor: tx.paymentStatus === 'paid' ? '#d1fae5' : '#fef3c7',
+                                                        color: tx.paymentStatus === 'paid' ? '#065f46' : '#92400e',
                                                         fontSize: '10px', fontWeight: '900', padding: '6px 12px', borderRadius: '100px', textTransform: 'uppercase', letterSpacing: '0.5px'
                                                     }}>
                                                         {tx.paymentStatus || 'Pending'}
@@ -1459,24 +1822,24 @@ const DashboardDesktop = ({
             )}
 
             {activeTab === 'favorites' && (
-                <div className="animate-fade-in">
+                <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto' }}>
                     {favoritesLoading ? (
                         <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><Loader className="animate-spin" /></div>
                     ) : (!favorites || favorites.length === 0) ? (
-                        <div style={{ textAlign: 'center', padding: '100px', background: '#fff', borderRadius: '24px' }}>
+                        <div style={{ textAlign: 'center', padding: '100px', background: '#fff', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                             <Heart size={48} color="#cbd5e1" style={{ marginBottom: '16px' }} />
                             <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1e293b' }}>No favorites yet</h3>
                             <p style={{ color: '#64748b' }}>Start exploring and save services you like!</p>
                             <button className="btn-primary" style={{ marginTop: '24px', borderRadius: '100px' }} onClick={() => navigate('/services')}>Browse Services</button>
                         </div>
                     ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px' }}>
                             {favorites.map(srv => (
-                                <div 
-                                    key={srv._id} 
-                                    className="card service-card-premium" 
+                                <div
+                                    key={srv._id}
+                                    className="card service-card-premium"
                                     onClick={() => navigate(`/services/${srv._id}`)}
-                                    style={{ 
+                                    style={{
                                         padding: 0,
                                         overflow: 'hidden',
                                         display: 'flex',
@@ -1492,42 +1855,42 @@ const DashboardDesktop = ({
                                     }}
                                 >
                                     <div style={{ position: 'relative', overflow: 'hidden' }}>
-                                        <img 
-                                            src={srv.images && srv.images.length > 0 ? srv.images[0] : (srv.provider?.avatar && srv.provider.avatar.startsWith('http') ? srv.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`)} 
-                                            alt={srv.title} 
-                                            style={{ 
+                                        <img
+                                            src={srv.images?.[0]?.url || srv.images?.[0] || (srv.provider?.avatar && srv.provider.avatar.startsWith('http') ? srv.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`)}
+                                            alt={srv.title}
+                                            style={{
                                                 width: '100%',
                                                 height: '200px',
                                                 objectFit: 'cover',
                                                 backgroundColor: '#f8fafc',
                                                 display: 'block'
-                                            }} 
-                                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`; }} 
+                                            }}
+                                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`; }}
                                         />
                                         <div style={{ position: 'absolute', top: '12px', left: '12px' }}>
                                             <span style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '700', color: 'var(--primary)', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                                                 {srv.category}
                                             </span>
                                         </div>
-                                        <button 
-                                            style={{ 
-                                                position: 'absolute', 
-                                                top: '12px', 
-                                                right: '12px', 
-                                                width: '32px', 
-                                                height: '32px', 
-                                                borderRadius: '50%', 
-                                                backgroundColor: '#ef4444', 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                justifyContent: 'center', 
-                                                border: 'none', 
-                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
+                                        <button
+                                            style={{
+                                                position: 'absolute',
+                                                top: '12px',
+                                                right: '12px',
+                                                width: '32px',
+                                                height: '32px',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#ef4444',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                border: 'none',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                                 cursor: 'pointer',
                                                 zIndex: 10
-                                            }} 
-                                            onClick={async (e) => { 
-                                                e.stopPropagation(); 
+                                            }}
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
                                                 if (user?.token) {
                                                     await api.post(`/api/users/favorites/${srv._id}`, {}, { headers: { Authorization: `Bearer ${user.token}` } });
                                                     fetchFavorites();
@@ -1565,15 +1928,15 @@ const DashboardDesktop = ({
                                                 />
                                                 <span style={{ fontWeight: '500', color: '#1e293b', fontSize: '0.85rem' }}>{srv.provider ? srv.provider.name : 'Professional'}</span>
                                             </div>
-                                            
+
                                             {srv.businessType === 'shop' ? (
-                                                <button 
-                                                    style={{ 
-                                                        backgroundColor: 'var(--primary)', 
-                                                        color: '#fff', 
-                                                        padding: '8px 16px', 
-                                                        borderRadius: '8px', 
-                                                        fontSize: '0.8rem', 
+                                                <button
+                                                    style={{
+                                                        backgroundColor: 'var(--primary)',
+                                                        color: '#fff',
+                                                        padding: '8px 16px',
+                                                        borderRadius: '8px',
+                                                        fontSize: '0.8rem',
                                                         fontWeight: '700',
                                                         border: 'none',
                                                         display: 'flex',
@@ -1605,6 +1968,55 @@ const DashboardDesktop = ({
                             ))}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Payment Mode Selection Modal */}
+            {bookingForPayment && (
+                <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+                    <div style={{ backgroundColor: 'white', padding: '32px', borderRadius: '24px', width: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: '1px solid rgba(0,0,0,0.1)' }}>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1e293b', marginBottom: '8px' }}>Payment Received?</h3>
+                        <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>Please select the payment method used for this service completion.</p>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <button
+                                onClick={() => confirmDelivery('Cash')}
+                                style={{ padding: '16px', borderRadius: '16px', border: '2px solid #e2e8f0', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', transition: 'all 0.2s' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#0052cc'; e.currentTarget.style.background = '#f0f7ff'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = 'white'; }}
+                            >
+                                <div style={{ width: 40, height: 40, borderRadius: '10px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Wallet size={20} />
+                                </div>
+                                <div style={{ textAlign: 'left' }}>
+                                    <div style={{ fontWeight: 800, fontSize: '15px' }}>Cash Payment</div>
+                                    <div style={{ fontSize: '12px', color: '#64748b' }}>Paid directly to professional</div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => confirmDelivery('Online')}
+                                style={{ padding: '16px', borderRadius: '16px', border: '2px solid #e2e8f0', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', transition: 'all 0.2s' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#0052cc'; e.currentTarget.style.background = '#f0f7ff'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = 'white'; }}
+                            >
+                                <div style={{ width: 40, height: 40, borderRadius: '10px', background: '#eff6ff', color: '#0052cc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <CreditCard size={20} />
+                                </div>
+                                <div style={{ textAlign: 'left' }}>
+                                    <div style={{ fontWeight: 800, fontSize: '15px' }}>Online Payment</div>
+                                    <div style={{ fontSize: '12px', color: '#64748b' }}>Paid via app or bank transfer</div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => setBookingForPayment(null)}
+                                style={{ marginTop: '12px', padding: '12px', background: 'transparent', border: 'none', color: '#94a3b8', fontWeight: 700, cursor: 'pointer', fontSize: '14px' }}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

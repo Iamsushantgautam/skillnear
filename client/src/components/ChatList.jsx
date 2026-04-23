@@ -5,7 +5,7 @@ import io from 'socket.io-client';
 import api, { API_URL } from '../utils/api';
 import useAuthStore from '../store/useAuthStore';
 
-const ChatList = ({ limit, onSelect }) => {
+const ChatList = ({ limit, onSelect, activeRoomId }) => {
     const { user } = useAuthStore();
     const navigate = useNavigate();
     const [rooms, setRooms] = useState([]);
@@ -49,64 +49,78 @@ const ChatList = ({ limit, onSelect }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {rooms.map((room) => (
-                <div
-                    key={room.roomId}
-                    onClick={() => onSelect ? onSelect(room) : navigate(`/chat?roomId=${room.roomId}`)}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '12px 16px',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '12px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        backgroundColor: '#fff'
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
-                    onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
-                >
-                    <img
-                        src={room.otherUser?.avatar && room.otherUser.avatar.startsWith('http') ? room.otherUser.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(room.otherUser?.name || 'U')}&background=ede9fe&color=4f46e5`}
-                        alt={room.otherUser?.name}
-                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
-                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(room.otherUser?.name || 'U')}&background=ede9fe&color=4f46e5`; }}
-                    />
-                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{room.otherUser?.name}</span>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                {room.updatedAt ? new Date(room.updatedAt).toLocaleDateString() : ''}
-                            </span>
-                        </div>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: '2px 0' }}>
-                            {room.lastMessage}
-                        </p>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ fontSize: '0.65rem', color: 'var(--primary)', fontWeight: '700', textTransform: 'uppercase' }}>
-                                {room.type}: {room.title}
+            {rooms.map((room) => {
+                const isActive = activeRoomId === room.roomId;
+                return (
+                    <div
+                        key={room.roomId}
+                        onClick={() => onSelect ? onSelect(room) : navigate(`/chat?roomId=${room.roomId}`)}
+                        style={{
+                            position: 'relative',
+                            backgroundColor: isActive ? '#ffffff' : 'transparent',
+                            padding: '16px',
+                            borderRadius: '12px',
+                            boxShadow: isActive ? '0 1px 2px 0 rgba(0,0,0,0.05)' : 'none',
+                            border: isActive ? '1px solid rgba(0,61,155,0.05)' : '1px solid transparent',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s',
+                            boxSizing: 'border-box'
+                        }}
+                        onMouseOver={(e) => {
+                            if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(225, 226, 236, 0.5)';
+                        }}
+                        onMouseOut={(e) => {
+                            if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                    >
+                        <div style={{ display: 'flex', gap: '16px' }}>
+                            <div style={{ position: 'relative', flexShrink: 0 }}>
+                                <img
+                                    src={room.otherUser?.avatar && room.otherUser.avatar.startsWith('http') ? room.otherUser.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(room.otherUser?.name || 'U')}&background=ede9fe&color=4f46e5`}
+                                    alt={room.otherUser?.name}
+                                    style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
+                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(room.otherUser?.name || 'U')}&background=ede9fe&color=4f46e5`; }}
+                                />
+                                {isActive && <span style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', backgroundColor: '#22c55e', border: '2px solid #ffffff', borderRadius: '50%' }}></span>}
                             </div>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (window.confirm('Delete this chat history?')) {
-                                        api.delete(`/api/messages/${room.roomId}`)
-                                            .then(() => fetchRooms())
-                                            .catch(err => {
-                                                const errorMsg = err.response?.data?.message || err.message || 'Failed to delete';
-                                                alert(`Delete failed: ${errorMsg}`);
-                                            });
-                                    }
-                                }}
-                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
-                            >
-                                <Trash2 size={14} />
-                            </button>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                    <h3 style={{ fontWeight: 'bold', fontSize: '14px', color: '#191b23', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Manrope, sans-serif' }}>{room.otherUser?.name}</h3>
+                                    <span style={{ fontSize: '10px', color: '#737685', fontWeight: 500 }}>
+                                        {room.updatedAt ? new Date(room.updatedAt).toLocaleDateString() : ''}
+                                    </span>
+                                </div>
+                                <p style={{ fontSize: '12px', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.5, color: isActive ? '#003d9b' : '#434654', fontWeight: isActive ? 600 : 400 }}>
+                                    {room.lastMessage}
+                                </p>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                                    <div style={{ fontSize: '9px', color: 'rgba(0,61,155,0.7)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>
+                                        {room.type}: {room.title}
+                                    </div>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (window.confirm('Delete this chat history?')) {
+                                                api.delete(`/api/messages/${room.roomId}`)
+                                                    .then(() => fetchRooms())
+                                                    .catch(err => {
+                                                        const errorMsg = err.response?.data?.message || err.message || 'Failed to delete';
+                                                        alert(`Delete failed: ${errorMsg}`);
+                                                    });
+                                            }
+                                        }}
+                                        style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px', transition: 'color 0.2s' }}
+                                        onMouseOver={(e) => e.currentTarget.style.color = '#dc2626'}
+                                        onMouseOut={(e) => e.currentTarget.style.color = '#f87171'}
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 };

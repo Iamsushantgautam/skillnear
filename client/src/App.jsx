@@ -23,6 +23,7 @@ import Terms from './pages/Terms';
 import HowItWorks from './pages/HowItWorks';
 import SuccessStories from './pages/SuccessStories';
 import ProviderGuidelines from './pages/ProviderGuidelines';
+import Invoice from './pages/Invoice';
 
 
 function MainLayout() {
@@ -48,6 +49,7 @@ function MainLayout() {
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/success-stories" element={<SuccessStories />} />
           <Route path="/provider-guidelines" element={<ProviderGuidelines />} />
+          <Route path="/invoice/:id" element={<Invoice />} />
         </Routes>
       </main>
       <Footer />

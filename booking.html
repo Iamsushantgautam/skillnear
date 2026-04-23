@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f3f3fd",
+                        "on-secondary-container": "#415382",
+                        "surface-container-highest": "#e1e2ec",
+                        "on-tertiary-container": "#ffc6b2",
+                        "background": "#faf8ff",
+                        "surface-container-high": "#e7e7f2",
+                        "error-container": "#ffdad6",
+                        "primary": "#003d9b",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#0040a2",
+                        "surface-bright": "#faf8ff",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#b2c5ff",
+                        "secondary-fixed-dim": "#b4c5fb",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#dae2ff",
+                        "secondary": "#4c5d8d",
+                        "inverse-on-surface": "#f0f0fb",
+                        "on-primary-container": "#c4d2ff",
+                        "on-surface-variant": "#434654",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed": "#021945",
+                        "primary-container": "#0052cc",
+                        "inverse-surface": "#2e3038",
+                        "surface-dim": "#d9d9e4",
+                        "primary-fixed-dim": "#b2c5ff",
+                        "on-tertiary-fixed-variant": "#812800",
+                        "primary-fixed": "#dae2ff",
+                        "on-background": "#191b23",
+                        "surface-variant": "#e1e2ec",
+                        "surface-tint": "#0c56d0",
+                        "on-secondary-fixed-variant": "#344573",
+                        "surface-container": "#ededf8",
+                        "secondary-container": "#b6c8fe",
+                        "surface": "#faf8ff",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#ffdbcf",
+                        "tertiary": "#7b2600",
+                        "on-primary-fixed": "#001848",
+                        "outline": "#737685",
+                        "outline-variant": "#c3c6d6",
+                        "on-tertiary-fixed": "#380d00",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#a33500",
+                        "on-surface": "#191b23",
+                        "tertiary-fixed-dim": "#ffb59b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        .font-display {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .glass-sidebar {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="bg-background text-on-background min-h-screen">
+    <!-- SideNavBar (Shared Component) -->
+    <aside
+        class="h-screen w-64 fixed left-0 top-0 border-r border-slate-200/10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[40px_0_40px_rgba(25,27,35,0.04)] flex flex-col py-8 px-4 z-50">
+        <div class="mb-10 px-2">
+            <h1 class="text-xl font-bold tracking-tight text-blue-800 dark:text-blue-300">The Curator</h1>
+            <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1">Premium Tier</p>
+        </div>
+        <nav class="flex-1 space-y-1">
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all duration-300"
+                href="#">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-sm font-medium">Dashboard</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all duration-300"
+                href="#">
+                <span class="material-symbols-outlined">storefront</span>
+                <span class="text-sm font-medium">Marketplace</span>
+            </a>
+            <!-- Active State: My Gigs (Closest match to Bookings in the nav labels provided) -->
+            <a class="flex items-center gap-3 px-4 py-3 text-blue-700 dark:text-blue-400 font-semibold border-r-4 border-blue-600 bg-surface-container-high/40 rounded-l-xl transition-all duration-300"
+                href="#">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">work</span>
+                <span class="text-sm">My Gigs</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all duration-300"
+                href="#">
+                <span class="material-symbols-outlined">chat_bubble</span>
+                <span class="text-sm font-medium">Messages</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-xl transition-all duration-300"
+                href="#">
+                <span class="material-symbols-outlined">insights</span>
+                <span class="text-sm font-medium">Analytics</span>
+            </a>
+        </nav>
+        <div class="mt-auto space-y-1 border-t border-slate-100 pt-6">
+            <button
+                class="w-full mb-6 bg-primary-container text-white py-3 rounded-full font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-transform">
+                Post a Gig
+            </button>
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-blue-600 transition-colors" href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-sm font-medium">Settings</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-blue-600 transition-colors" href="#">
+                <span class="material-symbols-outlined">help_outline</span>
+                <span class="text-sm font-medium">Help</span>
+            </a>
+        </div>
+    </aside>
+    <!-- TopNavBar (Shared Component Strategy) -->
+    <header
+        class="fixed top-0 right-0 left-64 h-20 bg-[#faf8ff]/80 backdrop-blur-md z-40 flex justify-between items-center px-10">
+        <div
+            class="flex items-center bg-surface-container-low px-4 py-2 rounded-full w-96 border border-outline-variant/10">
+            <span class="material-symbols-outlined text-slate-400 mr-2">search</span>
+            <input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-slate-400"
+                placeholder="Search bookings, services..." type="text" />
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-4 border-r border-slate-200 pr-6">
+                <span
+                    class="material-symbols-outlined text-slate-600 cursor-pointer hover:text-primary transition-colors">notifications</span>
+                <span
+                    class="material-symbols-outlined text-slate-600 cursor-pointer hover:text-primary transition-colors">mail</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-on-background">Alex Rivers</p>
+                    <p class="text-[10px] text-primary font-semibold uppercase tracking-wider">Switch to Buying</p>
+                </div>
+                <img alt="Freelancer Profile" class="w-10 h-10 rounded-full border-2 border-primary/20 object-cover"
+                    data-alt="close-up portrait of a professional male freelancer with glasses smiling in a modern office setting with soft natural light"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1Zyso3TIzdL9o1eWclhyQ9JZNUx4C2hnudWYhv1Lce3XHi4Z7-p96REhajJKEVb6Nxeqa47yn63lA1HXWcqjvVnfBhbjIxJ6nIDgAySX6kgtwVjE0k8-P4ai8OEc7Zv8Mnh_fd5UK6LtoFpH1uItybN4JG1Zvp5vxOwubjtyFbWmL1QL6G55DW07CTgbAiA22HBoDk83wP6g8kWnMERAxDS3yHGT909fvUjOD1CXowgu6kgiczpo-SgtACCUUWYlps8dTCNguviXR" />
+            </div>
+        </div>
+    </header>
+    <!-- Main Content Canvas -->
+    <main class="pl-64 pt-20 min-h-screen">
+        <div class="max-w-7xl mx-auto p-10">
+            <!-- Page Header & Filtering Section -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                <div class="space-y-2">
+                    <h2 class="text-4xl font-black tracking-tight text-on-background">My Bookings</h2>
+                    <p class="text-slate-500 font-medium max-w-md">Manage your active collaborations and professional
+                        service records from one central hub.</p>
+                </div>
+                <div class="flex items-center bg-surface-container-high p-1.5 rounded-full">
+                    <button
+                        class="px-6 py-2 rounded-full bg-surface-container-lowest text-primary font-bold shadow-sm transition-all">Active</button>
+                    <button
+                        class="px-6 py-2 rounded-full text-slate-500 font-semibold hover:text-primary transition-colors">Pending</button>
+                    <button
+                        class="px-6 py-2 rounded-full text-slate-500 font-semibold hover:text-primary transition-colors">Completed</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-12 gap-8">
+                <!-- Bookings Column -->
+                <div class="col-span-12 lg:col-span-8 space-y-6">
+                    <!-- Booking Card 1 -->
+                    <div
+                        class="group bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/10 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <div class="w-full md:w-48 h-32 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                                <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    data-alt="modern minimalist kitchen interior with dark wood cabinets and white marble countertops under warm pendant lighting"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRZmu2tI0Rfk0qhiseB7tedQjtP9GmnY4SM_SpVPOzDHeJr5iMI-XdhQgu1VlPqM9dOpudc-VKe24HwL1EU6bhpyNE3l1YXVgsBco-55WD1Yjacq14dt4Wl7O4XPF-YCuh7IUEN9DcOMDv8J8mBIoC-P_OVgaLnG69tHumtJs4hP58iPs3jG_hjdA4DYoWyDZ13VmitiLjsHQ1Wf5L9oA1-r0MzbBSZId0puQ14Ei5DXdWRpOmwCAaL2y2jeGRYPhQrRzBCgYPnB6_" />
+                            </div>
+                            <div class="flex-1 space-y-3">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span
+                                                class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-blue-100 text-blue-700 tracking-wider">IN
+                                                PROGRESS</span>
+                                            <span class="text-xs text-slate-400 font-medium">ID: #BK-88219</span>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-on-background leading-tight">Full Kitchen
+                                            Cabinet Installation</h3>
+                                        <p class="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-sm">person</span>
+                                            Provider: <span class="font-semibold text-on-surface">Rajesh Kumar</span>
+                                        </p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-2xl font-black text-primary">₹1500</p>
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase">Escrow Secured</p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-x-6 gap-y-2 pt-2 border-t border-slate-50">
+                                    <div class="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                                        <span
+                                            class="material-symbols-outlined text-base text-slate-400">calendar_today</span>
+                                        Oct 24, 2023
+                                    </div>
+                                    <div class="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                                        <span class="material-symbols-outlined text-base text-slate-400">schedule</span>
+                                        10:00 AM - 2:00 PM
+                                    </div>
+                                    <div class="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                                        <span
+                                            class="material-symbols-outlined text-base text-slate-400">location_on</span>
+                                        Indiranagar, Bangalore
+                                    </div>
+                                </div>
+                                <div class="flex gap-3 pt-4">
+                                    <button
+                                        class="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold text-sm hover:bg-primary-container transition-colors">View
+                                        Details &amp; Tracking</button>
+                                    <button
+                                        class="px-6 py-2.5 border border-outline-variant text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors">Message</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Booking Card 2 -->
+                    <div
+                        class="group bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/10 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <div class="w-full md:w-48 h-32 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                                <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    data-alt="close-up of a designer's desk with a large monitor showing architectural blueprints and professional drawing tools"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuANjm8ggqPdmV5zQ8pHitFTI-jMLDW4gc_Vu5Z4CLKgfedts2yjAJutZdFVWcfa897c59YVKSrXtdWjakzF99mdCzN8ViDianrWtC4aLsoVDGcJYJGSFJfeNqnDNShyMT9pWP07NCGWCLI_maP1Yi01ei84MnFzRz0MVBDSdaRHf0D8DgjSzWUObrtuE7pSbTkPiCnFw1rwS_H4_L15BMlXDuhp55bogT0-9M-BH0TlWJk5AFStaS4tjqfjdB8yxLyopv0Smj8VMS-C" />
+                            </div>
+                            <div class="flex-1 space-y-3">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span
+                                                class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-100 text-amber-700 tracking-wider">AWAITING
+                                                CONFIRMATION</span>
+                                            <span class="text-xs text-slate-400 font-medium">ID: #BK-88224</span>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-on-background leading-tight">3D Living Room
+                                            Visualization</h3>
+                                        <p class="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-sm">person</span>
+                                            Provider: <span class="font-semibold text-on-surface">Priya Sharma</span>
+                                        </p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-2xl font-black text-primary">₹3200</p>
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase">Payment Pending</p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-x-6 gap-y-2 pt-2 border-t border-slate-50">
+                                    <div class="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                                        <span
+                                            class="material-symbols-outlined text-base text-slate-400">calendar_today</span>
+                                        Oct 28, 2023
+                                    </div>
+                                    <div class="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                                        <span class="material-symbols-outlined text-base text-slate-400">schedule</span>
+                                        Remote Delivery
+                                    </div>
+                                    <div class="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                                        <span
+                                            class="material-symbols-outlined text-base text-slate-400">laptop_mac</span>
+                                        Online Service
+                                    </div>
+                                </div>
+                                <div class="flex gap-3 pt-4">
+                                    <button
+                                        class="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold text-sm hover:bg-primary-container transition-colors">Accept
+                                        &amp; Mark Complete</button>
+                                    <button
+                                        class="px-6 py-2.5 border border-outline-variant text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors">Review
+                                        Changes</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Booking Card 3 (Completed) -->
+                    <div
+                        class="group bg-surface-container-low/50 p-6 rounded-2xl border border-outline-variant/10 opacity-75 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <div class="w-full md:w-48 h-32 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                                <img class="w-full h-full object-cover"
+                                    data-alt="professional plumber fixing a chrome faucet in a high-end modern bathroom with soft bokeh background"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuABjp-knxpVDwyXaXaQehNDzRvdRetKRnZen-S9Mm5YovluouSHMjtW4-zFwDpESEMAkgGDdVwwWrJMh-zZ_-66yDQGkq3Jo-6rYniGBdAPUodiI96CPpEtLPSnKkL0MdS1uIVEyt_hx9oL2cp_4xAkV77FA0TBzpcxz745gFNVdSJSqqYt6adBM45GKDAdWQn7oUxRr-4GE3jJPExiyBZ_tS1SX2_3hrGtyX8KA3QXERw8gl5pIyVChtxDm_n0ZSKTjOMflsli7bKQ" />
+                            </div>
+                            <div class="flex-1 space-y-3">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span
+                                                class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-green-100 text-green-700 tracking-wider">DELIVERED</span>
+                                            <span class="text-xs text-slate-400 font-medium">ID: #BK-87002</span>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-on-background leading-tight">Bathroom Leakage
+                                            Repair</h3>
+                                        <p class="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-sm">person</span>
+                                            Provider: <span class="font-semibold text-on-surface">Amit Singh</span>
+                                        </p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-2xl font-black text-slate-400">₹850</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3 pt-4">
+                                    <button
+                                        class="flex-1 bg-surface-container-highest text-on-surface-variant py-2.5 rounded-xl font-bold text-sm hover:bg-surface-variant transition-colors">View
+                                        Receipt</button>
+                                    <button
+                                        class="px-6 py-2.5 border border-outline-variant text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-colors">Rate
+                                        Professional</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Sidebar Widget Column -->
+                <div class="col-span-12 lg:col-span-4 space-y-8">
+                    <!-- Analytics Quick Look -->
+                    <div
+                        class="bg-primary p-8 rounded-[2rem] text-white relative overflow-hidden shadow-2xl shadow-primary/20">
+                        <div class="relative z-10">
+                            <h4 class="text-sm font-bold uppercase tracking-widest opacity-70 mb-6">Activity Summary
+                            </h4>
+                            <div class="space-y-6">
+                                <div>
+                                    <p class="text-4xl font-black">₹5,550</p>
+                                    <p class="text-xs font-medium opacity-80 mt-1">Total Bookings Value (Oct)</p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-white/10 p-4 rounded-2xl backdrop-blur-sm">
+                                        <p class="text-xl font-bold">12</p>
+                                        <p class="text-[10px] font-bold opacity-70 uppercase">Bookings</p>
+                                    </div>
+                                    <div class="bg-white/10 p-4 rounded-2xl backdrop-blur-sm">
+                                        <p class="text-xl font-bold">98%</p>
+                                        <p class="text-[10px] font-bold opacity-70 uppercase">Rating</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
+                        <div class="absolute -top-10 -left-10 w-40 h-40 bg-blue-400/20 rounded-full blur-3xl"></div>
+                    </div>
+                    <!-- Help Widget -->
+                    <div
+                        class="bg-surface-container-high/50 p-8 rounded-[2rem] border border-outline-variant/10 text-center">
+                        <div
+                            class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                            <span class="material-symbols-outlined text-primary text-3xl">support_agent</span>
+                        </div>
+                        <h4 class="text-xl font-bold text-on-background mb-2">Need Help?</h4>
+                        <p class="text-sm text-slate-500 mb-8 leading-relaxed">Having trouble with a booking or a
+                            provider? Our 24/7 support team is here to assist you.</p>
+                        <button
+                            class="w-full bg-surface-container-lowest border border-primary/20 text-primary py-4 rounded-full font-bold text-sm hover:bg-primary hover:text-white transition-all duration-300">
+                            Contact Support
+                        </button>
+                        <a class="inline-block mt-6 text-xs font-bold text-slate-400 hover:text-primary transition-colors uppercase tracking-widest"
+                            href="#">Read FAQs</a>
+                    </div>
+                    <!-- Location Guide Map Mini -->
+                    <div
+                        class="bg-surface-container-lowest rounded-[2rem] overflow-hidden border border-outline-variant/10">
+                        <div class="h-40 bg-slate-200 relative">
+                            <img class="w-full h-full object-cover"
+                                data-alt="minimalist stylized map showing street grid and a blue location pin marker"
+                                data-location="Bangalore"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDumgvZRnAdjKdSpoi1hW5XIMySFxWlGa75ikgHZd-2xzcEXyd3bL7xtwmn5kmk8q3Bn6LLaGhr2hDW7jCvc1GbRZBvGR1T2pMITl2bV-p8inCVbnpxSoBA1c3xfXryNthNFH67Onyaij8YeBXML_2ct_0CEKlCVFVbPNAREVDJ0zEGhFyBrvtb1DSwtBYiRfRah64QrCoLAS_0lNSb2yNoRt1ykJbuXLr47Y6h-nbVo88MLBW1I_V003ysDMCGaFG87BI55AC_r8W2" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                        </div>
+                        <div class="p-6">
+                            <h5 class="font-bold text-sm mb-1">Service Coverage</h5>
+                            <p class="text-xs text-slate-500">You are viewing bookings within 25km of your current
+                                location: Indiranagar, KA.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Phone, Video, MoreVertical, ArrowLeft, Paperclip, Loader, Check, CheckCheck, Trash2 } from 'lucide-react';
+import { Send, Phone, Video, MoreVertical, ArrowLeft, Paperclip, Loader, Check, CheckCheck, Trash2, FileText, Mic } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import api, { API_URL } from '../utils/api';
@@ -22,8 +22,15 @@ const Chat = () => {
     const [onlineUsers, setOnlineUsers] = useState([]);
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [showOptions, setShowOptions] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const [uploadingFile, setUploadingFile] = useState(false);
     const messagesEndRef = useRef(null);
     const optionsRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+    const timerRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     // Get providerId from URL if navigated from ServiceDetails
     const queryParams = new URLSearchParams(location.search);
@@ -139,6 +146,12 @@ const Chat = () => {
             if (activeRoomRef.current?.roomId === roomId) setPartnerTyping(false);
         });
 
+        newSocket.on('messagesRead', (data) => {
+            if (activeRoomRef.current?.roomId === data.roomId) {
+                setMessages((prev) => prev.map(m => m.receiverId === data.userId ? { ...m, read: true } : m));
+            }
+        });
+
         return () => newSocket.disconnect();
     }, [user?._id]);
 
@@ -231,17 +244,21 @@ const Chat = () => {
                 
                 // Mark messages as read when opening a room
                 await api.put(`/api/messages/${activeRoom.roomId}/read`, {}, config);
+                if (socket) {
+                    socket.emit('readMessages', { roomId: activeRoom.roomId, userId: user._id });
+                }
             } catch (error) {
                 console.error("Error fetching messages", error);
             }
         };
         fetchMessagesForRoom();
-    }, [activeRoom?.roomId, user]);
+    }, [activeRoom?.roomId, user, socket]);
 
-    const handleSendMessage = () => {
-        if (!message.trim() || !activeRoom || !user || !socket) return;
+    const handleSendMessage = (text = '', type = 'text', fileUrl = '') => {
+        if (!text.trim() && !fileUrl && type === 'text') return;
+        if (!activeRoom || !user || !socket) return;
 
-        const messageText = message;
+        const messageText = text || message;
         const tempId = Date.now().toString();
         const newMsgData = {
             _id: tempId,
@@ -249,6 +266,8 @@ const Chat = () => {
             receiverId: activeRoom.otherUser._id,
             roomId: activeRoom.roomId,
             message: messageText,
+            messageType: type,
+            fileUrl: fileUrl,
             createdAt: new Date().toISOString(),
             optimistic: true,
             tempId: tempId
@@ -262,13 +281,98 @@ const Chat = () => {
             receiverId: activeRoom.otherUser._id,
             roomId: activeRoom.roomId,
             message: messageText,
+            messageType: type,
+            fileUrl: fileUrl,
             tempId: tempId
         });
         
         socket.emit('stopTyping', activeRoom.roomId);
 
-        setMessage('');
+        if (type === 'text') setMessage('');
         setIsTyping(false);
+    };
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploadingFile(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const config = { 
+                headers: { 
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${user.token}` 
+                } 
+            };
+            const { data } = await api.post('/api/upload', formData, config);
+            
+            let type = 'file';
+            if (file.type.startsWith('image/')) type = 'image';
+            
+            handleSendMessage('', type, data.url);
+        } catch (error) {
+            toast.error('File upload failed');
+        } finally {
+            setUploadingFile(false);
+        }
+    };
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderRef.current = new MediaRecorder(stream);
+            audioChunksRef.current = [];
+
+            mediaRecorderRef.current.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunksRef.current.push(e.data);
+            };
+
+            mediaRecorderRef.current.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+                const audioFile = new File([audioBlob], 'voice_message.wav', { type: 'audio/wav' });
+                
+                const formData = new FormData();
+                formData.append('file', audioFile);
+
+                setUploadingFile(true);
+                try {
+                    const config = { 
+                        headers: { 
+                            'Content-Type': 'multipart/form-data',
+                            Authorization: `Bearer ${user.token}` 
+                        } 
+                    };
+                    const { data } = await api.post('/api/upload', formData, config);
+                    handleSendMessage('', 'voice', data.url);
+                } catch (err) {
+                    toast.error('Failed to send voice message');
+                } finally {
+                    setUploadingFile(false);
+                }
+                
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorderRef.current.start();
+            setIsRecording(true);
+            setRecordingTime(0);
+            timerRef.current = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+        } catch (err) {
+            toast.error('Microphone access denied');
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            clearInterval(timerRef.current);
+        }
     };
 
     const handleTyping = (e) => {
@@ -491,7 +595,32 @@ const Chat = () => {
                                                         color: '#1e293b',
                                                         alignSelf: isMe ? 'flex-end' : 'flex-start'
                                                     }}>
-                                                        {msg.message}
+                                                        {msg.messageType === 'text' && msg.message}
+                                                        
+                                                        {msg.messageType === 'image' && (
+                                                            <div style={{ borderRadius: 8, overflow: 'hidden' }}>
+                                                                <img 
+                                                                    src={msg.fileUrl} 
+                                                                    alt="Shared" 
+                                                                    style={{ maxWidth: '100%', maxHeight: 300, cursor: 'pointer' }} 
+                                                                    onClick={() => window.open(msg.fileUrl, '_blank')}
+                                                                />
+                                                            </div>
+                                                        )}
+
+                                                        {msg.messageType === 'file' && (
+                                                            <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
+                                                                <FileText size={18} />
+                                                                <span>View Document</span>
+                                                            </a>
+                                                        )}
+
+                                                        {msg.messageType === 'voice' && (
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 200 }}>
+                                                                <audio controls src={msg.fileUrl} style={{ height: 32, width: '100%' }} />
+                                                            </div>
+                                                        )}
+
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, justifyContent: 'flex-end' }}>
                                                             <span style={{ fontSize: '0.65rem', color: '#667781' }}>
                                                                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -522,24 +651,80 @@ const Chat = () => {
 
                             {/* Input Area */}
                             <div style={styles.inputArea}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', maxWidth: '900px', margin: '0 auto' }}>
-                                    <button style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><Paperclip size={22} /></button>
-                                    <div style={{ flex: 1, position: 'relative' }}>
-                                        <input
-                                            type="text"
-                                            placeholder="Type message here..."
-                                            style={styles.messageInput}
-                                            value={message}
-                                            onChange={handleTyping}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={handleSendMessage}
-                                        disabled={!message.trim()}
-                                        style={{ backgroundColor: message.trim() ? 'var(--primary)' : '#e2e8f0', border: 'none', width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: message.trim() ? 'pointer' : 'default', transition: 'all 0.3s', color: 'white' }}>
-                                        <Send size={20} />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', maxWidth: '900px', margin: '0 auto' }}>
+                                    <input 
+                                        type="file" 
+                                        ref={fileInputRef} 
+                                        style={{ display: 'none' }} 
+                                        onChange={handleFileUpload} 
+                                        accept="image/*,.pdf,.doc,.docx" 
+                                    />
+                                    
+                                    <button 
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={uploadingFile}
+                                        style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                    >
+                                        <Paperclip size={22} className={uploadingFile ? 'spin' : ''} />
                                     </button>
+
+                                    {!isRecording ? (
+                                        <div style={{ flex: 1, position: 'relative' }}>
+                                            <input
+                                                type="text"
+                                                placeholder={uploadingFile ? "Uploading file..." : "Type message here..."}
+                                                style={styles.messageInput}
+                                                value={message}
+                                                onChange={handleTyping}
+                                                disabled={uploadingFile}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 24, padding: '10px 18px', color: '#ef4444', fontWeight: 700 }}>
+                                            <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#ef4444', animation: 'pulse 1s infinite' }}></div>
+                                            <style>{`
+                                                @keyframes pulse {
+                                                    0% { opacity: 1; }
+                                                    50% { opacity: 0.3; }
+                                                    100% { opacity: 1; }
+                                                }
+                                            `}</style>
+                                            Recording: {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+                                            <span style={{ marginLeft: 'auto', fontSize: '0.8rem', color: '#64748b' }}>Release to send</span>
+                                        </div>
+                                    )}
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        {!message.trim() && !isRecording && (
+                                            <button 
+                                                onMouseDown={startRecording}
+                                                onMouseUp={stopRecording}
+                                                onMouseLeave={isRecording ? stopRecording : undefined}
+                                                style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}
+                                                title="Hold to record"
+                                            >
+                                                <Mic size={22} />
+                                            </button>
+                                        )}
+
+                                        {isRecording && (
+                                            <button 
+                                                onClick={stopRecording}
+                                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                            >
+                                                <X size={22} />
+                                            </button>
+                                        )}
+
+                                        {(message.trim() || isRecording) && (
+                                            <button
+                                                onClick={isRecording ? stopRecording : handleSendMessage}
+                                                style={{ backgroundColor: 'var(--primary)', border: 'none', width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', color: 'white' }}>
+                                                {isRecording ? <div style={{ width: 12, height: 12, backgroundColor: 'white' }}></div> : <Send size={20} />}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </>

@@ -1,13 +1,14 @@
 import Booking from '../models/Booking.js';
 import Service from '../models/Service.js';
 import Message from '../models/Message.js';
+import Notification from '../models/Notification.js';
 
 // @desc    Create new booking
 // @route   POST /api/bookings
 // @access  Private
 export const createBooking = async (req, res) => {
     try {
-        const { serviceId, date, timeSlot, address, paymentMethod } = req.body;
+        const { serviceId, date, timeSlot, address, paymentMethod, totalPrice } = req.body;
 
         const service = await Service.findById(serviceId);
 
@@ -18,11 +19,11 @@ export const createBooking = async (req, res) => {
         const booking = new Booking({
             user: req.user._id,
             service: serviceId,
-            provider: service.provider, // Provider ID from service
+            provider: service.provider,
             date,
             timeSlot,
             address,
-            totalPrice: service.price, // Assuming no extra fees for now
+            totalPrice: totalPrice || service.price,
             paymentMethod,
         });
 
@@ -36,6 +37,21 @@ export const createBooking = async (req, res) => {
             message: `BOOKING: New booking request for ${service.title} on ${date} at ${timeSlot}.`
         });
 
+        // Create notification for provider
+        const notification = await Notification.create({
+            recipient: service.provider,
+            sender: req.user._id,
+            type: 'booking_request',
+            title: 'New Booking Request',
+            message: `You have a new booking request for ${service.title} on ${date} at ${timeSlot}.`,
+            link: '/dashboard'
+        });
+
+        // Emit via socket
+        if (req.io) {
+            req.io.to(service.provider.toString()).emit('newNotification', notification);
+        }
+
         res.status(201).json(createdBooking);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -48,8 +64,9 @@ export const createBooking = async (req, res) => {
 export const getMyBookings = async (req, res) => {
     try {
         const bookings = await Booking.find({ user: req.user._id })
-            .populate('service', 'title category price img')
-            .populate('provider', 'name avatar');
+            .populate('service', 'title category price images')
+            .populate('provider', 'name avatar')
+            .sort({ createdAt: -1 });
         res.json(bookings);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -62,9 +79,34 @@ export const getMyBookings = async (req, res) => {
 export const getProviderBookings = async (req, res) => {
     try {
         const bookings = await Booking.find({ provider: req.user._id })
-            .populate('service', 'title category')
-            .populate('user', 'name avatar phone');
+            .populate('service', 'title category images')
+            .populate('user', 'name avatar phone')
+            .sort({ createdAt: -1 });
         res.json(bookings);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get booking by ID
+// @route   GET /api/bookings/:id
+// @access  Private
+export const getBookingById = async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id)
+            .populate('user', 'name avatar')
+            .populate('provider', 'name avatar')
+            .populate('service', 'title images');
+
+        if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+        // Auth check
+        if (booking.user._id.toString() !== req.user._id.toString() && 
+            booking.provider._id.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        res.json(booking);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -99,16 +141,24 @@ export const updateBookingStatus = async (req, res) => {
             }
 
             if (authorized) {
+                const updateData = { status: status };
+                if (req.body.paymentMode) {
+                    updateData.paymentMode = req.body.paymentMode;
+                }
+
                 // EXTREME BYPASS: Use the raw MongoDB collection to update status without ANY Mongoose schema involvement
                 await Booking.collection.updateOne(
                     { _id: booking._id },
-                    { $set: { status: status } }
+                    { $set: updateData }
                 );
 
                 // Fetch the updated document via Mongoose for the response (no validation on find)
-                const updatedBooking = await Booking.findById(req.params.id)
-                    .populate('service', 'title category')
-                    .populate('user', 'name avatar phone');
+                const updatedBooking = await Booking.findById(booking._id)
+                    .populate('user', 'name email phone')
+                    .populate('provider', 'name email phone')
+                    .populate('service', 'title price');
+
+                console.log(`STATUS UPDATED SUCCESSFULLY TO: ${updatedBooking.status}`);
 
                 if (status === 'revision_requested' && req.body.revisionNote) {
                     await Booking.collection.updateOne(
@@ -125,6 +175,23 @@ export const updateBookingStatus = async (req, res) => {
                     message: `STATUS UPDATE: Booking status changed to ${status.replace('_', ' ').toUpperCase()}.${req.body.revisionNote ? ` Note: ${req.body.revisionNote}` : ''}`
                 });
 
+                // Create notification for the other party
+                const recipientId = isProvider ? updatedBooking.user : updatedBooking.provider;
+                const notificationType = status === 'confirmed' ? 'booking_accepted' : (status === 'cancelled' ? 'booking_rejected' : 'service_update');
+                
+                const notification = await Notification.create({
+                    recipient: recipientId,
+                    sender: req.user._id,
+                    type: notificationType,
+                    title: `Booking ${status.replace('_', ' ').toUpperCase()}`,
+                    message: `Your booking for ${updatedBooking.service?.title || 'service'} has been ${status.replace('_', ' ')}.${req.body.revisionNote ? ` Note: ${req.body.revisionNote}` : ''}`,
+                    link: '/dashboard'
+                });
+
+                // Emit via socket
+                if (req.io) {
+                    req.io.to(recipientId.toString()).emit('newNotification', notification);
+                }
                 res.json(updatedBooking);
             } else {
                 res.status(401).json({ message: 'Not authorized to change to this status' });
@@ -136,13 +203,14 @@ export const updateBookingStatus = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
 // @desc    Get all bookings (Admin only)
 // @route   GET /api/bookings/all
 // @access  Private/Admin
 export const getAllBookings = async (req, res) => {
     try {
         const bookings = await Booking.find({})
-            .populate('service', 'title category price')
+            .populate('service', 'title category price images')
             .populate('user', 'name email phone avatar')
             .populate('provider', 'name email phone avatar')
             .sort({ createdAt: -1 });
@@ -151,6 +219,7 @@ export const getAllBookings = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
 // @desc    Get provider dashboard stats
 // @route   GET /api/bookings/provider/stats
 // @access  Private/Provider
