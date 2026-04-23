@@ -211,6 +211,7 @@ const DashboardDesktop = ({
     const [bookingForPayment, setBookingForPayment] = useState(null);
     const [activeService, setActiveService] = useState(null);
     const [bookingFilter, setBookingFilter] = useState('all');
+    const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
 
     const handleDeliverClick = (bookingId) => {
         setBookingForPayment(bookingId);
@@ -620,7 +621,7 @@ const DashboardDesktop = ({
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <button style={{ flex: 1, background: '#003d9b', color: 'white', padding: '10px 0', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', border: 'none', cursor: 'pointer' }}>View Details & Tracking</button>
+                                                                    <button onClick={() => setSelectedBookingDetails(b)} style={{ flex: 1, background: '#003d9b', color: 'white', padding: '10px 0', borderRadius: '12px', fontWeight: '700', fontSize: '0.875rem', border: 'none', cursor: 'pointer' }}>View Details & Tracking</button>
                                                                     <button 
                                                                         onClick={() => { setDashActiveRoom({ roomId: b._id, otherUser: role === 'provider' ? b.user : b.provider, title: b.service?.title }); setActiveTab('chat'); }} 
                                                                         style={{ flex: 1, padding: '12px 24px', border: '1px solid #003d9b', color: '#003d9b', borderRadius: '14px', fontWeight: '800', fontSize: '0.875rem', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}
@@ -1391,7 +1392,20 @@ const DashboardDesktop = ({
                                                         </div>
                                                     </div>
 
-                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', padding: '20px', backgroundColor: '#fafafa', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '20px', padding: '20px', backgroundColor: '#fafafa', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                                                            <div style={{ padding: '8px', backgroundColor: '#fff', borderRadius: '10px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', color: '#059669' }}>
+                                                                <Phone size={18} />
+                                                            </div>
+                                                            <div>
+                                                                <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Customer Contact</p>
+                                                                <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#434654', margin: 0 }}>{req.customerName || req.user?.name}</p>
+                                                                <p style={{ fontSize: '0.85rem', fontWeight: 500, color: '#64748b', margin: 0 }}>
+                                                                    {['completed', 'cancelled'].includes(req.status) ? 'Hidden (Order Closed)' : (req.customerPhone || req.user?.phone || 'Phone not provided')}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        
                                                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                                                             <div style={{ padding: '8px', backgroundColor: '#fff', borderRadius: '10px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', color: '#003d9b' }}>
                                                                 <MapPin size={18} />
@@ -1401,13 +1415,14 @@ const DashboardDesktop = ({
                                                                 <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#434654', margin: 0 }}>{req.address?.street || 'Not specified'}, {req.address?.city} {req.address?.zipCode}</p>
                                                             </div>
                                                         </div>
+
                                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
                                                             {req.address?.lat && req.address?.lng && (
                                                                 <button
                                                                     onClick={() => window.open(`https://www.google.com/maps?q=${req.address.lat},${req.address.lng}`, '_blank')}
                                                                     style={{ backgroundColor: '#fff', color: '#003d9b', border: '1px solid #e2e8f0', padding: '10px 20px', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
                                                                 >
-                                                                    <MapPin size={16} /> Open in Maps
+                                                                    <MapPin size={16} /> Maps
                                                                 </button>
                                                             )}
                                                             {req.service?.businessType === 'shop' && (
@@ -1510,6 +1525,12 @@ const DashboardDesktop = ({
                     )}
                 </div>
             )}
+
+            <OrderDetailsModal 
+                isOpen={!!selectedBookingDetails} 
+                onClose={() => setSelectedBookingDetails(null)} 
+                booking={selectedBookingDetails} 
+            />
 
             <PaymentModal
                 isOpen={!!bookingForPayment}
@@ -2464,6 +2485,79 @@ function RevisionModal({ isOpen, onClose, onSubmit, note, setNote }) {
                         disabled={!note.trim()}
                         style={{ flex: 2, padding: '16px 0', borderRadius: '16px', background: note.trim() ? '#003d9b' : '#94a3b8', color: 'white', border: 'none', fontWeight: '800', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: note.trim() ? '0 10px 15px -3px rgba(0, 61, 155, 0.3)' : 'none' }}
                     >Submit Request</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ─── order details modal ─── */
+function OrderDetailsModal({ isOpen, onClose, booking }) {
+    if (!isOpen || !booking) return null;
+
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '24px' }}>
+            <div className="animate-in fade-in zoom-in duration-300 no-scrollbar" style={{ backgroundColor: 'white', width: '100%', maxWidth: '600px', borderRadius: '28px', padding: '40px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', maxHeight: '90vh', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                    <h3 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>Order Details</h3>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background-color 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                        <X size={24} />
+                    </button>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    <div style={{ background: '#f8fafc', borderRadius: '20px', padding: '24px', border: '1px solid #f1f5f9' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                            <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>Total Price</span>
+                            <span style={{ fontSize: '20px', color: '#003d9b', fontWeight: 900 }}>₹{booking.price || booking.totalPrice || '0'}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></div>
+                                <span style={{ fontSize: '13px', color: '#22c55e', fontWeight: 800 }}>{booking.paymentMethod || 'Wallet'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
+                            <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>Service Type</span>
+                            <span style={{ fontSize: '14px', color: '#1e293b', fontWeight: 800 }}>{booking.service?.businessType ? booking.service.businessType.toString().toUpperCase() : 'SERVICE'}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
+                            <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>Date</span>
+                            <span style={{ fontSize: '14px', color: '#1e293b', fontWeight: 800 }}>{booking.createdAt ? new Date(booking.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' }) : 'N/A'}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
+                            <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>Customer Name</span>
+                            <span style={{ fontSize: '14px', color: '#1e293b', fontWeight: 800 }}>{booking.customerName || booking.user?.name || 'Unknown'}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
+                            <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>Customer Phone</span>
+                            <span style={{ fontSize: '14px', color: '#1e293b', fontWeight: 800 }}>{['completed', 'cancelled'].includes(booking.status) ? 'Hidden' : (booking.customerPhone || booking.user?.phone || 'Not provided')}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
+                            <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>Location</span>
+                            <span style={{ fontSize: '14px', color: '#1e293b', fontWeight: 800, textAlign: 'right', maxWidth: '60%' }}>{typeof booking.address === 'object' ? (`${booking.address?.street || ''}, ${booking.address?.city || ''}`.trim() || 'Standard') : (booking.address || 'Standard Location')}</span>
+                        </div>
+                        
+                        {(booking.address?.googleMapLink || (booking.address?.lat && booking.address?.lng)) && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px' }}>
+                                <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>Interactive Map</span>
+                                <button 
+                                    onClick={() => {
+                                        const link = booking.address.googleMapLink || `https://www.google.com/maps?q=${booking.address.lat},${booking.address.lng}`;
+                                        window.open(link, '_blank');
+                                    }}
+                                    style={{ background: '#f0f9ff', color: '#0ea5e9', border: 'none', padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+                                    onMouseOver={(e) => { e.currentTarget.style.background = '#e0f2fe'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.background = '#f0f9ff'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                                >
+                                    Get Directions 📍
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

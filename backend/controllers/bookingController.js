@@ -8,7 +8,7 @@ import Notification from '../models/Notification.js';
 // @access  Private
 export const createBooking = async (req, res) => {
     try {
-        const { serviceId, date, timeSlot, address, paymentMethod, totalPrice } = req.body;
+        const { serviceId, date, timeSlot, address, paymentMethod, totalPrice, customerName, customerPhone } = req.body;
 
         const service = await Service.findById(serviceId);
 
@@ -23,6 +23,8 @@ export const createBooking = async (req, res) => {
             date,
             timeSlot,
             address,
+            customerName,
+            customerPhone,
             totalPrice: totalPrice || service.price,
             paymentMethod,
         });

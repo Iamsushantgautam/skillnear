@@ -34,6 +34,12 @@ const bookingSchema = new mongoose.Schema(
             lat: Number,
             lng: Number,
         },
+        customerName: {
+            type: String,
+        },
+        customerPhone: {
+            type: String,
+        },
         totalPrice: {
             type: Number,
             required: true,

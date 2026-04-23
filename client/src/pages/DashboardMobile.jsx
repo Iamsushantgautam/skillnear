@@ -900,12 +900,18 @@ function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus,
                                         <Badge status={req.status} />
                                     </div>
                                     <h3 style={{ fontSize: 18, fontWeight: 800, color: '#191b23', marginBottom: 4, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.service?.title}</h3>
-                                    <p style={{ fontSize: 14, color: '#434654', margin: 0, fontWeight: 500 }}>Customer: {req.user?.name || req.user?.username || 'User'}</p>
+                                    <p style={{ fontSize: 14, color: '#434654', margin: 0, fontWeight: 600 }}>{req.customerName || req.user?.name || req.user?.username || 'User'}</p>
                                 </div>
                             </div>
                             
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
+                                        <Phone size={16} />
+                                        <span style={{ fontSize: 12, fontWeight: 500 }}>
+                                            {['completed', 'cancelled'].includes(req.status) ? 'Hidden' : (req.customerPhone || req.user?.phone || 'Phone not provided')}
+                                        </span>
+                                    </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
                                         <CalendarIcon size={16} />
                                         <span style={{ fontSize: 12, fontWeight: 500 }}>{new Date(req.createdAt).toLocaleDateString()} | {req.slot || 'TBA'}</span>
@@ -1186,7 +1192,7 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                 <div style={{ backgroundColor: 'white', borderRadius: 28, padding: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.04)', marginBottom: 24, border: '1px solid #f1f5f9' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            <span style={{ fontSize: 11, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Order ID: #{booking._id?.slice(-8).toUpperCase()}</span>
+                            <span style={{ fontSize: 11, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Order ID: #{booking._id ? booking._id.slice(-8).toUpperCase() : 'N/A'}</span>
                             <span style={{ fontSize: 13, fontWeight: 800, color: PC }}>{role === 'provider' ? 'For' : 'With'}: {otherUser?.name || otherUser?.username || 'User'}</span>
                         </div>
                         <div style={{ 
@@ -1194,7 +1200,7 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                             color: booking.status === 'pending' ? '#f97316' : ['confirmed', 'in_progress', 'delivered', 'completed'].includes(booking.status) ? '#22c55e' : '#ef4444', 
                             padding: '4px 12px', borderRadius: 8, fontSize: 10, fontWeight: 900, textTransform: 'uppercase'
                         }}>
-                             {booking.status.replace('_', ' ')}
+                             {booking.status?.replace('_', ' ') || 'UNKNOWN'}
                         </div>
                     </div>
 
@@ -1223,7 +1229,9 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                         {detailRow('Plan Selected', booking.selectedPlan || 'Default')}
                         {detailRow('Date', booking.createdAt ? new Date(booking.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' }) : 'N/A')}
-                        {detailRow('Service Type', booking.service?.businessType?.toString().toUpperCase() || 'SERVICE')}
+                        {detailRow('Service Type', booking.service?.businessType ? booking.service.businessType.toString().toUpperCase() : 'SERVICE')}
+                        {detailRow('Customer Name', booking.customerName || booking.user?.name || 'Unknown')}
+                        {detailRow('Customer Phone', ['completed', 'cancelled'].includes(booking.status) ? 'Hidden' : (booking.customerPhone || booking.user?.phone || 'Not provided'))}
                         {detailRow('Location', typeof booking.address === 'object' ? (`${booking.address?.street || ''}, ${booking.address?.city || ''}`.trim() || 'Standard') : (booking.address || 'Standard Location'))}
                         
                         {booking.address?.googleMapLink && detailRow('Maps URL', <a href={booking.address.googleMapLink} target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', textDecoration: 'none', fontWeight: 800 }}>Visit Link 🔗</a>)}

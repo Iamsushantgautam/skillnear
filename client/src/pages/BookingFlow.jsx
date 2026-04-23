@@ -19,6 +19,8 @@ const BookingFlow = () => {
     const [time, setTime] = useState('');
     const [street, setStreet] = useState('');
     const [city, setCity] = useState('');
+    const [customerName, setCustomerName] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
     const [payment, setPayment] = useState('cash_on_delivery');
     const [submitting, setSubmitting] = useState(false);
     const [bookingDone, setBookingDone] = useState(false);
@@ -54,9 +56,14 @@ const BookingFlow = () => {
         fetchService();
     }, [id]);
 
-    // Redirect to login if not authenticated
+    // Redirect to login if not authenticated, else set initial user details
     useEffect(() => {
-        if (!user) navigate('/login');
+        if (!user) {
+            navigate('/login');
+        } else {
+            if (!customerName) setCustomerName(user.name || '');
+            if (!customerPhone) setCustomerPhone(user.phone || '');
+        }
     }, [user]);
 
     const tax = service ? +(service.price * 0.05).toFixed(2) : 0;
@@ -64,7 +71,11 @@ const BookingFlow = () => {
 
     const handleNext = () => {
         if (step === 1 && (!date || !time)) { toast.error('Please select a date and time'); return; }
-        if (step === 2 && !street) { toast.error('Please enter your address'); return; }
+        if (step === 2) {
+            if (!customerName.trim()) { toast.error('Please enter your name'); return; }
+            if (!customerPhone.trim()) { toast.error('Please enter your phone number'); return; }
+            if (!street.trim()) { toast.error('Please enter your address'); return; }
+        }
         if (step < 3) { setStep(step + 1); return; }
         handleConfirm();
     };
@@ -78,6 +89,8 @@ const BookingFlow = () => {
                 date,
                 timeSlot: time,
                 address: { street, city, googleMapLink, lat, lng },
+                customerName,
+                customerPhone,
                 paymentMethod: payment,
             }, config);
             setBookingId(data._id);
@@ -103,7 +116,7 @@ const BookingFlow = () => {
                         Your booking for <strong>{service?.title}</strong> on <strong>{new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</strong> at <strong>{time}</strong> has been placed.
                     </p>
                     <p style={{ color: 'var(--text-muted)', marginBottom: 28 }}>
-                        Booking ID: <code style={{ backgroundColor: '#f1f5f9', padding: '2px 8px', borderRadius: 6 }}>#{bookingId?.slice(-8).toUpperCase()}</code>
+                        Booking ID: <code style={{ backgroundColor: '#f1f5f9', padding: '2px 8px', borderRadius: 6 }}>#{bookingId ? bookingId.slice(-8).toUpperCase() : 'N/A'}</code>
                     </p>
                     <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button 
@@ -293,7 +306,19 @@ const BookingFlow = () => {
                     {/* Step 2 */}
                     {step === 2 && (
                         <div className="animate-fade-in">
-                            <h3 style={{ marginBottom: 24, fontWeight: 800, fontSize: '1.2rem' }}>Service Location</h3>
+                            <h3 style={{ marginBottom: 24, fontWeight: 800, fontSize: '1.2rem' }}>Contact & Location Details</h3>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div style={style.formGroup}>
+                                    <label style={style.label}>Full Name</label>
+                                    <input type="text" className="input-field" placeholder="e.g. John Doe" style={{ padding: '14px' }} value={customerName} onChange={e => setCustomerName(e.target.value)} />
+                                </div>
+                                <div style={style.formGroup}>
+                                    <label style={style.label}>Phone Number</label>
+                                    <input type="tel" className="input-field" placeholder="e.g. +91 9876543210" style={{ padding: '14px' }} value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+                                </div>
+                            </div>
+
                             <div style={style.formGroup}>
                                 <label style={style.label}>Street Address</label>
                                 <textarea className="input-field" rows="3" placeholder="e.g. 42, MG Road, Near Metro Station" style={{ padding: '14px' }} value={street} onChange={e => setStreet(e.target.value)} />
