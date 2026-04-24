@@ -68,7 +68,7 @@ export const getMyBookings = async (req, res) => {
     try {
         const bookings = await Booking.find({ user: req.user._id })
             .populate('service', 'title category price images')
-            .populate('provider', 'name avatar')
+            .populate('provider', 'name avatar phone')
             .sort({ createdAt: -1 });
         res.json(bookings);
     } catch (error) {
@@ -147,6 +147,10 @@ export const updateBookingStatus = async (req, res) => {
                 const updateData = { status: status };
                 if (req.body.paymentMode) {
                     updateData.paymentMode = req.body.paymentMode;
+                    // If payment is cash, mark as paid automatically
+                    if (req.body.paymentMode === 'Cash') {
+                        updateData.paymentStatus = 'paid';
+                    }
                 }
 
                 // EXTREME BYPASS: Use the raw MongoDB collection to update status without ANY Mongoose schema involvement
@@ -239,12 +243,17 @@ export const getProviderStats = async (req, res) => {
         const totalOrders = bookings.length;
         const pendingOrders = bookings.filter(b => b.status === 'pending').length;
 
-        // 3. Earnings (Sum of completed and paid bookings)
+        // 3. withdrawableEarnings (Sum of completed and paid bookings that were NOT cash)
         const totalEarnings = bookings
+            .filter(b => b.status === 'completed' && b.paymentStatus === 'paid' && b.paymentMode !== 'Cash' && b.paymentMethod !== 'cash_on_delivery')
+            .reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+
+        // 3a. Lifetime Earnings (Total money earned, including Cash)
+        const lifetimeEarnings = bookings
             .filter(b => b.status === 'completed' && b.paymentStatus === 'paid')
             .reduce((acc, b) => acc + (b.totalPrice || 0), 0);
 
-        // 3a. Gross Earnings (Sum of all non-cancelled paid/pending bookings)
+        // 3b. Gross Earnings (Sum of all non-cancelled paid/pending bookings)
         const grossEarnings = bookings
             .filter(b => b.status !== 'cancelled' && (b.paymentStatus === 'paid' || b.paymentStatus === 'pending'))
             .reduce((acc, b) => acc + (b.totalPrice || 0), 0);
@@ -280,6 +289,7 @@ export const getProviderStats = async (req, res) => {
             totalGigs,
             totalOrders,
             totalEarnings,
+            lifetimeEarnings,
             grossEarnings,
             withdrawnAmount,
             pendingWithdrawnAmount,

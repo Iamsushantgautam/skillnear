@@ -24,13 +24,13 @@ export default function MobileOverviewScreen({ user, role, stats, myGigs, myBook
                 <div className="overview-stats-card">
                     <div className="overview-stats-bg-circle"></div>
                     <p className="overview-stats-label">
-                        {role === 'provider' ? 'Total Earnings' : 'Total Invested'}
+                        {role === 'provider' ? 'Lifetime Earnings' : 'Total Invested'}
                     </p>
                     <div className="overview-stats-amount-row">
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
                             <span className="overview-stats-currency">₹</span>
                             <h2 className="overview-stats-value">
-                                {role === 'provider' ? (stats?.totalEarnings?.toLocaleString() || 0) : (myBookings?.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.totalPrice || b.price || 0), 0).toLocaleString() || '0')}
+                                {role === 'provider' ? (stats?.lifetimeEarnings?.toLocaleString() || 0) : (myBookings?.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.totalPrice || b.price || 0), 0).toLocaleString() || '0')}
                             </h2>
                         </div>
                         {role === 'provider' && (

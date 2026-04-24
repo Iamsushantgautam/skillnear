@@ -64,7 +64,7 @@ export default function MobilePaymentsScreen({ stats, bookingRequests, setActive
                                     <div className="transaction-icon-wrapper transaction-icon-credit"><CheckCircle size={20} /></div>
                                     <div className="transaction-info">
                                         <h4 className="transaction-name">{tx.service?.title || 'Service Payment'}</h4>
-                                        <p className="transaction-date">{new Date(tx.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} · {tx.user?.name || 'Customer'}</p>
+                                        <p className="transaction-date">{new Date(tx.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} · {tx.paymentMode || 'Online'} · {tx.user?.name || 'Customer'}</p>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
                                         <p className="transaction-amount transaction-amount-credit">+₹{tx.totalPrice?.toLocaleString()}</p>

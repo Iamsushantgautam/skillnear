@@ -42,10 +42,10 @@ const DesktopPaymentTab = ({
                     </div>
                     <div className="balance-content">
                         <p className="balance-label">
-                            {role === 'provider' ? 'Total Earnings' : 'Total Invested'}
+                            {role === 'provider' ? 'Lifetime Earnings' : 'Total Invested'}
                         </p>
                         <h2 className="balance-amount">
-                            ₹{role === 'provider' ? (stats?.totalEarnings?.toLocaleString() || '0') : totalInvested.toLocaleString()}
+                            ₹{role === 'provider' ? (stats?.lifetimeEarnings?.toLocaleString() || '0') : totalInvested.toLocaleString()}
                         </h2>
                     </div>
                     
@@ -53,7 +53,10 @@ const DesktopPaymentTab = ({
                         <div className="withdrawal-section">
                             <div className="withdrawal-info">
                                 <span>Available for Withdrawal</span>
-                                <span>₹{availableForWithdrawal.toLocaleString()}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span>₹{availableForWithdrawal.toLocaleString()}</span>
+                                    <span style={{ fontSize: '9px', opacity: 0.6, marginTop: '2px' }}>Online Payments Only</span>
+                                </div>
                             </div>
                             <button 
                                 onClick={() => {
@@ -121,6 +124,7 @@ const DesktopPaymentTab = ({
                             <thead>
                                 <tr>
                                     <th>Details</th>
+                                    <th>Method</th>
                                     <th>Amount</th>
                                     <th>Status</th>
                                 </tr>
@@ -128,7 +132,7 @@ const DesktopPaymentTab = ({
                             <tbody>
                                 {transactions.length === 0 ? (
                                     <tr>
-                                        <td colSpan="3" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No transactions found</td>
+                                        <td colSpan="4" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No transactions found</td>
                                     </tr>
                                 ) : (
                                     transactions.slice(0, 10).map((tx, idx) => (
@@ -138,13 +142,18 @@ const DesktopPaymentTab = ({
                                                 <div className="tx-date">{tx?.createdAt ? new Date(tx.createdAt).toLocaleDateString() : 'N/A'}</div>
                                             </td>
                                             <td>
+                                                <div className="tx-method" style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>
+                                                    {tx.paymentMode || 'Online'}
+                                                </div>
+                                            </td>
+                                            <td>
                                                 <div className={`tx-amount ${role === 'provider' ? 'positive' : 'negative'}`}>
                                                     {role === 'provider' ? '+' : '-'}₹{tx.totalPrice || tx.price}
                                                 </div>
                                             </td>
                                             <td>
                                                 <span className={`status-badge-mini ${tx.paymentStatus === 'paid' ? 'paid' : 'pending'}`}>
-                                                    {tx.paymentStatus || 'Pending'}
+                                                    {(tx.paymentStatus || 'Pending').toUpperCase()}
                                                 </span>
                                             </td>
                                         </tr>

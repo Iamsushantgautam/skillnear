@@ -16,6 +16,7 @@ const DesktopMyBookingsTab = ({
     bookingFilter,
     setBookingFilter,
     updateBookingStatus,
+    handleCompleteClick,
     setBookingForRevision,
     setRevisionNote,
     setSelectedBookingDetails,
@@ -133,6 +134,12 @@ const DesktopMyBookingsTab = ({
                                                     <p className="provider-info">
                                                         <User size={14} /> Provider: <span style={{ fontWeight: '600', color: '#434654' }}>{b.provider?.name}</span>
                                                     </p>
+                                                    {!isCompleted && !isCancelled && b.provider?.phone && (
+                                                        <p className="provider-phone" style={{ fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                                                            <div style={{ backgroundColor: '#f0fdf4', color: '#15803d', padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800' }}>CALL</div>
+                                                            {b.provider.phone}
+                                                        </p>
+                                                    )}
                                                 </div>
                                                 <div style={{ textAlign: 'right' }}>
                                                     <p className={`booking-price ${isCompleted ? 'price-completed' : ''}`}>₹{b.totalPrice}</p>
@@ -159,7 +166,7 @@ const DesktopMyBookingsTab = ({
                                                 {b.status === 'delivered' ? (
                                                     <>
                                                         <button 
-                                                            onClick={() => updateBookingStatus(b._id, 'completed')} 
+                                                            onClick={() => handleCompleteClick(b._id)} 
                                                             className="action-btn-primary"
                                                         >Accept & Mark Complete</button>
                                                         <button 

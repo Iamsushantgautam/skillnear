@@ -188,6 +188,7 @@ const DashboardDesktop = ({
     resetGigForm
 }) => {
     const [bookingForPayment, setBookingForPayment] = useState(null);
+    const [bookingForCompletion, setBookingForCompletion] = useState(null);
     const [activeService, setActiveService] = useState(null);
     const [bookingFilter, setBookingFilter] = useState('all');
     const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
@@ -320,6 +321,15 @@ const DashboardDesktop = ({
         setBookingForPayment(null);
     };
 
+    const handleCompleteClick = (bookingId) => {
+        setBookingForCompletion(bookingId);
+    };
+
+    const confirmCompletion = (paymentMode) => {
+        updateBookingStatus(bookingForCompletion, 'completed', '', paymentMode);
+        setBookingForCompletion(null);
+    };
+
     const handleRequestRevision = async () => {
         if (!bookingForRevision || !revisionNote.trim()) return;
         try {
@@ -444,6 +454,7 @@ const DashboardDesktop = ({
                     bookingFilter={bookingFilter}
                     setBookingFilter={setBookingFilter}
                     updateBookingStatus={updateBookingStatus}
+                    handleCompleteClick={handleCompleteClick}
                     setBookingForRevision={setBookingForRevision}
                     setRevisionNote={setRevisionNote}
                     setSelectedBookingDetails={setSelectedBookingDetails}
@@ -664,11 +675,20 @@ const DashboardDesktop = ({
                 <DesktopHelpTab />
             )}
 
-            {/* Payment Mode Selection Modal */}
+            {/* Payment Mode Selection Modal (For Provider Delivering) */}
             <DesktopPaymentModal
                 isOpen={!!bookingForPayment}
                 onClose={() => setBookingForPayment(null)}
                 onSelect={confirmDelivery}
+            />
+
+            {/* Payment Mode Selection Modal (For Customer Completing) */}
+            <DesktopPaymentModal
+                isOpen={!!bookingForCompletion}
+                onClose={() => setBookingForCompletion(null)}
+                onSelect={confirmCompletion}
+                title="Finalize Order?"
+                description="Select how you paid for this service to mark it as complete and release funds."
             />
 
             {/* Withdrawal Modal */}

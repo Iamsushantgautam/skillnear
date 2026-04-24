@@ -68,7 +68,8 @@ export default function MobileBookingDetailsScreen({ booking, userLocation, onBa
                         {detailRow('Date', booking.createdAt ? new Date(booking.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' }) : 'N/A')}
                         {detailRow('Service Type', booking.service?.businessType ? booking.service.businessType.toString().toUpperCase() : 'SERVICE')}
                         {detailRow('Customer Name', booking.customerName || booking.user?.name || 'Unknown')}
-                        {detailRow('Customer Phone', ['completed', 'cancelled'].includes(booking.status) ? 'Hidden' : (booking.customerPhone || booking.user?.phone || 'Not provided'))}
+                        {role === 'provider' && detailRow('Customer Phone', ['completed', 'cancelled'].includes(booking.status) ? 'Hidden' : (booking.customerPhone || booking.user?.phone || 'Not provided'))}
+                        {role === 'customer' && detailRow('Provider Phone', ['completed', 'cancelled'].includes(booking.status) ? 'Hidden' : (booking.provider?.phone || 'Not provided'))}
                         {detailRow('Location', typeof booking.address === 'object' ? (`${booking.address?.street || ''}, ${booking.address?.city || ''}`.trim() || 'Standard') : (booking.address || 'Standard Location'))}
 
                         {booking.address?.googleMapLink && detailRow('Maps URL', <button onClick={() => {

@@ -50,6 +50,12 @@ export default function MobileOrdersScreen({ myBookings, bookingsLoading, setAct
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}><Badge status={b.status} /></div>
                                         <h3 style={{ fontSize: 18, fontWeight: 800, color: '#191b23', marginBottom: 4, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.service?.title}</h3>
                                         <p style={{ fontSize: 14, color: '#434654', margin: 0, fontWeight: 500 }}>Provider: {b.provider?.name || 'Sushant'}</p>
+                                        {!isCompleted && !isCancelled && b.provider?.phone && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                                                <div style={{ background: '#f0fdf4', color: '#15803d', padding: '2px 6px', borderRadius: 6, fontSize: 9, fontWeight: 800 }}>CALL</div>
+                                                <p style={{ fontSize: 12, color: '#64748b', margin: 0, fontWeight: 600 }}>{b.provider.phone}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>

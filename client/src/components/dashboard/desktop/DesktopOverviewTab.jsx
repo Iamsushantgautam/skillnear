@@ -262,7 +262,7 @@ const DesktopOverviewTab = ({
                         <div className="snapshot-stats-row">
                             <div className="snapshot-stat-card">
                                 <p className="snapshot-stat-label">Total Earned</p>
-                                <p className="snapshot-stat-value">₹{(stats?.totalEarnings || 0).toLocaleString()}</p>
+                                <p className="snapshot-stat-value">₹{(stats?.lifetimeEarnings || 0).toLocaleString()}</p>
                             </div>
                             <div className="snapshot-stat-card snapshot-stat-card-active">
                                 <p className="snapshot-stat-label snapshot-stat-label-active">Pending Orders</p>
