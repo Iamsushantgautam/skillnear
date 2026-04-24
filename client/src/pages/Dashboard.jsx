@@ -136,7 +136,9 @@ const Dashboard = () => {
         if (!silent) setBookingsLoading(true);
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await api.get('/api/bookings/mybookings', config);
+            // Add timestamp to prevent caching
+            const { data } = await api.get(`/api/bookings/mybookings?t=${Date.now()}`, config);
+            console.log('API FETCH SUCCESS (Bookings):', data.length, 'items');
             setMyBookings(data);
         } catch (err) {
             console.error('Failed to fetch bookings', err);
@@ -150,7 +152,8 @@ const Dashboard = () => {
         if (!silent) setBookingsLoading(true);
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await api.get('/api/bookings/provider', config);
+            const { data } = await api.get(`/api/bookings/provider?t=${Date.now()}`, config);
+            console.log('API FETCH SUCCESS (Requests):', data.length, 'items');
             setBookingRequests(data);
         } catch (err) {
             console.error('Failed to fetch provider requests', err);
@@ -178,7 +181,7 @@ const Dashboard = () => {
         try {
             if (!silent) setIsStatsLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await api.get('/api/bookings/provider/stats', config);
+            const { data } = await api.get(`/api/bookings/provider/stats?t=${Date.now()}`, config);
             setStats(data);
         } catch (error) {
             console.error('Error fetching dashboard stats', error);
@@ -192,7 +195,7 @@ const Dashboard = () => {
         try {
             if (!silent) setWithdrawalsLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await api.get('/api/withdrawals/my', config);
+            const { data } = await api.get(`/api/withdrawals/my?t=${Date.now()}`, config);
             setWithdrawals(data);
         } catch (error) {
             console.error('Error fetching withdrawals', error);
@@ -208,11 +211,11 @@ const Dashboard = () => {
         try {
             if (!silent) setUsersLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const usersRes = await api.get('/api/admin/users', config);
+            const usersRes = await api.get(`/api/admin/users?t=${Date.now()}`, config);
             setAllUsers(usersRes.data);
 
             if (!silent) setServicesLoading(true);
-            const servicesRes = await api.get('/api/admin/services', config);
+            const servicesRes = await api.get(`/api/admin/services?t=${Date.now()}`, config);
             setAdminServices(servicesRes.data);
 
             setUsersLoading(false);
@@ -298,14 +301,87 @@ const Dashboard = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Setup Dashboard Socket for Real-time chat and updates
+    useEffect(() => {
+        if (!user?._id) return;
+
+        const socket = io(API_URL, {
+            withCredentials: true,
+            transports: ['websocket', 'polling']
+        });
+
+        socket.on('connect', () => {
+            console.log('Dashboard Socket Connected:', socket.id);
+            socket.emit('setup', user._id);
+        });
+
+        socket.on('receiveMessage', (data) => {
+            const activeRoom = activeRoomRef.current;
+            if (activeRoom && activeRoom.roomId === data.roomId) {
+                setDashMessages(prev => {
+                    if (data.tempId) {
+                        const exists = prev.findIndex(m => m._id === data.tempId || m.tempId === data.tempId);
+                        if (exists !== -1) {
+                            const newMsgs = [...prev];
+                            newMsgs[exists] = { ...data, optimistic: false };
+                            return newMsgs;
+                        }
+                    }
+                    if (prev.find(m => m._id === data._id)) return prev;
+                    return [...prev, data];
+                });
+                socket.emit('readMessages', { roomId: activeRoom.roomId, userId: user._id });
+            }
+        });
+
+        socket.on('typing', (data) => {
+            if (activeRoomRef.current?.roomId === data.roomId) setPartnerTyping(true);
+        });
+
+        socket.on('stopTyping', (data) => {
+            if (activeRoomRef.current?.roomId === data.roomId) setPartnerTyping(false);
+        });
+
+        socket.on('messagesRead', ({ roomId }) => {
+            if (activeRoomRef.current?.roomId === roomId) {
+                setDashMessages(prev => prev.map(m => ({ ...m, isRead: true })));
+            }
+        });
+
+        socket.on('roomDeleted', ({ roomId }) => {
+            if (activeRoomRef.current?.roomId === roomId) {
+                setDashActiveRoom(null);
+                setDashMessages([]);
+                toast.success('Conversation removed');
+            }
+        });
+
+        socket.on('bookingUpdate', (data) => {
+            console.log('CRITICAL: Real-time booking update received via socket!', data);
+            
+            // Wait 500ms for DB consistency before fetching fresh data
+            setTimeout(() => {
+                console.log('TRIGGERING AUTO-REFRESH NOW...');
+                fetchMyBookings(true);
+                fetchProviderRequests(true);
+                fetchStats(true);
+                if (user?.role === 'admin') fetchAdminData(true);
+            }, 500);
+        });
+
+        setDashSocket(socket);
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [user?._id, user?.token, user?.role, fetchMyBookings, fetchProviderRequests, fetchStats, fetchAdminData]);
+
+    // Update profile local states when user changes
     useEffect(() => {
         if (user) {
             setRole(user.role);
             if (user.role === 'provider') {
                 setProviderStatus(user.providerDetails?.isApproved ? 'approved' : 'pending');
-                fetchMyGigs();
-                fetchProviderRequests();
-                fetchStats();
             }
             setProfileAvatar(user.avatar || '');
             setProfileName(user.name || '');
@@ -313,72 +389,23 @@ const Dashboard = () => {
             setProfileUsername(user.username || '');
             setProviderTitle(user.providerDetails?.title || user.title || '');
             setProviderAbout(user.providerDetails?.about || user.about || '');
+        }
+    }, [user?._id, user?.role, user?.avatar, user?.name, user?.phone, user?.username, user?.providerDetails]);
+
+    // Initial data fetch on mount/user change
+    useEffect(() => {
+        if (user?.token) {
             fetchMyBookings();
+            if (user.role === 'provider') {
+                fetchMyGigs();
+                fetchProviderRequests();
+                fetchStats();
+            }
             if (user.role === 'admin') {
                 fetchAdminData();
             }
-
-            // Setup Dashboard Socket for Real-time chat
-            const socket = io(API_URL, {
-                withCredentials: true,
-                transports: ['websocket', 'polling']
-            });
-            socket.emit('setup', user._id);
-            setDashSocket(socket);
-
-            socket.on('receiveMessage', (data) => {
-                const activeRoom = activeRoomRef.current;
-                if (activeRoom && activeRoom.roomId === data.roomId) {
-                    setDashMessages(prev => {
-                        if (data.tempId) {
-                            const exists = prev.findIndex(m => m._id === data.tempId || m.tempId === data.tempId);
-                            if (exists !== -1) {
-                                const newMsgs = [...prev];
-                                newMsgs[exists] = { ...data, optimistic: false };
-                                return newMsgs;
-                            }
-                        }
-                        if (prev.find(m => m._id === data._id)) return prev;
-                        return [...prev, data];
-                    });
-                    // Emit read event if we are in the room
-                    socket.emit('readMessages', { roomId: activeRoom.roomId, userId: user._id });
-                }
-            });
-
-            socket.on('typing', (data) => {
-                if (activeRoomRef.current?.roomId === data.roomId) setPartnerTyping(true);
-            });
-
-            socket.on('stopTyping', (data) => {
-                if (activeRoomRef.current?.roomId === data.roomId) setPartnerTyping(false);
-            });
-
-            socket.on('messagesRead', ({ roomId }) => {
-                if (activeRoomRef.current?.roomId === roomId) {
-                    setDashMessages(prev => prev.map(m => ({ ...m, isRead: true })));
-                }
-            });
-
-            socket.on('roomDeleted', ({ roomId }) => {
-                if (activeRoomRef.current?.roomId === roomId) {
-                    setDashActiveRoom(null);
-                    setDashMessages([]);
-                    toast.success('Conversation removed');
-                }
-            });
-
-            return () => {
-                socket.off('receiveMessage');
-                socket.off('typing');
-                socket.off('stopTyping');
-                socket.off('messagesRead');
-                socket.off('roomDeleted');
-                socket.disconnect();
-            };
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user?._id, user?.providerDetails?.title, user?.providerDetails?.about, user?.avatar, user?.name, user?.phone, user?.username]);
+    }, [user?._id, user?.role, user?.token, fetchMyBookings, fetchMyGigs, fetchProviderRequests, fetchStats, fetchAdminData]);
 
     // Scroll chat to bottom
     useEffect(() => {
@@ -403,32 +430,15 @@ const Dashboard = () => {
         fetchDashMessages();
     }, [fetchDashMessages]);
 
-    // Auto-refresh (polling fallback) every 1 second for chat
+    // Auto-refresh (polling fallback) every 30 seconds for chat
     useEffect(() => {
         if (!dashActiveRoom || !user) return;
-        const interval = setInterval(fetchDashMessages, 1000);
+        const interval = setInterval(fetchDashMessages, 30000);
         return () => clearInterval(interval);
     }, [fetchDashMessages, dashActiveRoom, user]);
 
-    // Auto-refresh Dashboard data every 10 seconds (Bookings, Requests, Stats, etc.)
-    useEffect(() => {
-        if (!user) return;
-
-        const pollDashboardData = () => {
-            fetchMyBookings(true);
-            if (user.role === 'provider') {
-                fetchProviderRequests(true);
-                fetchStats(true);
-            }
-            if (activeTab === 'favorites') fetchFavorites(true);
-            if (activeTab === 'payments' && user.role === 'provider') fetchWithdrawals(true);
-            if (activeTab === 'mygigs' && user.role === 'provider') fetchMyGigs(true);
-            if (user.role === 'admin') fetchAdminData(true);
-        };
-
-        const dashboardInterval = setInterval(pollDashboardData, 1000); // 1 second
-        return () => clearInterval(dashboardInterval);
-    }, [user, activeTab, fetchMyBookings, fetchProviderRequests, fetchStats, fetchFavorites, fetchWithdrawals, fetchMyGigs, fetchAdminData]);
+    // The Dashboard now uses WebSockets for real-time updates (see bookingUpdate listener in setup useEffect).
+    // The interval polling has been removed to optimize server performance.
 
     // Auto-open chat if provider in URL
     useEffect(() => {

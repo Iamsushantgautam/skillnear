@@ -52,7 +52,9 @@ export const createBooking = async (req, res) => {
 
         // Emit via socket
         if (req.io) {
-            req.io.to(service.provider.toString()).emit('newNotification', notification);
+            const providerRoom = service.provider.toString();
+            req.io.to(providerRoom).emit('newNotification', notification);
+            req.io.to(providerRoom).emit('bookingUpdate', { type: 'new_booking' });
         }
 
         res.status(201).json(createdBooking);
@@ -153,17 +155,15 @@ export const updateBookingStatus = async (req, res) => {
                     }
                 }
 
-                // EXTREME BYPASS: Use the raw MongoDB collection to update status without ANY Mongoose schema involvement
-                await Booking.collection.updateOne(
+                // Use findOneAndUpdate to ensure we get the latest data atomically
+                const updatedBooking = await Booking.findOneAndUpdate(
                     { _id: booking._id },
-                    { $set: updateData }
-                );
-
-                // Fetch the updated document via Mongoose for the response (no validation on find)
-                const updatedBooking = await Booking.findById(booking._id)
-                    .populate('user', 'name email phone')
-                    .populate('provider', 'name email phone')
-                    .populate('service', 'title price');
+                    { $set: updateData },
+                    { new: true, runValidators: false } // new: true returns the updated document
+                )
+                .populate('user', 'name email phone')
+                .populate('provider', 'name email phone')
+                .populate('service', 'title price');
 
                 console.log(`STATUS UPDATED SUCCESSFULLY TO: ${updatedBooking.status}`);
 
@@ -197,7 +197,14 @@ export const updateBookingStatus = async (req, res) => {
 
                 // Emit via socket
                 if (req.io) {
-                    req.io.to(recipientId.toString()).emit('newNotification', notification);
+                    const recipientRoom = recipientId._id ? recipientId._id.toString() : recipientId.toString();
+                    const senderRoom = req.user._id.toString();
+                    
+                    console.log(`EMITTING bookingUpdate to recipientRoom: ${recipientRoom} and senderRoom: ${senderRoom}`);
+                    
+                    req.io.to(recipientRoom).emit('newNotification', notification);
+                    req.io.to(recipientRoom).emit('bookingUpdate', updatedBooking);
+                    req.io.to(senderRoom).emit('bookingUpdate', updatedBooking);
                 }
                 res.json(updatedBooking);
             } else {

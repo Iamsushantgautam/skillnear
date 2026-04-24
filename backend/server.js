@@ -83,8 +83,11 @@ const activeUsers = new Set();
 
 io.on('connection', (socket) => {
     socket.on('setup', (userId) => {
-        socket.join(userId);
-        activeUsers.add(userId);
+        if (!userId) return;
+        const roomName = userId.toString();
+        socket.join(roomName);
+        activeUsers.add(roomName);
+        console.log(`SOCKET: User ${roomName} setup completed and joined room.`);
         io.emit('onlineUsers', Array.from(activeUsers));
     });
 
