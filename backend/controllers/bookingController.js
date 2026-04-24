@@ -2,6 +2,7 @@ import Booking from '../models/Booking.js';
 import Service from '../models/Service.js';
 import Message from '../models/Message.js';
 import Notification from '../models/Notification.js';
+import Withdrawal from '../models/Withdrawal.js';
 
 // @desc    Create new booking
 // @route   POST /api/bookings
@@ -238,10 +239,23 @@ export const getProviderStats = async (req, res) => {
         const totalOrders = bookings.length;
         const pendingOrders = bookings.filter(b => b.status === 'pending').length;
 
-        // 3. Earnings (Sum of completed bookings)
+        // 3. Earnings (Sum of completed and paid bookings)
         const totalEarnings = bookings
-            .filter(b => b.status === 'completed')
+            .filter(b => b.status === 'completed' && b.paymentStatus === 'paid')
             .reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+
+        // 3a. Gross Earnings (Sum of all non-cancelled paid/pending bookings)
+        const grossEarnings = bookings
+            .filter(b => b.status !== 'cancelled' && (b.paymentStatus === 'paid' || b.paymentStatus === 'pending'))
+            .reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+
+        // 3b. Withdrawn amount
+        const withdrawals = await Withdrawal.find({ user: providerId, status: 'successful' });
+        const withdrawnAmount = withdrawals.reduce((acc, w) => acc + w.amount, 0);
+
+        // 3c. Pending withdrawal
+        const pendingWithdrawals = await Withdrawal.find({ user: providerId, status: 'pending' });
+        const pendingWithdrawnAmount = pendingWithdrawals.reduce((acc, w) => acc + w.amount, 0);
 
         // 4. Chart Data (Last 6 Months)
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -255,7 +269,7 @@ export const getProviderStats = async (req, res) => {
             const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
 
             const monthEarnings = bookings
-                .filter(b => b.status === 'completed' && b.createdAt >= monthStart && b.createdAt <= monthEnd)
+                .filter(b => b.status === 'completed' && b.paymentStatus === 'paid' && b.createdAt >= monthStart && b.createdAt <= monthEnd)
                 .reduce((acc, b) => acc + (b.totalPrice || 0), 0);
 
             chartData.push({ name: monthName, earnings: monthEarnings });
@@ -266,6 +280,9 @@ export const getProviderStats = async (req, res) => {
             totalGigs,
             totalOrders,
             totalEarnings,
+            grossEarnings,
+            withdrawnAmount,
+            pendingWithdrawnAmount,
             pendingOrders,
             chartData
         });

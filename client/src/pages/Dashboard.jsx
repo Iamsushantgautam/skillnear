@@ -107,9 +107,14 @@ const Dashboard = () => {
         totalOrders: 0,
         totalEarnings: 0,
         pendingOrders: 0,
+        grossEarnings: 0,
+        withdrawnAmount: 0,
+        pendingWithdrawnAmount: 0,
         chartData: []
     });
     const [isStatsLoading, setIsStatsLoading] = useState(false);
+    const [withdrawals, setWithdrawals] = useState([]);
+    const [withdrawalsLoading, setWithdrawalsLoading] = useState(false);
 
     const fetchStats = async () => {
         try {
@@ -121,6 +126,20 @@ const Dashboard = () => {
         } catch (error) {
             console.error('Error fetching dashboard stats', error);
             setIsStatsLoading(false);
+        }
+    };
+
+    const fetchWithdrawals = async () => {
+        if (!user || user.role !== 'provider') return;
+        try {
+            setWithdrawalsLoading(true);
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.get('/api/withdrawals/my', config);
+            setWithdrawals(data);
+            setWithdrawalsLoading(false);
+        } catch (error) {
+            console.error('Error fetching withdrawals', error);
+            setWithdrawalsLoading(false);
         }
     };
 
@@ -177,6 +196,9 @@ const Dashboard = () => {
     useEffect(() => {
         if (activeTab === 'favorites') {
             fetchFavorites();
+        }
+        if (activeTab === 'payments' && user?.role === 'provider') {
+            fetchWithdrawals();
         }
     }, [activeTab]);
 
@@ -1039,6 +1061,10 @@ const Dashboard = () => {
                     role={role}
                     stats={stats}
                     myGigs={myGigs}
+                    withdrawals={withdrawals}
+                    withdrawalsLoading={withdrawalsLoading}
+                    fetchWithdrawals={fetchWithdrawals}
+                    fetchStats={fetchStats}
                     gigsLoading={gigsLoading}
                     bookingRequests={bookingRequests}
                     providerStatus={providerStatus}
@@ -1284,6 +1310,10 @@ const Dashboard = () => {
                                 myBookings={myBookings}
                                 myGigs={myGigs}
                                 stats={stats}
+                                withdrawals={withdrawals}
+                                withdrawalsLoading={withdrawalsLoading}
+                                fetchWithdrawals={fetchWithdrawals}
+                                fetchStats={fetchStats}
                                 providerStatus={providerStatus}
                                 handleApplyProvider={handleApplyProvider}
                                 isSubmitting={isSubmitting}

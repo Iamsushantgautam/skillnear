@@ -4,7 +4,7 @@ import {
     Briefcase, MessageSquare, Wallet, User,
     Star, PlusCircle, ArrowLeft, Loader, CheckCircle, Calendar as CalendarIcon,
     ChevronRight, Edit3, Send, Search, ShoppingBag, MapPin, ChevronLeft, Plus as PlusIcon,
-    ShoppingCart, Video, Trash2, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, X, Phone, MoreVertical, CreditCard, RotateCw, History
+    ShoppingCart, Video, Trash2, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, X, Phone, MoreVertical, CreditCard, RotateCw, History, DollarSign, Clock, XCircle, TrendingUp, Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import io from 'socket.io-client';
@@ -16,7 +16,6 @@ const PC = '#003d9b';
 const PL = 'rgba(0,61,155,0.08)';
 
 /* ─── payment modal ─── */
-/* ─── payment modal ─── */
 function PaymentModal({ isOpen, onClose, onSelect }) {
     if (!isOpen) return null;
     return (
@@ -25,9 +24,9 @@ function PaymentModal({ isOpen, onClose, onSelect }) {
                 <div style={{ width: 40, height: 4, background: '#e2e8f0', borderRadius: 2, margin: '0 auto 24px' }}></div>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: 8, textAlign: 'center' }}>Service Completed?</h3>
                 <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center', marginBottom: 32, fontWeight: 500 }}>How did the customer pay for this service?</p>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <button 
+                    <button
                         onClick={() => onSelect('Cash')}
                         style={{ padding: 20, borderRadius: 20, border: '2px solid #f1f5f9', background: 'white', display: 'flex', alignItems: 'center', gap: 16, textAlign: 'left' }}
                     >
@@ -40,7 +39,7 @@ function PaymentModal({ isOpen, onClose, onSelect }) {
                         </div>
                     </button>
 
-                    <button 
+                    <button
                         onClick={() => onSelect('Online')}
                         style={{ padding: 20, borderRadius: 20, border: '2px solid #f1f5f9', background: 'white', display: 'flex', alignItems: 'center', gap: 16, textAlign: 'left' }}
                     >
@@ -53,11 +52,90 @@ function PaymentModal({ isOpen, onClose, onSelect }) {
                         </div>
                     </button>
 
-                    <button 
+                    <button
                         onClick={onClose}
                         style={{ marginTop: 8, padding: 16, background: 'transparent', border: 'none', color: '#94a3b8', fontWeight: 800, fontSize: 14 }}
                     >
                         Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ─── withdrawal modal ─── */
+function WithdrawalModal({ isOpen, onClose, onSubmit, amount, setAmount, availableBalance, method, setMethod, details, setDetails }) {
+    if (!isOpen) return null;
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 10000 }}>
+            <div className="animate-slide-up no-scrollbar" style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: '32px 24px 48px', boxShadow: '0 -10px 40px rgba(0,0,0,0.1)' }}>
+                <div style={{ width: 40, height: 4, background: '#e2e8f0', borderRadius: 2, margin: '0 auto 24px' }}></div>
+                <div style={{ width: 64, height: 64, borderRadius: 20, background: PL, color: PC, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                    <DollarSign size={32} />
+                </div>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: 8, textAlign: 'center' }}>Request Withdrawal</h3>
+                <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center', marginBottom: 32, fontWeight: 500 }}>
+                    Enter the amount you'd like to withdraw. <br />
+                    <span style={{ color: PC, fontWeight: 700 }}>Available: ₹{availableBalance.toLocaleString()}</span>
+                </p>
+
+                <div style={{ marginBottom: 32 }}>
+                    <div style={{ position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: '#1e293b', fontSize: '1.25rem' }}>₹</span>
+                        <input
+                            type="number"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            placeholder="0.00"
+                            style={{ width: '100%', padding: '20px 20px 20px 44px', borderRadius: 20, border: `2px solid ${Number(amount) > availableBalance ? '#ef4444' : '#f1f5f9'}`, background: '#f8fafc', fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', outline: 'none' }}
+                        />
+                    </div>
+                    {Number(amount) > availableBalance && (
+                        <p style={{ fontSize: 12, color: '#ef4444', fontWeight: 800, marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <XCircle size={14} /> Amount exceeds available balance
+                        </p>
+                    )}
+                </div>
+
+                <div style={{ marginBottom: 24 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#1e293b', marginBottom: 10, textTransform: 'uppercase' }}>Withdrawal Method</label>
+                    <select
+                        value={method}
+                        onChange={(e) => setMethod(e.target.value)}
+                        style={{ width: '100%', padding: '16px 20px', borderRadius: 16, border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: 15, fontWeight: 700, color: '#1e293b', outline: 'none', appearance: 'none' }}
+                    >
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="UPI">UPI (Google Pay, PhonePe, etc.)</option>
+                        <option value="Wallet">Digital Wallet</option>
+                    </select>
+                </div>
+
+                <div style={{ marginBottom: 32 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 800, color: '#1e293b', marginBottom: 10, textTransform: 'uppercase' }}>
+                        {method === 'UPI' ? 'UPI ID' : 'Bank Account Details'}
+                    </label>
+                    <textarea
+                        value={details}
+                        onChange={(e) => setDetails(e.target.value)}
+                        placeholder={method === 'UPI' ? "e.g. name@upi" : "Account Number, Bank Name, IFSC Code..."}
+                        style={{ width: '100%', padding: '16px 20px', borderRadius: 16, border: '2px solid #f1f5f9', background: '#f8fafc', fontSize: 14, fontWeight: 600, color: '#1e293b', outline: 'none', minHeight: 80, resize: 'none' }}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', gap: 12 }}>
+                    <button
+                        onClick={onClose}
+                        style={{ flex: 1, padding: 16, borderRadius: 16, background: '#f1f5f9', color: '#64748b', border: 'none', fontWeight: 800, fontSize: 14 }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={onSubmit}
+                        disabled={!amount || isNaN(amount) || Number(amount) <= 0 || Number(amount) > availableBalance || !details.trim()}
+                        style={{ flex: 2, padding: 16, borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 800, fontSize: 14, opacity: (!amount || isNaN(amount) || Number(amount) <= 0 || Number(amount) > availableBalance || !details.trim()) ? 0.6 : 1 }}
+                    >
+                        Confirm Withdrawal
                     </button>
                 </div>
             </div>
@@ -78,7 +156,7 @@ function RevisionHistoryModal({ isOpen, onClose, revisions }) {
                         <X size={16} />
                     </button>
                 </div>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {revisions && revisions.length > 0 ? (
                         revisions.map((rev, i) => (
@@ -95,7 +173,7 @@ function RevisionHistoryModal({ isOpen, onClose, revisions }) {
                     )}
                 </div>
 
-                <button 
+                <button
                     onClick={onClose}
                     style={{ width: '100%', marginTop: 24, padding: 16, borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 800, fontSize: 14 }}
                 >
@@ -114,8 +192,8 @@ function RevisionModal({ isOpen, onClose, onSubmit, note, setNote }) {
                 <div style={{ width: 40, height: 4, background: '#e2e8f0', borderRadius: 2, margin: '0 auto 24px' }}></div>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: 8, textAlign: 'center' }}>Request Revision</h3>
                 <p style={{ color: '#64748b', fontSize: 14, textAlign: 'center', marginBottom: 24, fontWeight: 500 }}>Please describe what changes you would like the professional to make.</p>
-                
-                <textarea 
+
+                <textarea
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="Describe your revision requirements..."
@@ -123,13 +201,13 @@ function RevisionModal({ isOpen, onClose, onSubmit, note, setNote }) {
                 />
 
                 <div style={{ display: 'flex', gap: 12 }}>
-                    <button 
+                    <button
                         onClick={onClose}
                         style={{ flex: 1, padding: 16, borderRadius: 16, background: '#f1f5f9', color: '#64748b', border: 'none', fontWeight: 800, fontSize: 14 }}
                     >
                         Cancel
                     </button>
-                    <button 
+                    <button
                         onClick={onSubmit}
                         disabled={!note.trim()}
                         style={{ flex: 2, padding: 16, borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 800, fontSize: 14, opacity: note.trim() ? 1 : 0.6 }}
@@ -148,8 +226,8 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return (R * c).toFixed(1);
 };
@@ -162,13 +240,13 @@ function Shell({ title, onBack, children, headerRight }) {
         <div style={{ minHeight: '100dvh', background: '#faf8ff', fontFamily: 'Inter, sans-serif', paddingBottom: 100 }}>
             <div style={{ background: PC, display: 'flex', justifyContent: 'center' }}>
                 <div style={{ width: '100%', maxWidth: '800px', padding: '52px 20px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                {onBack && (
-                    <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                        <ArrowLeft size={18} color="white" />
-                    </button>
-                )}
-                <h1 style={{ color: 'white', fontWeight: 900, fontSize: '1.25rem', flex: 1 }}>{title}</h1>
-                {headerRight}
+                    {onBack && (
+                        <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                            <ArrowLeft size={18} color="white" />
+                        </button>
+                    )}
+                    <h1 style={{ color: 'white', fontWeight: 900, fontSize: '1.25rem', flex: 1 }}>{title}</h1>
+                    {headerRight}
                 </div>
             </div>
             <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto', padding: '20px 16px' }}>{children}</div>
@@ -191,14 +269,14 @@ function Badge({ status }) {
     };
     const { label, bg, color } = map[status] || { label: status, bg: '#f3f4f6', color: '#374151' };
     return (
-        <span style={{ 
-            background: bg, 
-            color: color, 
-            padding: '6px 14px', 
-            borderRadius: 9999, 
-            fontSize: 10, 
-            fontWeight: 800, 
-            textTransform: 'uppercase', 
+        <span style={{
+            background: bg,
+            color: color,
+            padding: '6px 14px',
+            borderRadius: 9999,
+            fontSize: 10,
+            fontWeight: 800,
+            textTransform: 'uppercase',
             letterSpacing: '0.05em',
             height: 'fit-content',
             display: 'inline-block'
@@ -242,7 +320,7 @@ function InboxScreen({ user, setActiveTab, onSelectRoom, onMenuClick }) {
 
     const [search, setSearch] = useState('');
 
-    const filteredRooms = rooms.filter(r => 
+    const filteredRooms = rooms.filter(r =>
         r.otherUser?.name?.toLowerCase().includes(search.toLowerCase()) ||
         r.lastMessage?.toLowerCase().includes(search.toLowerCase())
     );
@@ -264,8 +342,8 @@ function InboxScreen({ user, setActiveTab, onSelectRoom, onMenuClick }) {
             <div style={{ padding: '0 16px 12px' }}>
                 <div style={{ position: 'relative', background: 'white', borderRadius: 16, border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', padding: '12px 14px', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
                     <Search size={18} color="#94a3b8" />
-                    <input 
-                        placeholder="Search conversations..." 
+                    <input
+                        placeholder="Search conversations..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         style={{ border: 'none', background: 'none', marginLeft: 10, flex: 1, fontSize: '0.9rem', outline: 'none', color: '#1e293b', fontWeight: 500 }}
@@ -289,13 +367,13 @@ function InboxScreen({ user, setActiveTab, onSelectRoom, onMenuClick }) {
                         const isSystem = room.lastMessage?.startsWith('STATUS UPDATE') || room.lastMessage?.startsWith('BOOKING:');
                         return (
                             <div key={room.roomId} onClick={() => onSelectRoom(room)}
-                                style={{ 
-                                    background: 'white', 
-                                    padding: '16px', 
-                                    display: 'flex', 
-                                    gap: 14, 
-                                    alignItems: 'center', 
-                                    cursor: 'pointer', 
+                                style={{
+                                    background: 'white',
+                                    padding: '16px',
+                                    display: 'flex',
+                                    gap: 14,
+                                    alignItems: 'center',
+                                    cursor: 'pointer',
                                     borderRadius: 24,
                                     border: room.unreadCount > 0 ? `1.5px solid ${PL}` : '1.5px solid #f1f5f9',
                                     boxShadow: room.unreadCount > 0 ? `0 8px 20px ${PL}33` : '0 4px 15px rgba(0,0,0,0.03)',
@@ -319,13 +397,13 @@ function InboxScreen({ user, setActiveTab, onSelectRoom, onMenuClick }) {
                                         <p style={{ fontWeight: 900, fontSize: '1rem', color: '#1e293b', margin: 0 }}>{room.otherUser?.name || 'User'}</p>
                                         <p style={{ fontSize: 10, color: room.unreadCount > 0 ? PC : '#94a3b8', fontWeight: 800, margin: 0 }}>{room.updatedAt ? new Date(room.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</p>
                                     </div>
-                                    <p style={{ 
-                                        fontSize: 13, 
-                                        color: isSystem ? PC : '#64748b', 
+                                    <p style={{
+                                        fontSize: 13,
+                                        color: isSystem ? PC : '#64748b',
                                         fontWeight: room.unreadCount > 0 || isSystem ? 700 : 500,
-                                        whiteSpace: 'nowrap', 
-                                        overflow: 'hidden', 
-                                        textOverflow: 'ellipsis', 
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
                                         margin: 0,
                                         display: 'flex',
                                         alignItems: 'center',
@@ -336,7 +414,7 @@ function InboxScreen({ user, setActiveTab, onSelectRoom, onMenuClick }) {
                                     </p>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
-                                    <button 
+                                    <button
                                         onClick={(e) => handleDeleteRoom(e, room.roomId)}
                                         style={{ background: 'transparent', border: 'none', color: '#94a3b8', padding: 4 }}
                                     >
@@ -348,7 +426,7 @@ function InboxScreen({ user, setActiveTab, onSelectRoom, onMenuClick }) {
                         );
                     })}
                 </div>
-            ) }
+            )}
         </Shell>
     );
 }
@@ -375,7 +453,7 @@ function ChatRoom({ user, room, onBack }) {
         const queryParams = new URLSearchParams(window.location.search);
         const serviceId = queryParams.get('service');
         if (serviceId) {
-            api.get(`/api/services/${serviceId}`).then(({ data }) => setActiveService(data)).catch(() => {});
+            api.get(`/api/services/${serviceId}`).then(({ data }) => setActiveService(data)).catch(() => { });
         }
     }, []);
 
@@ -432,10 +510,10 @@ function ChatRoom({ user, room, onBack }) {
         });
 
         setSocket(newSocket);
-        
+
         // Auto-refresh (polling fallback) every 1 second
         const interval = setInterval(fetchMessages, 1000);
-        
+
         return () => {
             newSocket.disconnect();
             clearInterval(interval);
@@ -456,7 +534,7 @@ function ChatRoom({ user, room, onBack }) {
 
     const handleSend = (type = 'text', url = null) => {
         if ((type === 'text' && !input.trim()) || !socket) return;
-        
+
         const tempId = Date.now().toString();
         const msgData = {
             _id: tempId,
@@ -481,7 +559,7 @@ function ChatRoom({ user, room, onBack }) {
             fileUrl: url,
             tempId: tempId
         });
-        
+
         if (type === 'text') setInput('');
         socket.emit('stopTyping', { roomId: room.roomId });
     };
@@ -563,11 +641,11 @@ function ChatRoom({ user, room, onBack }) {
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     <h4 style={{ color: '#0f172a', margin: 0, fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.01em' }}>{room.otherUser?.name}</h4>
                     <span style={{ color: '#22c55e', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 4 }}>
-                         ACTIVE NOW
+                        ACTIVE NOW
                     </span>
                 </div>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <button 
+                    <button
                         onClick={() => {
                             if (window.refreshMobileChat) {
                                 toast.promise(window.refreshMobileChat(), {
@@ -638,7 +716,7 @@ function ChatRoom({ user, room, onBack }) {
                     <>
                         {messages.map((m, i) => {
                             const isMe = m.senderId === user._id;
-                            const showDate = i === 0 || new Date(m.createdAt).toDateString() !== new Date(messages[i-1]?.createdAt).toDateString();
+                            const showDate = i === 0 || new Date(m.createdAt).toDateString() !== new Date(messages[i - 1]?.createdAt).toDateString();
                             return (
                                 <div key={m._id || i}>
                                     {showDate && (
@@ -713,16 +791,16 @@ function ChatRoom({ user, room, onBack }) {
                 position: 'relative'
             }}>
                 <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} />
-                
+
                 {!isRecording ? (
                     <>
-                        <button 
+                        <button
                             onClick={() => fileInputRef.current.click()}
                             style={{ background: 'white', border: 'none', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}
                         >
                             <Paperclip size={20} />
                         </button>
-                        
+
                         <div style={{ flex: 1, background: 'white', borderRadius: 24, display: 'flex', alignItems: 'center', padding: '2px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                             <input
                                 value={input}
@@ -761,7 +839,7 @@ function ChatRoom({ user, room, onBack }) {
                         <button onClick={() => { setIsRecording(false); clearInterval(timerRef.current); if (mediaRecorderRef.current) mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop()); }} style={{ color: '#64748b', background: 'none', border: 'none' }}>
                             <X size={20} />
                         </button>
-                        <button 
+                        <button
                             onClick={stopRecording}
                             style={{ background: '#ef4444', color: 'white', border: 'none', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
@@ -782,9 +860,9 @@ function ChatRoom({ user, room, onBack }) {
 }
 
 /* ─── My Gigs screen ─── */
-function GigsScreen({ 
+function GigsScreen({
     filteredGigs, gigSearchQuery, setGigSearchQuery, gigTypeFilter, setGigTypeFilter,
-    gigsLoading, setActiveTab, navigate, handleEditClick, onMenuClick, providerStatus 
+    gigsLoading, setActiveTab, navigate, handleEditClick, onMenuClick, providerStatus
 }) {
     return (
         <Shell title="My Gigs" onBack={() => setActiveTab('overview')} onMenuClick={onMenuClick}
@@ -794,14 +872,14 @@ function GigsScreen({
                     + New Gig
                 </button>
             }>
-            
+
             {/* Search and Filters */}
             <div style={{ marginBottom: 20 }}>
                 <div style={{ position: 'relative', marginBottom: 12 }}>
                     <Search size={16} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                    <input 
-                        type="text" 
-                        placeholder="Search gigs..." 
+                    <input
+                        type="text"
+                        placeholder="Search gigs..."
                         value={gigSearchQuery}
                         onChange={(e) => setGigSearchQuery(e.target.value)}
                         style={{ width: '100%', padding: '12px 12px 12px 42px', borderRadius: 16, border: '1px solid #e2e8f0', background: 'white', fontSize: 14, fontWeight: 500, outline: 'none' }}
@@ -841,8 +919,8 @@ function GigsScreen({
                 <div style={{ textAlign: 'center', padding: '48px 24px', border: '2px dashed #e2e8f0', borderRadius: 20 }}>
                     <Briefcase size={40} color="#cbd5e1" style={{ marginBottom: 12 }} />
                     <p style={{ color: '#94a3b8' }}>
-                        {gigSearchQuery || gigTypeFilter !== 'all' 
-                            ? 'No matching gigs found.' 
+                        {gigSearchQuery || gigTypeFilter !== 'all'
+                            ? 'No matching gigs found.'
                             : (providerStatus === 'pending'
                                 ? 'Your account is pending review. You can still create gigs!'
                                 : 'No gigs yet')}
@@ -945,109 +1023,109 @@ function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus,
                         const isCancelled = ['cancelled', 'rejected'].includes(req.status);
                         const isCompleted = req.status === 'completed';
                         return (
-                        <div key={req._id} onClick={() => onSelectBooking(req)} style={{ background: isCancelled ? '#f8fafc' : (isCompleted ? '#faf8ff' : 'white'), borderRadius: 24, padding: 24, boxShadow: (isCancelled || isCompleted) ? 'none' : '0 10px 30px rgba(0,0,0,0.03)', border: isCancelled ? '2px dashed #e2e8f0' : '1px solid rgba(195, 198, 214, 0.1)', opacity: isCancelled ? 0.7 : 1, filter: isCancelled ? 'grayscale(100%)' : 'none' }}>
-                            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                                <img 
-                                    src={req.service?.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.service?.title || 'S')}&background=f3f3fd&color=003d9b`} 
-                                    style={{ width: 80, height: 80, borderRadius: 16, objectFit: 'cover', flexShrink: 0, border: '1px solid #f1f5f9' }}
-                                    alt=""
-                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(req.service?.title || 'S')}&background=f3f3fd&color=003d9b`; }}
-                                />
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                                        <Badge status={req.status} />
-                                    </div>
-                                    <h3 style={{ fontSize: 18, fontWeight: 800, color: '#191b23', marginBottom: 4, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.service?.title}</h3>
-                                    <p style={{ fontSize: 14, color: '#434654', margin: 0, fontWeight: 600 }}>{req.customerName || req.user?.name || req.user?.username || 'User'}</p>
-                                </div>
-                            </div>
-                            
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
-                                        <Phone size={16} />
-                                        <span style={{ fontSize: 12, fontWeight: 500 }}>
-                                            {['completed', 'cancelled'].includes(req.status) ? 'Hidden' : (req.customerPhone || req.user?.phone || 'Phone not provided')}
-                                        </span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
-                                        <CalendarIcon size={16} />
-                                        <span style={{ fontSize: 12, fontWeight: 500 }}>{new Date(req.createdAt).toLocaleDateString()} | {req.slot || 'TBA'}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
-                                        <MapPin size={16} />
-                                        <span style={{ fontSize: 12, fontWeight: 500 }}>
-                                            {typeof req.address === 'object' 
-                                                ? (`${req.address?.street || ''}, ${req.address?.city || ''}`.trim() || 'Location TBA')
-                                                : (req.address || 'Location TBA')}
-                                        </span>
+                            <div key={req._id} onClick={() => onSelectBooking(req)} style={{ background: isCancelled ? '#f8fafc' : (isCompleted ? '#faf8ff' : 'white'), borderRadius: 24, padding: 24, boxShadow: (isCancelled || isCompleted) ? 'none' : '0 10px 30px rgba(0,0,0,0.03)', border: isCancelled ? '2px dashed #e2e8f0' : '1px solid rgba(195, 198, 214, 0.1)', opacity: isCancelled ? 0.7 : 1, filter: isCancelled ? 'grayscale(100%)' : 'none' }}>
+                                <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+                                    <img
+                                        src={req.service?.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.service?.title || 'S')}&background=f3f3fd&color=003d9b`}
+                                        style={{ width: 80, height: 80, borderRadius: 16, objectFit: 'cover', flexShrink: 0, border: '1px solid #f1f5f9' }}
+                                        alt=""
+                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(req.service?.title || 'S')}&background=f3f3fd&color=003d9b`; }}
+                                    />
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                            <Badge status={req.status} />
+                                        </div>
+                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#191b23', marginBottom: 4, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.service?.title}</h3>
+                                        <p style={{ fontSize: 14, color: '#434654', margin: 0, fontWeight: 600 }}>{req.customerName || req.user?.name || req.user?.username || 'User'}</p>
                                     </div>
                                 </div>
-                                <p style={{ fontSize: 24, fontWeight: 900, color: PC, margin: 0 }}>₹{req.price || req.totalPrice || '0'}</p>
-                            </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); onSelectBooking(req); }} 
-                                    style={{ width: '100%', padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.2)', borderRadius: 16, color: '#434654', background: '#f8f9fc', fontWeight: 800, fontSize: 12 }}
-                                >View Order Details</button>
-
-                                {req.status === 'pending' && (
-                                    <div style={{ display: 'flex', gap: 12 }}>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'cancelled'); }} 
-                                            style={{ flex: 1, padding: '12px 0', borderRadius: 16, background: '#ffdad6', color: '#93000a', border: 'none', fontWeight: 800, fontSize: 12 }}
-                                        >Decline</button>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'confirmed'); }} 
-                                            style={{ flex: 1, padding: '12px 0', borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
-                                        >Accept Request</button>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
+                                            <Phone size={16} />
+                                            <span style={{ fontSize: 12, fontWeight: 500 }}>
+                                                {['completed', 'cancelled'].includes(req.status) ? 'Hidden' : (req.customerPhone || req.user?.phone || 'Phone not provided')}
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
+                                            <CalendarIcon size={16} />
+                                            <span style={{ fontSize: 12, fontWeight: 500 }}>{new Date(req.createdAt).toLocaleDateString()} | {req.slot || 'TBA'}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
+                                            <MapPin size={16} />
+                                            <span style={{ fontSize: 12, fontWeight: 500 }}>
+                                                {typeof req.address === 'object'
+                                                    ? (`${req.address?.street || ''}, ${req.address?.city || ''}`.trim() || 'Location TBA')
+                                                    : (req.address || 'Location TBA')}
+                                            </span>
+                                        </div>
                                     </div>
-                                )}
+                                    <p style={{ fontSize: 24, fontWeight: 900, color: PC, margin: 0 }}>₹{req.price || req.totalPrice || '0'}</p>
+                                </div>
 
-                                {req.status === 'confirmed' && (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'in_progress'); }} 
-                                            style={{ width: '100%', padding: '12px 0', borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
-                                        >Mark In Progress</button>
-                                        <button 
-                                            onClick={(e) => { 
-                                                e.stopPropagation(); 
-                                                const link = req.address?.googleMapLink || (req.address?.lat && req.address?.lng ? `https://www.google.com/maps?q=${req.address.lat},${req.address.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.address?.street || ''} ${req.address?.city || ''} ${req.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
-                                                window.open(link, '_blank'); 
-                                            }} 
-                                            style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '1px solid #e2e8f0', color: '#1e293b', background: '#f8f9fc', fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-                                        >
-                                            <MapPin size={16} /> Show Live Location
-                                        </button>
-                                    </div>
-                                )}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onSelectBooking(req); }}
+                                        style={{ width: '100%', padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.2)', borderRadius: 16, color: '#434654', background: '#f8f9fc', fontWeight: 800, fontSize: 12 }}
+                                    >View Order Details</button>
 
-                                {['in_progress', 'revision_requested'].includes(req.status) && (
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); onDeliverClick(req._id); }} 
-                                        style={{ width: '100%', padding: '12px 0', borderRadius: 16, background: '#059669', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
-                                    >Deliver Service</button>
-                                )}
-                                <div style={{ display: 'flex', gap: 12 }}>
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: req._id, otherUser: req.user }); }} 
-                                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 8px', border: `1.5px solid ${PL}`, borderRadius: 16, color: PC, background: 'white', fontWeight: 800, fontSize: 12 }}
-                                    >
-                                        <MessageSquare size={16} /> Message
-                                    </button>
-                                    {req.revisions?.length > 0 && (
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); onShowRevisions(req); }} 
-                                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 8px', border: 'none', borderRadius: 16, color: '#003d9b', background: '#f0f7ff', fontWeight: 800, fontSize: 12 }}
-                                        >
-                                            <History size={16} /> Revisions ({req.revisions.length})
-                                        </button>
+                                    {req.status === 'pending' && (
+                                        <div style={{ display: 'flex', gap: 12 }}>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'cancelled'); }}
+                                                style={{ flex: 1, padding: '12px 0', borderRadius: 16, background: '#ffdad6', color: '#93000a', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                            >Decline</button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'confirmed'); }}
+                                                style={{ flex: 1, padding: '12px 0', borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                            >Accept Request</button>
+                                        </div>
                                     )}
+
+                                    {req.status === 'confirmed' && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'in_progress'); }}
+                                                style={{ width: '100%', padding: '12px 0', borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                            >Mark In Progress</button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const link = req.address?.googleMapLink || (req.address?.lat && req.address?.lng ? `https://www.google.com/maps?q=${req.address.lat},${req.address.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.address?.street || ''} ${req.address?.city || ''} ${req.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
+                                                    window.open(link, '_blank');
+                                                }}
+                                                style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '1px solid #e2e8f0', color: '#1e293b', background: '#f8f9fc', fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                                            >
+                                                <MapPin size={16} /> Show Live Location
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {['in_progress', 'revision_requested'].includes(req.status) && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onDeliverClick(req._id); }}
+                                            style={{ width: '100%', padding: '12px 0', borderRadius: 16, background: '#059669', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                        >Deliver Service</button>
+                                    )}
+                                    <div style={{ display: 'flex', gap: 12 }}>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: req._id, otherUser: req.user }); }}
+                                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 8px', border: `1.5px solid ${PL}`, borderRadius: 16, color: PC, background: 'white', fontWeight: 800, fontSize: 12 }}
+                                        >
+                                            <MessageSquare size={16} /> Message
+                                        </button>
+                                        {req.revisions?.length > 0 && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onShowRevisions(req); }}
+                                                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 8px', border: 'none', borderRadius: 16, color: '#003d9b', background: '#f0f7ff', fontWeight: 800, fontSize: 12 }}
+                                            >
+                                                <History size={16} /> Revisions ({req.revisions.length})
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                         );
                     })}
                 </div>
@@ -1126,90 +1204,90 @@ function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onS
                         const isCancelled = ['cancelled', 'rejected'].includes(b.status);
                         const isCompleted = b.status === 'completed';
                         return (
-                        <div key={b._id} onClick={() => onSelectBooking(b)} style={{ background: isCancelled ? '#f8fafc' : (isCompleted ? '#faf8ff' : 'white'), borderRadius: 24, padding: 24, boxShadow: (isCancelled || isCompleted) ? 'none' : '0 10px 30px rgba(0,0,0,0.03)', border: isCancelled ? '2px dashed #e2e8f0' : '1px solid rgba(195, 198, 214, 0.2)', opacity: isCancelled ? 0.7 : 1, filter: isCancelled ? 'grayscale(100%)' : 'none' }}>
-                            <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                                <img 
-                                    src={b.service?.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(b.service?.title || 'S')}&background=f3f3fd&color=003d9b`} 
-                                    style={{ width: 80, height: 80, borderRadius: 16, objectFit: 'cover', flexShrink: 0, border: '1px solid #f1f5f9' }}
-                                    alt=""
-                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(b.service?.title || 'S')}&background=f3f3fd&color=003d9b`; }}
-                                />
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                                        <Badge status={b.status} />
-                                    </div>
-                                    <h3 style={{ fontSize: 18, fontWeight: 800, color: '#191b23', marginBottom: 4, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.service?.title}</h3>
-                                    <p style={{ fontSize: 14, color: '#434654', margin: 0, fontWeight: 500 }}>Provider: {b.provider?.name || 'Sushant'}</p>
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
-                                        <CalendarIcon size={16} />
-                                        <span style={{ fontSize: 12, fontWeight: 500 }}>{new Date(b.createdAt).toLocaleDateString()} | {b.slot || 'TBA'}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
-                                        <MapPin size={16} />
-                                        <span style={{ fontSize: 12, fontWeight: 500 }}>
-                                            {typeof b.address === 'object' 
-                                                ? (`${b.address?.street || ''}, ${b.address?.city || ''}`.trim() || 'Location TBA')
-                                                : (b.address || 'Location TBA')}
-                                        </span>
+                            <div key={b._id} onClick={() => onSelectBooking(b)} style={{ background: isCancelled ? '#f8fafc' : (isCompleted ? '#faf8ff' : 'white'), borderRadius: 24, padding: 24, boxShadow: (isCancelled || isCompleted) ? 'none' : '0 10px 30px rgba(0,0,0,0.03)', border: isCancelled ? '2px dashed #e2e8f0' : '1px solid rgba(195, 198, 214, 0.2)', opacity: isCancelled ? 0.7 : 1, filter: isCancelled ? 'grayscale(100%)' : 'none' }}>
+                                <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+                                    <img
+                                        src={b.service?.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(b.service?.title || 'S')}&background=f3f3fd&color=003d9b`}
+                                        style={{ width: 80, height: 80, borderRadius: 16, objectFit: 'cover', flexShrink: 0, border: '1px solid #f1f5f9' }}
+                                        alt=""
+                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(b.service?.title || 'S')}&background=f3f3fd&color=003d9b`; }}
+                                    />
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                            <Badge status={b.status} />
+                                        </div>
+                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#191b23', marginBottom: 4, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.service?.title}</h3>
+                                        <p style={{ fontSize: 14, color: '#434654', margin: 0, fontWeight: 500 }}>Provider: {b.provider?.name || 'Sushant'}</p>
                                     </div>
                                 </div>
-                                <p style={{ fontSize: 24, fontWeight: 900, color: PC, margin: 0 }}>₹{b.price || b.totalPrice || '0'}</p>
-                            </div>
 
-                            {/* Buttons based on status */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); onSelectBooking(b); }} 
-                                    style={{ width: '100%', height: 44, padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.2)', borderRadius: 16, color: '#434654', background: '#f8f9fc', fontWeight: 800, fontSize: 12 }}
-                                >View Details</button>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
+                                            <CalendarIcon size={16} />
+                                            <span style={{ fontSize: 12, fontWeight: 500 }}>{new Date(b.createdAt).toLocaleDateString()} | {b.slot || 'TBA'}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}>
+                                            <MapPin size={16} />
+                                            <span style={{ fontSize: 12, fontWeight: 500 }}>
+                                                {typeof b.address === 'object'
+                                                    ? (`${b.address?.street || ''}, ${b.address?.city || ''}`.trim() || 'Location TBA')
+                                                    : (b.address || 'Location TBA')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <p style={{ fontSize: 24, fontWeight: 900, color: PC, margin: 0 }}>₹{b.price || b.totalPrice || '0'}</p>
+                                </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: (b.status === 'delivered' || b.status === 'completed') ? '1fr 1fr' : '1fr', gap: 12 }}>
-                                    {b.status === 'delivered' ? (
-                                        <>
-                                            <button 
-                                                onClick={(e) => { e.stopPropagation(); onRequestRevision(b); }} 
-                                                style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 800, fontSize: 12 }}
-                                            >Request Revision</button>
-                                            <button 
-                                                onClick={(e) => { e.stopPropagation(); updateBookingStatus(b._id, 'completed'); }} 
-                                                style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
-                                            >Accept & Complete</button>
-                                        </>
-                                    ) : b.status === 'completed' ? (
-                                        <>
-                                            <button 
-                                                onClick={(e) => { e.stopPropagation(); navigate(`/invoice/${b._id}`); }} 
-                                                style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 800, fontSize: 12 }}
-                                            >View Receipt</button>
-                                            <button 
-                                                onClick={(e) => { e.stopPropagation(); navigate(`/services/${b.service?._id || b.service}`); }} 
-                                                style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
-                                            >Rate Professional</button>
-                                        </>
-                                    ) : (
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: b._id, otherUser: b.provider }); }} 
-                                            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, padding: '12px 0', border: `1.5px solid ${PL}`, borderRadius: 16, color: PC, background: 'white', fontWeight: 800, fontSize: 12 }}
+                                {/* Buttons based on status */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onSelectBooking(b); }}
+                                        style={{ width: '100%', height: 44, padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.2)', borderRadius: 16, color: '#434654', background: '#f8f9fc', fontWeight: 800, fontSize: 12 }}
+                                    >View Details</button>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: (b.status === 'delivered' || b.status === 'completed') ? '1fr 1fr' : '1fr', gap: 12 }}>
+                                        {b.status === 'delivered' ? (
+                                            <>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); onRequestRevision(b); }}
+                                                    style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                                >Request Revision</button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); updateBookingStatus(b._id, 'completed'); }}
+                                                    style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                                >Accept & Complete</button>
+                                            </>
+                                        ) : b.status === 'completed' ? (
+                                            <>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); navigate(`/invoice/${b._id}`); }}
+                                                    style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                                >View Receipt</button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); navigate(`/services/${b.service?._id || b.service}`); }}
+                                                    style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}
+                                                >Rate Professional</button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: b._id, otherUser: b.provider }); }}
+                                                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 44, padding: '12px 0', border: `1.5px solid ${PL}`, borderRadius: 16, color: PC, background: 'white', fontWeight: 800, fontSize: 12 }}
+                                            >
+                                                <MessageSquare size={16} /> Message Provider
+                                            </button>
+                                        )}
+                                    </div>
+                                    {b.revisions?.length > 0 && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onShowRevisions(b); }}
+                                            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0', border: 'none', borderRadius: 16, color: '#003d9b', background: '#f0f7ff', fontWeight: 800, fontSize: 12, marginTop: 4 }}
                                         >
-                                            <MessageSquare size={16} /> Message Provider
+                                            <History size={16} /> View Revision History ({b.revisions.length})
                                         </button>
                                     )}
                                 </div>
-                                {b.revisions?.length > 0 && (
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); onShowRevisions(b); }} 
-                                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0', border: 'none', borderRadius: 16, color: '#003d9b', background: '#f0f7ff', fontWeight: 800, fontSize: 12, marginTop: 4 }}
-                                    >
-                                        <History size={16} /> View Revision History ({b.revisions.length})
-                                    </button>
-                                )}
                             </div>
-                        </div>
                         );
                     })}
                 </div>
@@ -1237,9 +1315,9 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
     const isPending = booking.status === 'pending';
 
     const distance = calculateDistance(
-        userLocation?.latitude, 
-        userLocation?.longitude, 
-        booking.address?.lat, 
+        userLocation?.latitude,
+        userLocation?.longitude,
+        booking.address?.lat,
         booking.address?.lng
     );
 
@@ -1259,12 +1337,12 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                             <span style={{ fontSize: 11, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Order ID: #{booking._id ? booking._id.slice(-8).toUpperCase() : 'N/A'}</span>
                             <span style={{ fontSize: 13, fontWeight: 800, color: PC }}>{role === 'provider' ? 'For' : 'With'}: {otherUser?.name || otherUser?.username || 'User'}</span>
                         </div>
-                        <div style={{ 
-                            backgroundColor: booking.status === 'pending' ? '#fff7ed' : ['confirmed', 'in_progress', 'delivered', 'completed'].includes(booking.status) ? '#f0fdf4' : '#fef2f2', 
-                            color: booking.status === 'pending' ? '#f97316' : ['confirmed', 'in_progress', 'delivered', 'completed'].includes(booking.status) ? '#22c55e' : '#ef4444', 
+                        <div style={{
+                            backgroundColor: booking.status === 'pending' ? '#fff7ed' : ['confirmed', 'in_progress', 'delivered', 'completed'].includes(booking.status) ? '#f0fdf4' : '#fef2f2',
+                            color: booking.status === 'pending' ? '#f97316' : ['confirmed', 'in_progress', 'delivered', 'completed'].includes(booking.status) ? '#22c55e' : '#ef4444',
                             padding: '4px 12px', borderRadius: 8, fontSize: 10, fontWeight: 900, textTransform: 'uppercase'
                         }}>
-                             {booking.status?.replace('_', ' ') || 'UNKNOWN'}
+                            {booking.status?.replace('_', ' ') || 'UNKNOWN'}
                         </div>
                     </div>
 
@@ -1297,14 +1375,14 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                         {detailRow('Customer Name', booking.customerName || booking.user?.name || 'Unknown')}
                         {detailRow('Customer Phone', ['completed', 'cancelled'].includes(booking.status) ? 'Hidden' : (booking.customerPhone || booking.user?.phone || 'Not provided'))}
                         {detailRow('Location', typeof booking.address === 'object' ? (`${booking.address?.street || ''}, ${booking.address?.city || ''}`.trim() || 'Standard') : (booking.address || 'Standard Location'))}
-                        
+
                         {booking.address?.googleMapLink && detailRow('Maps URL', <a href={booking.address.googleMapLink} target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', textDecoration: 'none', fontWeight: 800 }}>Visit Link 🔗</a>)}
 
                         {(booking.address?.googleMapLink || (booking.address?.lat && booking.address?.lng)) && (
                             <div style={{ padding: '16px 0', borderBottom: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 12 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>Interactive Map</span>
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             const link = booking.address.googleMapLink || `https://www.google.com/maps?q=${booking.address.lat},${booking.address.lng}`;
                                             window.open(link, '_blank');
@@ -1315,8 +1393,8 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                                     </button>
                                 </div>
                                 <div onClick={() => {
-                                     const link = booking.address.googleMapLink || `https://www.google.com/maps?q=${booking.address.lat},${booking.address.lng}`;
-                                     window.open(link, '_blank');
+                                    const link = booking.address.googleMapLink || `https://www.google.com/maps?q=${booking.address.lat},${booking.address.lng}`;
+                                    window.open(link, '_blank');
                                 }} style={{ width: '100%', height: 120, borderRadius: 16, background: '#f1f5f9', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
                                     <div style={{ position: 'absolute', inset: 0, opacity: 0.1, background: `repeating-linear-gradient(45deg, ${PC}, ${PC} 10px, transparent 10px, transparent 20px)` }}></div>
                                     <div style={{ textAlign: 'center', zIndex: 1 }}>
@@ -1334,9 +1412,9 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                         {role === 'provider' ? 'Customer Info' : 'Professional Info'}
                     </h4>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <img 
-                            src={otherUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser?.name || otherUser?.username || 'U')}`} 
-                            style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }} 
+                        <img
+                            src={otherUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser?.name || otherUser?.username || 'U')}`}
+                            style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }}
                             alt=""
                             onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=U&background=ede9fe&color=4f46e5`; }}
                         />
@@ -1348,10 +1426,10 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                     </div>
                 </div>
 
-                 {booking.status === 'completed' && (
+                {booking.status === 'completed' && (
                     <div style={{ marginTop: 12 }}>
-                        <button 
-                            onClick={() => navigate(`/invoice/${booking._id}`)} 
+                        <button
+                            onClick={() => navigate(`/invoice/${booking._id}`)}
                             style={{ width: '100%', padding: '16px', borderRadius: 16, background: '#f1f5f9', color: '#1e293b', border: '1px solid #e2e8f0', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
                         >
                             <Download size={20} /> View & Download Invoice
@@ -1369,12 +1447,12 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                 {role === 'provider' && booking.status === 'confirmed' && (
                     <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(booking._id, 'in_progress'); }} style={{ width: '100%', padding: '16px', borderRadius: 16, background: PC, color: 'white', border: 'none', fontWeight: 900 }}>Start Service</button>
-                        <button 
-                            onClick={(e) => { 
-                                e.stopPropagation(); 
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
                                 const link = booking.address?.googleMapLink || (booking.address?.lat && booking.address?.lng ? `https://www.google.com/maps?q=${booking.address.lat},${booking.address.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${booking.address?.street || ''} ${booking.address?.city || ''} ${booking.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
-                                window.open(link, '_blank'); 
-                            }} 
+                                window.open(link, '_blank');
+                            }}
                             style={{ width: '100%', padding: '16px', borderRadius: 16, background: '#f1f5f9', color: '#1e293b', border: '1px solid #e2e8f0', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
                         >
                             <MapPin size={20} /> Show Live Location
@@ -1390,8 +1468,8 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
 
                 {booking.revisions?.length > 0 && (
                     <div style={{ marginTop: 12 }}>
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onShowRevisions(booking); }} 
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onShowRevisions(booking); }}
                             style={{ width: '100%', padding: '16px', borderRadius: 16, background: '#f0f7ff', color: '#003d9b', border: '1px solid #e2e8f0', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
                         >
                             <History size={20} /> View Revision History ({booking.revisions.length})
@@ -1481,14 +1559,14 @@ function ProfileScreen({ user, profileAvatar, getAvatar, profileName, setProfile
                 </div>
                 <div>
                     <label style={labelStyle}>Phone Number</label>
-                    <input 
-                        value={profilePhone} 
+                    <input
+                        value={profilePhone}
                         onChange={e => {
                             const val = e.target.value.replace(/\D/g, '');
                             if (val.length <= 10) setProfilePhone(val);
-                        }} 
-                        style={inputStyle} 
-                        placeholder="10 digit number" 
+                        }}
+                        style={inputStyle}
+                        placeholder="10 digit number"
                     />
                 </div>
             </div>
@@ -1500,12 +1578,12 @@ function ProfileScreen({ user, profileAvatar, getAvatar, profileName, setProfile
                         <label style={labelStyle}>Professional Title</label>
                         <span style={{ fontSize: 10, color: (providerTitle?.length || 0) >= 25 ? '#ef4444' : '#94a3b8', fontWeight: 700 }}>{providerTitle?.length || 0}/25</span>
                     </div>
-                    <input 
-                        value={providerTitle} 
-                        onChange={e => providerTitleSetter(e.target.value)} 
+                    <input
+                        value={providerTitle}
+                        onChange={e => providerTitleSetter(e.target.value)}
                         maxLength={25}
-                        style={inputStyle} 
-                        placeholder="e.g. Master Electrician" 
+                        style={inputStyle}
+                        placeholder="e.g. Master Electrician"
                     />
                 </div>
                 <div>
@@ -1513,13 +1591,13 @@ function ProfileScreen({ user, profileAvatar, getAvatar, profileName, setProfile
                         <label style={labelStyle}>About Me / Bio</label>
                         <span style={{ fontSize: 10, color: (providerAbout?.length || 0) >= 50 ? '#ef4444' : '#94a3b8', fontWeight: 700 }}>{providerAbout?.length || 0}/50</span>
                     </div>
-                    <textarea 
-                        value={providerAbout} 
-                        onChange={e => providerAboutSetter(e.target.value)} 
+                    <textarea
+                        value={providerAbout}
+                        onChange={e => providerAboutSetter(e.target.value)}
                         maxLength={50}
-                        rows={3} 
-                        style={{ ...inputStyle, resize: 'none' }} 
-                        placeholder="Short bio (max 50 characters)" 
+                        rows={3}
+                        style={{ ...inputStyle, resize: 'none' }}
+                        placeholder="Short bio (max 50 characters)"
                     />
                 </div>
             </div>
@@ -1539,8 +1617,8 @@ function ProfileScreen({ user, profileAvatar, getAvatar, profileName, setProfile
 
 function AdminScreen({ allUsers, usersLoading, handleUpdateUserRole, handleToggleUserBan, setActiveTab }) {
     const [searchTerm, setSearchTerm] = useState('');
-    const filteredUsers = allUsers?.filter(u => 
-        u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const filteredUsers = allUsers?.filter(u =>
+        u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -1549,11 +1627,11 @@ function AdminScreen({ allUsers, usersLoading, handleUpdateUserRole, handleToggl
             <main style={{ padding: '24px 16px 120px' }}>
                 <div style={{ position: 'relative', marginBottom: 24 }}>
                     <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                    <input 
-                        value={searchTerm} 
+                    <input
+                        value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        placeholder="Search users by name or email..." 
-                        style={{ width: '100%', padding: '14px 16px 14px 44px', borderRadius: 16, border: '2px solid #f1f5f9', background: 'white', fontSize: '0.9rem' }} 
+                        placeholder="Search users by name or email..."
+                        style={{ width: '100%', padding: '14px 16px 14px 44px', borderRadius: 16, border: '2px solid #f1f5f9', background: 'white', fontSize: '0.9rem' }}
                     />
                 </div>
 
@@ -1575,10 +1653,10 @@ function AdminScreen({ allUsers, usersLoading, handleUpdateUserRole, handleToggl
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div style={{ display: 'flex', gap: 8 }}>
-                                <select 
-                                    value={u.role} 
+                                <select
+                                    value={u.role}
                                     onChange={(e) => handleUpdateUserRole(u._id, e.target.value)}
                                     style={{ flex: 1, padding: '10px', borderRadius: 12, border: '1px solid #f1f5f9', fontSize: '0.8rem', background: '#f8fafc', fontWeight: 700 }}
                                 >
@@ -1586,12 +1664,12 @@ function AdminScreen({ allUsers, usersLoading, handleUpdateUserRole, handleToggl
                                     <option value="provider">Provider</option>
                                     <option value="admin">Admin</option>
                                 </select>
-                                <button 
+                                <button
                                     onClick={() => handleToggleUserBan(u._id)}
-                                    style={{ 
-                                        flex: 1, padding: '10px', borderRadius: 12, border: 'none', 
-                                        background: u.isBanned ? '#10b981' : '#ef4444', 
-                                        color: 'white', fontSize: '0.8rem', fontWeight: 800 
+                                    style={{
+                                        flex: 1, padding: '10px', borderRadius: 12, border: 'none',
+                                        background: u.isBanned ? '#10b981' : '#ef4444',
+                                        color: 'white', fontSize: '0.8rem', fontWeight: 800
                                     }}
                                 >
                                     {u.isBanned ? 'Unban Account' : 'Ban Account'}
@@ -1606,65 +1684,134 @@ function AdminScreen({ allUsers, usersLoading, handleUpdateUserRole, handleToggl
 }
 
 /* ─── Payments Screen ─── */
-function PaymentsScreen({ stats, bookingRequests, setActiveTab, onMenuClick }) {
+function PaymentsScreen({ stats, bookingRequests, setActiveTab, onWithdrawClick, withdrawals, withdrawalsLoading }) {
     const transactions = (bookingRequests || []).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed');
+    const [view, setView] = useState('transactions'); // 'transactions' or 'withdrawals'
+
+    const availableBalance = ((stats?.totalEarnings || 0) - (stats?.withdrawnAmount || 0) - (stats?.pendingWithdrawnAmount || 0));
 
     return (
-        <Shell title="Wallet & Payments" onBack={() => setActiveTab('overview')} onMenuClick={onMenuClick}>
+        <Shell title="Wallet & Payments" onBack={() => setActiveTab('overview')}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 100 }}>
                 {/* Balance Card */}
-                <div style={{ background: PC, borderRadius: 28, padding: 28, color: 'white', position: 'relative', overflow: 'hidden', boxShadow: '0 15px 30px rgba(0,61,155,0.2)' }}>
+                <div style={{ background: PC, borderRadius: 28, padding: 24, color: 'white', position: 'relative', overflow: 'hidden', boxShadow: '0 15px 30px rgba(0,61,155,0.2)' }}>
                     <div style={{ position: 'absolute', right: -20, bottom: -20, opacity: 0.1 }}>
                         <Wallet size={120} color="white" />
                     </div>
-                    <p style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8, marginBottom: 8 }}>Total Earned</p>
-                    <h2 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0 }}>₹{stats?.totalEarnings?.toLocaleString() || '0'}</h2>
-                    
-                    <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
-                        <div style={{ background: 'rgba(255,255,255,0.15)', padding: '12px 16px', borderRadius: 16, flex: 1 }}>
-                            <span style={{ display: 'block', fontSize: 10, fontWeight: 700, opacity: 0.8 }}>Available</span>
-                            <span style={{ fontSize: '1.2rem', fontWeight: 900 }}>₹{(stats?.totalEarnings - (stats?.withdrawnAmount || 0)).toLocaleString()}</span>
-                        </div>
-                        <button style={{ background: 'white', color: PC, border: 'none', borderRadius: 16, padding: '0 20px', fontWeight: 900, fontSize: 12 }}>Withdraw</button>
-                    </div>
-                </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div style={{ background: 'white', borderRadius: 20, padding: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
-                        <p style={{ fontSize: 10, color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Last 30 Days</p>
-                        <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e293b', marginTop: 4 }}>₹{Math.round((stats?.totalEarnings || 0) * 0.35).toLocaleString()}</h4>
-                    </div>
-                    <div style={{ background: 'white', borderRadius: 20, padding: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
-                        <p style={{ fontSize: 10, color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>In Escrow</p>
-                        <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e293b', marginTop: 4 }}>₹{Math.round((stats?.totalEarnings || 0) * 0.1).toLocaleString()}</h4>
-                    </div>
-                </div>
+                    <div style={{ position: 'relative', zIndex: 1 }}>
+                        <p style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8, marginBottom: 8 }}>Available for Withdrawal</p>
+                        <h2 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, letterSpacing: '-1px' }}>₹{availableBalance.toLocaleString()}</h2>
 
-                {/* Transactions */}
-                <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e293b', marginBottom: 16, marginLeft: 4 }}>Recent Transactions</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {transactions.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '40px 20px', background: 'white', borderRadius: 24, border: '1px dashed #e2e8f0' }}>
-                                <Loader size={32} color="#cbd5e1" style={{ marginBottom: 12 }} />
-                                <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No successful transactions yet.</p>
+                        <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
+                            <div style={{ background: 'rgba(255,255,255,0.15)', padding: '10px 14px', borderRadius: 16, flex: 1 }}>
+                                <span style={{ display: 'block', fontSize: 9, fontWeight: 700, opacity: 0.8, textTransform: 'uppercase' }}>Pending</span>
+                                <span style={{ fontSize: '1.1rem', fontWeight: 900 }}>₹{(stats?.pendingWithdrawnAmount || 0).toLocaleString()}</span>
                             </div>
-                        ) : (
-                            transactions.map((tx, idx) => (
-                                <div key={idx} style={{ background: 'white', borderRadius: 24, padding: 16, display: 'flex', alignItems: 'center', gap: 14, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
-                                    <div style={{ width: 44, height: 44, borderRadius: 14, background: PL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                        <CheckCircle size={20} color={PC} />
+                            <button
+                                onClick={onWithdrawClick}
+                                style={{ background: 'white', color: PC, border: 'none', borderRadius: 16, padding: '0 24px', fontWeight: 900, fontSize: 14, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                            >
+                                Withdraw
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+                    <div style={{ background: 'white', borderRadius: 24, padding: 20, border: '1px solid #f1f5f9', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 16, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <TrendingUp size={24} color="#3b82f6" />
+                        </div>
+                        <div>
+                            <p style={{ fontSize: 10, color: '#64748b', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4, letterSpacing: '0.5px' }}>Gross Earnings (Paid + Pending)</p>
+                            <h4 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>₹{stats?.grossEarnings?.toLocaleString() || '0'}</h4>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div style={{ background: 'white', borderRadius: 20, padding: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
+                            <p style={{ fontSize: 9, color: '#64748b', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>Total Withdrawn</p>
+                            <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e293b', margin: 0 }}>₹{stats?.withdrawnAmount?.toLocaleString() || '0'}</h4>
+                        </div>
+                        <div style={{ background: 'white', borderRadius: 20, padding: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
+                            <p style={{ fontSize: 9, color: '#64748b', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>Pending Payout</p>
+                            <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#f59e0b', margin: 0 }}>₹{stats?.pendingWithdrawnAmount?.toLocaleString() || '0'}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Tabs */}
+                <div style={{ display: 'flex', background: '#f1f5f9', padding: 4, borderRadius: 14, marginTop: 8 }}>
+                    <button
+                        onClick={() => setView('transactions')}
+                        style={{ flex: 1, padding: '10px', borderRadius: 10, border: 'none', background: view === 'transactions' ? 'white' : 'transparent', color: view === 'transactions' ? PC : '#64748b', fontWeight: 800, fontSize: 13, boxShadow: view === 'transactions' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}
+                    >
+                        Transactions
+                    </button>
+                    <button
+                        onClick={() => setView('withdrawals')}
+                        style={{ flex: 1, padding: '10px', borderRadius: 10, border: 'none', background: view === 'withdrawals' ? 'white' : 'transparent', color: view === 'withdrawals' ? PC : '#64748b', fontWeight: 800, fontSize: 13, boxShadow: view === 'withdrawals' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}
+                    >
+                        Withdrawals
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {view === 'transactions' ? (
+                            transactions.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: 28, border: '1px dashed #e2e8f0' }}>
+                                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                                        <History size={24} color="#cbd5e1" />
                                     </div>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.service?.title || 'Service Payment'}</h4>
-                                        <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{new Date(tx.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} · {tx.user?.name || 'Customer'}</p>
-                                    </div>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <p style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#10b981' }}>+₹{tx.totalPrice?.toLocaleString()}</p>
-                                        <p style={{ margin: '2px 0 0', fontSize: 9, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase' }}>{tx.paymentStatus}</p>
-                                    </div>
+                                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 500 }}>No successful transactions yet.</p>
                                 </div>
-                            ))
+                            ) : (
+                                transactions.map((tx, idx) => (
+                                    <div key={idx} style={{ background: 'white', borderRadius: 24, padding: 16, display: 'flex', alignItems: 'center', gap: 14, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                                        <div style={{ width: 44, height: 44, borderRadius: 14, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                            <CheckCircle size={20} color="#10b981" />
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tx.service?.title || 'Service Payment'}</h4>
+                                            <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{new Date(tx.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} · {tx.user?.name || 'Customer'}</p>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#10b981' }}>+₹{tx.totalPrice?.toLocaleString()}</p>
+                                            <p style={{ margin: '2px 0 0', fontSize: 9, fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase' }}>{tx.paymentStatus}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            )
+                        ) : (
+                            withdrawalsLoading ? (
+                                <div style={{ textAlign: 'center', padding: 40 }}><Loader className="animate-spin" /></div>
+                            ) : withdrawals.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: 28, border: '1px dashed #e2e8f0' }}>
+                                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                                        <DollarSign size={24} color="#cbd5e1" />
+                                    </div>
+                                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 500 }}>No withdrawal history yet.</p>
+                                </div>
+                            ) : (
+                                withdrawals.map((w, idx) => (
+                                    <div key={idx} style={{ background: 'white', borderRadius: 24, padding: 16, display: 'flex', alignItems: 'center', gap: 14, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                                        <div style={{ width: 44, height: 44, borderRadius: 14, background: w.status === 'successful' ? '#f0fdf4' : (w.status === 'pending' ? '#fffbeb' : '#fef2f2'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                            {w.status === 'successful' ? <CheckCircle size={20} color="#10b981" /> : (w.status === 'pending' ? <Clock size={20} color="#f59e0b" /> : <XCircle size={20} color="#ef4444" />)}
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>Payout Request</h4>
+                                            <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{w.createdAt ? new Date(w.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</p>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#1e293b' }}>-₹{w.amount?.toLocaleString()}</p>
+                                            <p style={{ margin: '2px 0 0', fontSize: 9, fontWeight: 900, color: w.status === 'successful' ? '#10b981' : (w.status === 'pending' ? '#f59e0b' : '#ef4444'), textTransform: 'uppercase' }}>{w.status}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            )
                         )}
                     </div>
                 </div>
@@ -1701,11 +1848,11 @@ function BecomeProviderScreen({ handleApplyProvider, isSubmitting, setActiveTab 
                     ))}
                 </div>
 
-                <button 
-                    onClick={handleApplyProvider} 
+                <button
+                    onClick={handleApplyProvider}
                     disabled={isSubmitting}
-                    style={{ 
-                        width: '100%', padding: '20px', borderRadius: 20, border: 'none', 
+                    style={{
+                        width: '100%', padding: '20px', borderRadius: 20, border: 'none',
                         background: PC, color: 'white', fontSize: '1.1rem', fontWeight: 800,
                         boxShadow: '0 10px 20px rgba(0, 61, 155, 0.2)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12
@@ -1939,21 +2086,21 @@ function ServicesScreen(props) {
                         </div>
                         <input value={gigZipCode} onChange={e => setGigZipCode(e.target.value)} style={inputStyle} placeholder="Pin Code / Zip" />
                         <input value={gigAddress} onChange={e => setGigAddress(e.target.value)} style={inputStyle} placeholder="Full Street Address" />
-                        
+
                         <div style={{ marginBottom: 16 }}>
                             <label style={labelStyle}>Pin Location on Map</label>
                             <div style={{ height: 200, borderRadius: 16, overflow: 'hidden', border: '2px solid #f1f5f9' }}>
-                                <MapPicker 
-                                    lat={gigLat} 
-                                    lng={gigLng} 
-                                    onChange={(lat, lng) => { setGigLat(lat); setGigLng(lng); }} 
+                                <MapPicker
+                                    lat={gigLat}
+                                    lng={gigLng}
+                                    onChange={(lat, lng) => { setGigLat(lat); setGigLng(lng); }}
                                 />
                             </div>
                         </div>
 
                         <label style={labelStyle}>Coverage Pincodes (Comma separated)</label>
                         <input value={gigCoveragePincodes} onChange={e => setGigCoveragePincodes(e.target.value)} style={inputStyle} placeholder="e.g. 110001, 110002" />
-                        
+
                         <label style={labelStyle}>Google Maps Link (Optional)</label>
                         <input value={shopGoogleMapsLink} onChange={e => setShopGoogleMapsLink(e.target.value)} style={inputStyle} placeholder="https://goo.gl/maps/..." />
                     </div>
@@ -1977,7 +2124,7 @@ function ServicesScreen(props) {
 }
 function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, getAvatar, setActiveTab, navigate, providerTitle, providerAbout, onMenuClick, onShowRevisions }) {
     const pendingRevisions = (myBookings || []).filter(b => b.status === 'revision_requested');
-    
+
     return (
         <>
             <section style={{ background: `linear-gradient(135deg, ${PC} 0%, #1e40af 100%)`, padding: '64px 24px 100px', borderRadius: '0 0 32px 32px' }}>
@@ -2007,11 +2154,19 @@ function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, 
                     <p style={{ fontSize: 11, fontWeight: 800, color: '#64748b', letterSpacing: '1px', textTransform: 'uppercase' }}>
                         {role === 'provider' ? 'Total Earnings' : 'Total Invested'}
                     </p>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, margin: '8px 0' }}>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 800, color: PC }}>₹</span>
-                        <h2 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, letterSpacing: '-1px' }}>
-                            {role === 'provider' ? (stats?.totalEarnings?.toLocaleString() || 0) : (myBookings?.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.totalPrice || b.price || 0), 0).toLocaleString() || '0')}
-                        </h2>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', margin: '8px 0' }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 800, color: PC }}>₹</span>
+                            <h2 style={{ fontSize: '2.5rem', fontWeight: 900, margin: 0, letterSpacing: '-1px' }}>
+                                {role === 'provider' ? (stats?.totalEarnings?.toLocaleString() || 0) : (myBookings?.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.totalPrice || b.price || 0), 0).toLocaleString() || '0')}
+                            </h2>
+                        </div>
+                        {role === 'provider' && (
+                            <div style={{ textAlign: 'right' }}>
+                                <p style={{ fontSize: 9, fontWeight: 800, color: '#10b981', textTransform: 'uppercase', marginBottom: 2 }}>Available</p>
+                                <p style={{ fontSize: '1.1rem', fontWeight: 900, color: '#10b981', margin: 0 }}>₹{((stats.totalEarnings || 0) - (stats.withdrawnAmount || 0) - (stats.pendingWithdrawnAmount || 0)).toLocaleString()}</p>
+                            </div>
+                        )}
                     </div>
 
                     <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
@@ -2029,15 +2184,15 @@ function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, 
                 </div>
 
                 {role === 'customer' && (
-                    <div 
+                    <div
                         onClick={() => setActiveTab('become_provider')}
-                        style={{ 
-                            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', 
-                            borderRadius: 28, 
-                            padding: '24px', 
-                            color: 'white', 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        style={{
+                            background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                            borderRadius: 28,
+                            padding: '24px',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 16,
                             boxShadow: '0 15px 30px rgba(79, 70, 229, 0.2)',
                             cursor: 'pointer',
@@ -2045,8 +2200,8 @@ function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, 
                             overflow: 'hidden'
                         }}
                     >
-                        <div style={{ 
-                            position: 'absolute', right: -10, bottom: -10, opacity: 0.1, transform: 'rotate(-15deg)' 
+                        <div style={{
+                            position: 'absolute', right: -10, bottom: -10, opacity: 0.1, transform: 'rotate(-15deg)'
                         }}>
                             <Briefcase size={80} color="white" />
                         </div>
@@ -2115,7 +2270,7 @@ function OverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, 
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>Recent Activity</h3>
                         <button onClick={() => setActiveTab(role === 'provider' ? 'requests' : 'bookings')} style={{ background: 'none', border: 'none', color: '#0052cc', fontWeight: 700, fontSize: '0.85rem' }}>View All</button>
                     </div>
-                    
+
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         {myBookings?.length > 0 ? myBookings.slice(0, 3).map(b => (
                             <div key={b._id} onClick={() => setActiveTab(role === 'provider' ? 'requests' : 'bookings')} style={{ background: 'white', borderRadius: 20, padding: 16, display: 'flex', alignItems: 'center', gap: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
@@ -2239,17 +2394,17 @@ function ReviewsScreen({ setActiveTab, user, role }) {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #f1f5f9' }}>
-                                            <img 
-                                                src={review.service?.images?.[0] || (role === 'provider' ? review.user?.avatar : review.provider?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.service?.title || 'S')}&background=ede9fe&color=4f46e5`} 
-                                                alt="" 
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.service?.title || 'S')}&background=ede9fe&color=4f46e5`; }} 
+                                            <img
+                                                src={review.service?.images?.[0] || (role === 'provider' ? review.user?.avatar : review.provider?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.service?.title || 'S')}&background=ede9fe&color=4f46e5`}
+                                                alt=""
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.service?.title || 'S')}&background=ede9fe&color=4f46e5`; }}
                                             />
                                         </div>
                                         <div>
                                             <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '800', color: '#1e293b' }}>{role === 'provider' ? review.user?.name : review.provider?.name || 'Professional'}</h4>
                                             {review.service && (
-                                                <div 
+                                                <div
                                                     onClick={() => navigate(`/services/${review.service._id}`)}
                                                     style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#003d9b', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0, 61, 155, 0.05)', padding: '4px 8px', borderRadius: '6px', width: 'fit-content' }}
                                                 >
@@ -2264,34 +2419,34 @@ function ReviewsScreen({ setActiveTab, user, role }) {
                                         <Star size={12} fill="#d97706" color="#d97706" />
                                     </div>
                                 </div>
-                                
+
                                 {editingReviewId === review._id ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
                                         <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                                             {[1, 2, 3, 4, 5].map(star => (
-                                                <Star 
+                                                <Star
                                                     key={star}
-                                                    size={24} 
-                                                    fill={star <= editRating ? "#d97706" : "none"} 
-                                                    color={star <= editRating ? "#d97706" : "#cbd5e1"} 
+                                                    size={24}
+                                                    fill={star <= editRating ? "#d97706" : "none"}
+                                                    color={star <= editRating ? "#d97706" : "#cbd5e1"}
                                                     onClick={() => setEditRating(star)}
                                                 />
                                             ))}
                                         </div>
-                                        <textarea 
+                                        <textarea
                                             value={editComment}
                                             onChange={(e) => setEditComment(e.target.value)}
                                             style={{ width: '100%', height: '100px', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '12px', fontSize: '0.95rem', resize: 'none', outline: 'none' }}
                                             placeholder="Write your review here..."
                                         />
                                         <div style={{ display: 'flex', gap: '12px' }}>
-                                            <button 
+                                            <button
                                                 onClick={() => handleUpdateReview(review._id)}
                                                 style={{ flex: 1, padding: '12px', borderRadius: '10px', background: PC, color: '#fff', border: 'none', fontWeight: '700' }}
                                             >
                                                 Save
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => setEditingReviewId(null)}
                                                 style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#f1f5f9', color: '#64748b', border: 'none', fontWeight: '700' }}
                                             >
@@ -2305,7 +2460,7 @@ function ReviewsScreen({ setActiveTab, user, role }) {
                                             <MessageSquare size={14} color="#cbd5e1" style={{ position: 'absolute', top: '12px', left: '8px', opacity: 0.5 }} />
                                             <p style={{ color: '#334155', fontSize: '0.9rem', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>"{review.comment}"</p>
                                         </div>
-                                        
+
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
                                             <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                 <CalendarIcon size={12} />
@@ -2349,34 +2504,34 @@ function FavoritesScreen({ favorites, favoritesLoading, fetchFavorites, setActiv
                         <button onClick={() => navigate('/services')} style={{ background: PC, color: 'white', border: 'none', borderRadius: 100, padding: '14px 28px', fontWeight: 800, fontSize: '0.9rem', boxShadow: '0 10px 20px rgba(0,61,155,0.2)' }}>Browse Services</button>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
                         {favorites.map(srv => (
-                            <div 
-                                key={srv._id} 
-                                onClick={() => navigate(`/services/${srv._id}`)} 
-                                style={{ 
-                                    background: 'white', 
-                                    borderRadius: 24, 
-                                    overflow: 'hidden', 
-                                    display: 'flex', 
+                            <div
+                                key={srv._id}
+                                onClick={() => navigate(`/services/${srv._id}`)}
+                                style={{
+                                    background: 'white',
+                                    borderRadius: 24,
+                                    overflow: 'hidden',
+                                    display: 'flex',
                                     flexDirection: 'column',
-                                    border: '1px solid #f1f5f9', 
-                                    boxShadow: '0 10px 25px rgba(0,0,0,0.05)' 
+                                    border: '1px solid #f1f5f9',
+                                    boxShadow: '0 10px 25px rgba(0,0,0,0.05)'
                                 }}
                             >
-                                <div style={{ position: 'relative', width: '100%', height: 130 }}>
-                                    <img 
-                                        src={srv.images && srv.images.length > 0 ? srv.images[0] : (srv.provider?.avatar && srv.provider.avatar.startsWith('http') ? srv.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`)} 
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                        alt="" 
-                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`; }} 
+                                <div style={{ position: 'relative', width: '100%', height: 180 }}>
+                                    <img
+                                        src={srv.images && srv.images.length > 0 ? srv.images[0] : (srv.provider?.avatar && srv.provider.avatar.startsWith('http') ? srv.provider.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`)}
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        alt=""
+                                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`; }}
                                     />
                                     <div style={{ position: 'absolute', top: 12, left: 12 }}>
                                         <span style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: '4px 10px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '800', color: PC, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                                             {srv.category}
                                         </span>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={async (e) => {
                                             e.stopPropagation();
                                             if (user?.token) {
@@ -2391,7 +2546,7 @@ function FavoritesScreen({ favorites, favoritesLoading, fetchFavorites, setActiv
                                 </div>
                                 <div style={{ padding: 12, flex: 1, display: 'flex', flexDirection: 'column' }}>
                                     <h4 style={{ margin: '0 0 8px', fontSize: '1.05rem', fontWeight: 800, color: '#1e293b', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>{srv.title || 'Untitled Service'}</h4>
-                                    
+
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
                                         <Star size={14} fill="#fbbf24" color="#fbbf24" />
                                         <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{srv.rating || '4.8'}</span>
@@ -2414,13 +2569,13 @@ function FavoritesScreen({ favorites, favoritesLoading, fetchFavorites, setActiv
                                             <span style={{ fontWeight: 600, color: '#334155', fontSize: '0.85rem' }}>{srv.provider?.name || 'Professional'}</span>
                                         </div>
                                         {srv.businessType === 'shop' ? (
-                                            <button 
-                                                style={{ 
-                                                    backgroundColor: PC, 
-                                                    color: '#fff', 
-                                                    padding: '8px 16px', 
-                                                    borderRadius: '100px', 
-                                                    fontSize: '0.8rem', 
+                                            <button
+                                                style={{
+                                                    backgroundColor: PC,
+                                                    color: '#fff',
+                                                    padding: '8px 16px',
+                                                    borderRadius: '100px',
+                                                    fontSize: '0.8rem',
                                                     fontWeight: '700',
                                                     border: 'none',
                                                     display: 'flex',
@@ -2470,8 +2625,49 @@ export default function DashboardMobile(props) {
         handleSaveProfile, savingProfile, handleAvatarUpload, uploadingAvatar,
         handleEditClick,
         favorites, favoritesLoading, fetchFavorites,
-        showRevisions, setShowRevisions, bookingWithRevisions, setBookingWithRevisions
+        showRevisions, setShowRevisions, bookingWithRevisions, setBookingWithRevisions,
+        withdrawals, withdrawalsLoading, fetchWithdrawals, fetchStats
     } = props;
+
+
+    const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+    const [withdrawalAmount, setWithdrawalAmount] = useState('');
+    const [withdrawalMethod, setWithdrawalMethod] = useState('Bank Transfer');
+    const [withdrawalDetails, setWithdrawalDetails] = useState('');
+
+
+
+    const handleWithdrawRequest = async () => {
+        if (!withdrawalAmount || isNaN(withdrawalAmount) || Number(withdrawalAmount) <= 0) {
+            toast.error('Please enter a valid amount');
+            return;
+        }
+
+        const available = (stats.totalEarnings || 0) - (stats.withdrawnAmount || 0) - (stats.pendingWithdrawnAmount || 0);
+        if (Number(withdrawalAmount) > available) {
+            toast.error('Insufficient balance');
+            return;
+        }
+
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.post('/api/withdrawals', {
+                amount: Number(withdrawalAmount),
+                method: withdrawalMethod,
+                details: withdrawalDetails
+            }, config);
+            toast.success('Withdrawal request submitted');
+            setShowWithdrawModal(false);
+            setWithdrawalAmount('');
+            setWithdrawalDetails('');
+            fetchWithdrawals();
+            if (fetchStats) fetchStats();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Error submitting request');
+        }
+    };
+
+
 
     const filteredGigs = (myGigs || []).filter(gig => {
         const title = (gig?.title || '').toLowerCase();
@@ -2532,7 +2728,7 @@ export default function DashboardMobile(props) {
     useEffect(() => {
         const provId = new URLSearchParams(window.location.search).get('provider');
         const servId = new URLSearchParams(window.location.search).get('service');
-        
+
         if (provId && activeTab === 'chat' && !selectedRoom) {
             const fetchAndOpen = async () => {
                 try {
@@ -2553,14 +2749,14 @@ export default function DashboardMobile(props) {
 
     const renderScreen = () => {
         if (selectedRoom) return <ChatRoom user={user} room={selectedRoom} onBack={() => setSelectedRoom(null)} />;
-        
+
         if (selectedBooking) {
             return (
-                <BookingDetailsScreen 
-                    booking={selectedBooking} 
-                    userLocation={userLocation} 
-                    onBack={() => setSelectedBooking(null)} 
-                    onMessage={() => { setSelectedRoom({ roomId: selectedBooking._id, otherUser: role === 'provider' ? selectedBooking.user : selectedBooking.provider }); setSelectedBooking(null); }} 
+                <BookingDetailsScreen
+                    booking={selectedBooking}
+                    userLocation={userLocation}
+                    onBack={() => setSelectedBooking(null)}
+                    onMessage={() => { setSelectedRoom({ roomId: selectedBooking._id, otherUser: role === 'provider' ? selectedBooking.user : selectedBooking.provider }); setSelectedBooking(null); }}
                     role={role}
                     updateBookingStatus={updateBookingStatus}
                     onDeliverClick={handleDeliverClick}
@@ -2572,12 +2768,12 @@ export default function DashboardMobile(props) {
 
         if (activeTab === 'requests') {
             return (
-                <RequestsScreen 
-                    bookingRequests={bookingRequests} 
-                    bookingsLoading={bookingsLoading} 
-                    updateBookingStatus={updateBookingStatus} 
-                    setActiveTab={setActiveTab} 
-                    navigate={navigate} 
+                <RequestsScreen
+                    bookingRequests={bookingRequests}
+                    bookingsLoading={bookingsLoading}
+                    updateBookingStatus={updateBookingStatus}
+                    setActiveTab={setActiveTab}
+                    navigate={navigate}
                     onSelectRoom={setSelectedRoom}
                     onSelectBooking={setSelectedBooking}
                     onDeliverClick={handleDeliverClick}
@@ -2589,16 +2785,16 @@ export default function DashboardMobile(props) {
 
         switch (activeTab) {
             case 'mygigs': return (
-                <GigsScreen 
-                    filteredGigs={filteredGigs} 
+                <GigsScreen
+                    filteredGigs={filteredGigs}
                     gigSearchQuery={gigSearchQuery}
                     setGigSearchQuery={setGigSearchQuery}
                     gigTypeFilter={gigTypeFilter}
                     setGigTypeFilter={setGigTypeFilter}
-                    gigsLoading={gigsLoading} 
-                    setActiveTab={setActiveTab} 
-                    navigate={navigate} 
-                    handleEditClick={handleEditClick} 
+                    gigsLoading={gigsLoading}
+                    setActiveTab={setActiveTab}
+                    navigate={navigate}
+                    handleEditClick={handleEditClick}
                     providerStatus={providerStatus}
                 />
             );
@@ -2608,7 +2804,16 @@ export default function DashboardMobile(props) {
             case 'requests': return <RequestsScreen bookingRequests={bookingRequests} bookingsLoading={bookingsLoading} updateBookingStatus={updateBookingStatus} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking} onShowRevisions={handleShowRevisions} />;
             case 'bookings': return <OrdersScreen myBookings={myBookings} bookingsLoading={bookingsLoading} updateBookingStatus={updateBookingStatus} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking} onShowRevisions={handleShowRevisions} onRequestRevision={handleRequestRevision} />;
             case 'chat': return <InboxScreen user={user} setActiveTab={setActiveTab} navigate={navigate} onSelectRoom={setSelectedRoom} />;
-            case 'payments': return <PaymentsScreen stats={stats} bookingRequests={bookingRequests} setActiveTab={setActiveTab} />;
+            case 'payments': return (
+                <PaymentsScreen
+                    stats={stats}
+                    bookingRequests={bookingRequests}
+                    setActiveTab={setActiveTab}
+                    onWithdrawClick={() => setShowWithdrawModal(true)}
+                    withdrawals={withdrawals}
+                    withdrawalsLoading={withdrawalsLoading}
+                />
+            );
             case 'profile': return <ProfileScreen user={user} profileAvatar={profileAvatar} getAvatar={getAvatar} profileName={profileName} setProfileName={setProfileName} profilePhone={profilePhone} setProfilePhone={setProfilePhone} profileUsername={profileUsername} setProfileUsername={setProfileUsername} providerTitle={providerTitle} providerAbout={providerAbout} providerTitleSetter={providerTitleSetter} providerAboutSetter={providerAboutSetter} handleSaveProfile={handleSaveProfile} savingProfile={savingProfile} uploadingAvatar={uploadingAvatar} handleAvatarUpload={handleAvatarUpload} role={role} setActiveTab={setActiveTab} />;
             case 'favorites': return <FavoritesScreen favorites={favorites} favoritesLoading={favoritesLoading} fetchFavorites={fetchFavorites} setActiveTab={setActiveTab} navigate={navigate} user={user} />;
             case 'reviews': return <ReviewsScreen user={user} role={role} setActiveTab={setActiveTab} />;
@@ -2619,22 +2824,34 @@ export default function DashboardMobile(props) {
     return (
         <div style={{ minHeight: '100dvh', backgroundColor: '#faf8ff', fontFamily: 'Inter, sans-serif' }}>
             {renderScreen()}
-            <RevisionHistoryModal 
-                isOpen={showRevisions} 
-                onClose={() => setShowRevisions(false)} 
-                revisions={bookingWithRevisions?.revisions || []} 
+            <RevisionHistoryModal
+                isOpen={showRevisions}
+                onClose={() => setShowRevisions(false)}
+                revisions={bookingWithRevisions?.revisions || []}
             />
-            <RevisionModal 
-                isOpen={!!bookingForRevision} 
-                onClose={() => setBookingForRevision(null)} 
+            <RevisionModal
+                isOpen={!!bookingForRevision}
+                onClose={() => setBookingForRevision(null)}
                 onSubmit={submitRevision}
                 note={revisionNote}
                 setNote={setRevisionNote}
             />
-            <PaymentModal 
-                isOpen={!!bookingForPayment} 
-                onClose={() => setBookingForPayment(null)} 
-                onSelect={confirmDelivery} 
+            <PaymentModal
+                isOpen={!!bookingForPayment}
+                onClose={() => setBookingForPayment(null)}
+                onSelect={confirmDelivery}
+            />
+            <WithdrawalModal
+                isOpen={showWithdrawModal}
+                onClose={() => setShowWithdrawModal(false)}
+                onSubmit={handleWithdrawRequest}
+                amount={withdrawalAmount}
+                setAmount={setWithdrawalAmount}
+                availableBalance={(stats.totalEarnings || 0) - (stats.withdrawnAmount || 0) - (stats.pendingWithdrawnAmount || 0)}
+                method={withdrawalMethod}
+                setMethod={setWithdrawalMethod}
+                details={withdrawalDetails}
+                setDetails={setWithdrawalDetails}
             />
             <DashboardMobileNav
                 activeTab={activeTab}

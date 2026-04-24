@@ -210,12 +210,52 @@ const DashboardDesktop = ({
     favoritesLoading,
     fetchFavorites,
     handleSaveProfile,
-    savingProfile
+    savingProfile,
+    fetchWithdrawals,
+    fetchStats,
+    withdrawals,
+    withdrawalsLoading
 }) => {
     const [bookingForPayment, setBookingForPayment] = useState(null);
     const [activeService, setActiveService] = useState(null);
     const [bookingFilter, setBookingFilter] = useState('all');
     const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
+    const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+    const [withdrawalAmount, setWithdrawalAmount] = useState('');
+    const [withdrawalMethod, setWithdrawalMethod] = useState('Bank Transfer');
+    const [withdrawalDetails, setWithdrawalDetails] = useState('');
+
+    const handleWithdrawRequest = async () => {
+        if (!withdrawalAmount || isNaN(withdrawalAmount) || Number(withdrawalAmount) <= 0) {
+            toast.error('Please enter a valid amount');
+            return;
+        }
+
+        const available = (stats.totalEarnings || 0) - (stats.withdrawnAmount || 0) - (stats.pendingWithdrawnAmount || 0);
+        if (Number(withdrawalAmount) > available) {
+            toast.error('Insufficient balance');
+            return;
+        }
+
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.post('/api/withdrawals', { 
+                amount: Number(withdrawalAmount),
+                method: withdrawalMethod,
+                details: withdrawalDetails
+            }, config);
+            toast.success('Withdrawal request submitted');
+            setShowWithdrawModal(false);
+            setWithdrawalAmount('');
+            setWithdrawalDetails('');
+            fetchWithdrawals();
+            if (fetchStats) fetchStats();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Error submitting request');
+        }
+    };
+
+
 
     const filteredGigs = (myGigs || []).filter(gig => {
         const title = (gig?.title || '').toLowerCase();
@@ -2390,137 +2430,166 @@ const DashboardDesktop = ({
 
             {activeTab === 'payments' && (
                 <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px', marginBottom: '32px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '32px' }}>
                         {/* Balance Overview */}
-                        <div style={{ gridColumn: 'span 4', backgroundColor: role === 'provider' ? '#003d9b' : '#0f172a', borderRadius: '24px', padding: '32px', color: 'white', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ backgroundColor: role === 'provider' ? '#003d9b' : '#0f172a', borderRadius: '24px', padding: '24px', color: 'white', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 30px rgba(0,61,155,0.1)' }}>
                             <div style={{ position: 'absolute', right: -20, bottom: -20, opacity: 0.1 }}>
                                 <Wallet size={120} />
                             </div>
-                            <p style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8, marginBottom: '8px' }}>{role === 'provider' ? 'Total Earnings' : 'Total Invested'}</p>
-                            <h2 style={{ fontSize: '2.5rem', fontWeight: '900', margin: 0 }}>₹{role === 'provider' ? (stats.totalEarnings?.toLocaleString() || '0') : myBookings.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.totalPrice || b.price || 0), 0).toLocaleString()}</h2>
+                            <div style={{ position: 'relative', zIndex: 10 }}>
+                                <p style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8, marginBottom: '8px' }}>{role === 'provider' ? 'Total Earnings' : 'Total Invested'}</p>
+                                <h2 style={{ fontSize: '2.5rem', fontWeight: '900', margin: 0 }}>₹{role === 'provider' ? (stats.totalEarnings?.toLocaleString() || '0') : myBookings.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.totalPrice || b.price || 0), 0).toLocaleString()}</h2>
+                            </div>
                             
                             {role === 'provider' ? (
-                                <div style={{ marginTop: '24px', display: 'flex', gap: '16px' }}>
-                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1 }}>
-                                        <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', opacity: 0.7 }}>Available</span>
-                                        <span style={{ fontSize: '1.25rem', fontWeight: '800' }}>₹{((stats.totalEarnings || 0) - (stats.withdrawnAmount || 0)).toLocaleString()}</span>
+                                <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.1)', padding: '16px', borderRadius: '16px', position: 'relative', zIndex: 10 }}>
+                                    <div>
+                                        <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', opacity: 0.7, marginBottom: '4px' }}>Available for Withdrawal</span>
+                                        <span style={{ fontSize: '1.15rem', fontWeight: '800' }}>₹{((stats.totalEarnings || 0) - (stats.withdrawnAmount || 0) - (stats.pendingWithdrawnAmount || 0)).toLocaleString()}</span>
                                     </div>
-                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <button className="btn-primary" style={{ background: 'white', color: '#003d9b', padding: '8px 16px', borderRadius: '12px', fontSize: '10px', fontWeight: '900', border: 'none' }}>WITHDRAW</button>
-                                    </div>
+                                    <button 
+                                        onClick={() => {
+                                            setShowWithdrawModal(true);
+                                            setWithdrawalAmount('');
+                                        }}
+                                        className="btn-primary" 
+                                        style={{ background: 'white', color: '#003d9b', padding: '8px 16px', borderRadius: '12px', fontSize: '10px', fontWeight: '900', border: 'none', cursor: 'pointer' }}
+                                    >WITHDRAW</button>
                                 </div>
                             ) : (
-                                <div style={{ marginTop: '24px', display: 'flex', gap: '16px' }}>
+                                <div style={{ marginTop: '24px', display: 'flex', gap: '12px', position: 'relative', zIndex: 10 }}>
                                     <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1 }}>
                                         <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', opacity: 0.7 }}>Completed Projects</span>
-                                        <span style={{ fontSize: '1.25rem', fontWeight: '800' }}>{myBookings.filter(b => b.status === 'completed').length}</span>
+                                        <span style={{ fontSize: '1.15rem', fontWeight: '800' }}>{myBookings.filter(b => b.status === 'completed').length}</span>
                                     </div>
                                     <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '16px', flex: 1 }}>
                                         <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', opacity: 0.7 }}>Active Services</span>
-                                        <span style={{ fontSize: '1.25rem', fontWeight: '800' }}>{myBookings.filter(b => ['pending', 'confirmed', 'in_progress'].includes(b.status)).length}</span>
+                                        <span style={{ fontSize: '1.15rem', fontWeight: '800' }}>{myBookings.filter(b => ['pending', 'confirmed', 'in_progress'].includes(b.status)).length}</span>
                                     </div>
                                 </div>
                             )}
                         </div>
 
                         {/* Stats Cards */}
-                        <div style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                            <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <ArrowDownLeft size={24} />
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: '12px', color: '#737685', fontWeight: '600' }}>{role === 'provider' ? 'Last 30 Days' : 'Recent Spending (30d)'}</p>
-                                    <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>₹{role === 'provider' ? Math.round((stats.totalEarnings || 0) * 0.35).toLocaleString() : Math.round(myBookings.filter(b => b.status === 'completed').reduce((sum, b) => sum + (b.totalPrice || b.price || 0), 0) * 0.35).toLocaleString()}</h4>
-                                </div>
+                        <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: '16px', border: '1px solid rgba(195, 198, 214, 0.2)' }}>
+                            <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <BarChart size={24} />
                             </div>
-                            <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '20px' }}>
-                                <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <CreditCard size={24} />
-                                </div>
-                                <div>
-                                    <p style={{ fontSize: '12px', color: '#737685', fontWeight: '600' }}>{role === 'provider' ? 'Active Orders Value' : 'Pending Obligations'}</p>
-                                    <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>₹{role === 'provider' ? bookingRequests.filter(b => b.status === 'confirmed' || b.status === 'in_progress').reduce((acc, b) => acc + (b.totalPrice || 0), 0).toLocaleString() : myBookings.filter(b => b.status === 'confirmed' || b.status === 'in_progress').reduce((acc, b) => acc + (b.totalPrice || 0), 0).toLocaleString()}</h4>
-                                </div>
+                            <div>
+                                <p style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>{role === 'provider' ? 'Gross Earnings' : 'Total Portfolio'}</p>
+                                <h4 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#1e293b', margin: 0 }}>₹{role === 'provider' ? (stats?.grossEarnings || 0).toLocaleString() : (stats?.totalEarnings || 0).toLocaleString()}</h4>
+                                {role === 'provider' && <p style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600', marginTop: '4px', margin: 0 }}>(Paid + Pending)</p>}
+                            </div>
+                        </div>
+
+                        <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: '16px', border: '1px solid rgba(195, 198, 214, 0.2)' }}>
+                            <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <ArrowDownLeft size={24} />
+                            </div>
+                            <div>
+                                <p style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>{role === 'provider' ? 'Total Withdrawn' : 'Spent'}</p>
+                                <h4 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#1e293b', margin: 0 }}>₹{role === 'provider' ? (stats?.withdrawnAmount || 0).toLocaleString() : '0'}</h4>
+                            </div>
+                        </div>
+
+                        <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: '16px', border: '1px solid rgba(195, 198, 214, 0.2)' }}>
+                            <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: '#fff7ed', color: '#f97316', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Clock size={24} />
+                            </div>
+                            <div>
+                                <p style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>{role === 'provider' ? 'Pending Payout' : 'Owed'}</p>
+                                <h4 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#1e293b', margin: 0 }}>₹{role === 'provider' ? (stats?.pendingWithdrawnAmount || 0).toLocaleString() : '0'}</h4>
                             </div>
                         </div>
                     </div>
 
-                    {/* Transaction History */}
-                    <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                            <h3 style={{ fontSize: '1.25rem', fontWeight: '800' }}>Payment Transactions</h3>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <button style={{ padding: '6px 16px', borderRadius: '100px', border: '1px solid #f1f5f9', background: '#f8fafc', fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Export CSV</button>
-                                <button style={{ padding: '6px 16px', borderRadius: '100px', border: '1px solid #f1f5f9', background: '#f8fafc', fontSize: '12px', fontWeight: '700', color: '#64748b' }}>Filters</button>
+                    <div style={{ display: 'grid', gridTemplateColumns: role === 'provider' ? '1fr 1fr' : '1fr', gap: '24px' }}>
+                        {/* Transaction History */}
+                        <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '24px' }}>Recent Transactions</h3>
+                            <div className="no-scrollbar" style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr style={{ textAlign: 'left', borderBottom: '1px solid #f1f5f9' }}>
+                                            <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Details</th>
+                                            <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Amount</th>
+                                            <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {(role === 'provider' ? bookingRequests : myBookings).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed').length === 0 ? (
+                                            <tr>
+                                                <td colSpan="3" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No transactions found</td>
+                                            </tr>
+                                        ) : (
+                                            (role === 'provider' ? bookingRequests : myBookings).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed').slice(0, 10).map((tx, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                                                    <td style={{ padding: '16px 8px' }}>
+                                                        <div style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b' }}>{tx.service?.title || 'Service Payment'}</div>
+                                                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(tx.createdAt).toLocaleDateString()}</div>
+                                                    </td>
+                                                    <td style={{ padding: '16px 8px' }}>
+                                                        <div style={{ fontSize: '14px', fontWeight: '800', color: role === 'provider' ? '#059669' : '#e11d48' }}>{role === 'provider' ? '+' : '-'}₹{tx.totalPrice || tx.price}</div>
+                                                    </td>
+                                                    <td style={{ padding: '16px 8px' }}>
+                                                        <span style={{ fontSize: '10px', fontWeight: '900', padding: '4px 8px', borderRadius: '6px', background: tx.paymentStatus === 'paid' ? '#ecfdf5' : '#fef3c7', color: tx.paymentStatus === 'paid' ? '#059669' : '#92400e', textTransform: 'uppercase' }}>{tx.paymentStatus || 'Pending'}</span>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
-                        <div className="no-scrollbar" style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
-                                <thead>
-                                    <tr style={{ textAlign: 'left', borderBottom: '1px solid #f1f5f9' }}>
-                                        <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Transaction / ID</th>
-                                        <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Date</th>
-                                        <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>User / Service</th>
-                                        <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Amount</th>
-                                        <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {(role === 'provider' ? bookingRequests : myBookings).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed').length === 0 ? (
-                                        <tr>
-                                            <td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                                                    <CreditCard size={40} style={{ opacity: 0.1 }} />
-                                                    <p>No successful transactions yet.</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        (role === 'provider' ? bookingRequests : myBookings).filter(b => b?.paymentStatus === 'paid' || b?.status === 'completed').map((tx, idx) => (
-                                            <tr key={idx} style={{ borderBottom: '1px solid #f8fafc', transition: 'all 0.2s ease' }} className="hover-bg-light">
-                                                <td style={{ padding: '20px 8px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: tx.paymentStatus === 'paid' ? '#ecfdf5' : '#fff7ed', color: tx.paymentStatus === 'paid' ? '#10b981' : '#f97316', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                                            {tx.paymentStatus === 'paid' ? <CheckCircle size={20} /> : <ArrowDownLeft size={20} />}
-                                                        </div>
-                                                        <div style={{ overflow: 'hidden' }}>
-                                                            <span style={{ display: 'block', fontSize: '14px', fontWeight: '800', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{role === 'provider' ? (tx.paymentStatus === 'paid' ? 'Payment Completed' : 'Incoming Transfer') : (tx.paymentStatus === 'paid' ? 'Payment Completed' : 'Outgoing Payment')}</span>
-                                                            <span style={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'monospace', letterSpacing: '0.5px' }}>ID: {tx._id?.toString()?.toUpperCase() || 'TXN'}</span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td style={{ padding: '20px 8px' }}>
-                                                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#475569' }}>
-                                                        {new Date(tx.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                                        <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8', fontWeight: '500' }}>{new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                    </div>
-                                                </td>
-                                                <td style={{ padding: '20px 8px' }}>
-                                                    <div>
-                                                        <span style={{ display: 'block', fontSize: '14px', fontWeight: '800', color: '#1e293b' }}>{role === 'provider' ? tx.user?.name : tx.provider?.name || 'Professional'}</span>
-                                                        <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>{tx.service?.title?.split(' ')?.slice(0, 3)?.join(' ') || 'Service Details'}...</span>
-                                                    </div>
-                                                </td>
-                                                <td style={{ padding: '20px 8px' }}>
-                                                    <div style={{ fontSize: '15px', fontWeight: '900', color: role === 'provider' ? '#059669' : '#1e293b' }}>{role === 'provider' ? '+' : '-'}₹{tx.totalPrice?.toLocaleString() || tx.price?.toLocaleString()}</div>
-                                                </td>
-                                                <td style={{ padding: '20px 8px' }}>
-                                                    <span style={{
-                                                        backgroundColor: tx.paymentStatus === 'paid' ? '#d1fae5' : '#fef3c7',
-                                                        color: tx.paymentStatus === 'paid' ? '#065f46' : '#92400e',
-                                                        fontSize: '10px', fontWeight: '900', padding: '6px 12px', borderRadius: '100px', textTransform: 'uppercase', letterSpacing: '0.5px'
-                                                    }}>
-                                                        {tx.paymentStatus || 'Pending'}
-                                                    </span>
-                                                </td>
+                        {/* Withdrawal History (Provider Only) */}
+                        {role === 'provider' && (
+                            <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '24px' }}>Withdrawal Requests</h3>
+                                <div className="no-scrollbar" style={{ overflowX: 'auto' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                        <thead>
+                                            <tr style={{ textAlign: 'left', borderBottom: '1px solid #f1f5f9' }}>
+                                                <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Date</th>
+                                                <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Amount</th>
+                                                <th style={{ padding: '16px 8px', fontSize: '12px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>Status</th>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                        </thead>
+                                        <tbody>
+                                            {withdrawalsLoading ? (
+                                                <tr><td colSpan="3" style={{ padding: '40px', textAlign: 'center' }}><Loader size={20} className="animate-spin" /></td></tr>
+                                            ) : withdrawals.length === 0 ? (
+                                                <tr><td colSpan="3" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No withdrawal requests</td></tr>
+                                            ) : (
+                                                withdrawals.map((w, idx) => (
+                                                    <tr key={idx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                                                        <td style={{ padding: '16px 8px' }}>
+                                                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#475569' }}>{new Date(w.createdAt).toLocaleDateString()}</div>
+                                                        </td>
+                                                        <td style={{ padding: '16px 8px' }}>
+                                                            <div style={{ fontSize: '14px', fontWeight: '800', color: '#1e293b' }}>₹{w.amount?.toLocaleString()}</div>
+                                                        </td>
+                                                        <td style={{ padding: '16px 8px' }}>
+                                                            <span style={{ 
+                                                                fontSize: '10px', 
+                                                                fontWeight: '900', 
+                                                                padding: '4px 8px', 
+                                                                borderRadius: '6px', 
+                                                                background: w.status === 'successful' ? '#ecfdf5' : (w.status === 'pending' ? '#eff6ff' : '#fef2f2'), 
+                                                                color: w.status === 'successful' ? '#059669' : (w.status === 'pending' ? '#2563eb' : '#e11d48'), 
+                                                                textTransform: 'uppercase' 
+                                                            }}>
+                                                                {w.status}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -2850,6 +2919,19 @@ const DashboardDesktop = ({
                     </div>
                 </div>
             )}
+            {/* Withdrawal Modal */}
+            <WithdrawalModal
+                isOpen={showWithdrawModal}
+                onClose={() => setShowWithdrawModal(false)}
+                onSubmit={handleWithdrawRequest}
+                amount={withdrawalAmount}
+                setAmount={setWithdrawalAmount}
+                availableBalance={(stats.totalEarnings || 0) - (stats.withdrawnAmount || 0) - (stats.pendingWithdrawnAmount || 0)}
+                method={withdrawalMethod}
+                setMethod={setWithdrawalMethod}
+                details={withdrawalDetails}
+                setDetails={setWithdrawalDetails}
+            />
         </div>
     );
 };
@@ -2936,6 +3018,89 @@ function RevisionModal({ isOpen, onClose, onSubmit, note, setNote }) {
                         disabled={!note.trim()}
                         style={{ flex: 2, padding: '16px 0', borderRadius: '16px', background: note.trim() ? '#003d9b' : '#94a3b8', color: 'white', border: 'none', fontWeight: '800', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: note.trim() ? '0 10px 15px -3px rgba(0, 61, 155, 0.3)' : 'none' }}
                     >Submit Request</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ─── withdrawal request modal ─── */
+function WithdrawalModal({ isOpen, onClose, onSubmit, amount, setAmount, availableBalance, method, setMethod, details, setDetails }) {
+    if (!isOpen) return null;
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: '24px' }}>
+            <div className="animate-in fade-in zoom-in duration-300" style={{ backgroundColor: 'white', width: '100%', maxWidth: '450px', borderRadius: '28px', padding: '40px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+                <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                    <div style={{ width: '64px', height: '64px', backgroundColor: '#ecfdf5', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', color: '#10b981' }}>
+                        <ArrowUpRight size={32} />
+                    </div>
+                    <h3 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#1e293b', margin: '0 0 8px 0' }}>Withdraw Funds</h3>
+                    <p style={{ color: '#64748b', fontSize: '1rem', fontWeight: '500' }}>Request a payout to your registered bank account.</p>
+                </div>
+                
+                <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '20px', border: '1px solid #f1f5f9', marginBottom: '32px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Available Balance</span>
+                    <div style={{ fontSize: '2rem', fontWeight: '900', color: '#003d9b', marginTop: '4px' }}>₹{availableBalance?.toLocaleString()}</div>
+                </div>
+
+                <div style={{ marginBottom: '32px' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', color: '#1e293b', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Amount to Withdraw</label>
+                    <div style={{ position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', fontSize: '1.25rem', fontWeight: '900', color: '#94a3b8' }}>₹</span>
+                        <input 
+                            type="number"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            placeholder="0.00"
+                            style={{ width: '100%', padding: '16px 20px 16px 45px', borderRadius: '18px', border: `2px solid ${Number(amount) > availableBalance ? '#ef4444' : '#f1f5f9'}`, backgroundColor: '#f8fafc', fontSize: '1.25rem', fontWeight: '800', color: '#1e293b', outline: 'none', transition: 'all 0.2s', boxSizing: 'border-box' }}
+                            onFocus={(e) => e.target.style.borderColor = Number(amount) > availableBalance ? '#ef4444' : '#003d9b'}
+                            onBlur={(e) => e.target.style.borderColor = Number(amount) > availableBalance ? '#ef4444' : '#f1f5f9'}
+                        />
+                    </div>
+                    {Number(amount) > availableBalance ? (
+                        <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <XCircle size={14} /> Amount exceeds available balance
+                        </p>
+                    ) : (
+                        <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '12px', fontWeight: '500' }}>Withdrawals are processed within 2-3 business days.</p>
+                    )}
+                </div>
+
+                <div style={{ marginBottom: '24px' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', color: '#1e293b', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Withdrawal Method</label>
+                    <select 
+                        value={method}
+                        onChange={(e) => setMethod(e.target.value)}
+                        style={{ width: '100%', padding: '16px 20px', borderRadius: '18px', border: '2px solid #f1f5f9', backgroundColor: '#f8fafc', fontSize: '1rem', fontWeight: '700', color: '#1e293b', outline: 'none', transition: 'all 0.2s', appearance: 'none', cursor: 'pointer' }}
+                    >
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="UPI">UPI (Google Pay, PhonePe, etc.)</option>
+                        <option value="Wallet">Digital Wallet</option>
+                    </select>
+                </div>
+
+                <div style={{ marginBottom: '32px' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', color: '#1e293b', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        {method === 'UPI' ? 'UPI ID' : 'Bank Account Details'}
+                    </label>
+                    <textarea 
+                        value={details}
+                        onChange={(e) => setDetails(e.target.value)}
+                        placeholder={method === 'UPI' ? "e.g. name@upi" : "Account Number, Bank Name, IFSC Code..."}
+                        style={{ width: '100%', padding: '16px 20px', borderRadius: '18px', border: '2px solid #f1f5f9', backgroundColor: '#f8fafc', fontSize: '1rem', fontWeight: '600', color: '#1e293b', outline: 'none', transition: 'all 0.2s', minHeight: '100px', resize: 'none' }}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', gap: '16px' }}>
+                    <button 
+                        onClick={onClose}
+                        style={{ flex: 1, padding: '16px 0', borderRadius: '16px', background: '#f1f5f9', color: '#64748b', border: 'none', fontWeight: '800', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                    >Cancel</button>
+                    <button 
+                        onClick={onSubmit}
+                        disabled={!amount || Number(amount) <= 0 || Number(amount) > availableBalance || !details.trim()}
+                        style={{ flex: 2, padding: '16px 0', borderRadius: '16px', background: (amount && Number(amount) > 0 && Number(amount) <= availableBalance && details.trim()) ? '#003d9b' : '#94a3b8', color: 'white', border: 'none', fontWeight: '800', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: (amount && Number(amount) > 0 && Number(amount) <= availableBalance && details.trim()) ? '0 10px 15px -3px rgba(0, 61, 155, 0.3)' : 'none' }}
+                    >Confirm Request</button>
                 </div>
             </div>
         </div>

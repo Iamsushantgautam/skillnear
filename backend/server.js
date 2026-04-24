@@ -14,6 +14,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import withdrawalRoutes from './routes/withdrawalRoutes.js';
 import Message from './models/Message.js';
 import User from './models/User.js';
 import Notification from './models/Notification.js';
@@ -199,6 +200,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/withdrawals', withdrawalRoutes);
 
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'SkillNear API is running' });
