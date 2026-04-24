@@ -9,7 +9,7 @@ import { toast } from 'react-hot-toast';
 import io from 'socket.io-client';
 
 const Navbar = () => {
-    const { user, logout, userLocation, setLocation } = useAuthStore();
+    const { user, logout, userLocation, setLocation, updateUserInfo } = useAuthStore();
     const { notifications, unreadCount, fetchNotifications, addNotification, markAllAsRead } = useNotificationStore();
     const navigate = useNavigate();
     // Location Modal State
@@ -90,7 +90,8 @@ const Navbar = () => {
         if (user) {
             try {
                 const config = { headers: { Authorization: `Bearer ${user.token}` } };
-                await api.put('/api/users/location', locData, config);
+                const { data: updateRes } = await api.put('/api/users/location', locData, config);
+                updateUserInfo({ ...user, locationHistory: updateRes.locationHistory });
             } catch (error) {
                 console.error("Error saving location to DB", error);
             }
@@ -129,7 +130,8 @@ const Navbar = () => {
 
                     if (user) {
                         const config = { headers: { Authorization: `Bearer ${user.token}` } };
-                        await api.put('/api/users/location', { lat: latitude, lng: longitude, city, state, pincode }, config);
+                        const { data: updateRes } = await api.put('/api/users/location', { lat: latitude, lng: longitude, city, state, pincode }, config);
+                        updateUserInfo({ ...user, locationHistory: updateRes.locationHistory });
                     }
 
                     setLocation({ city, state, pincode });
@@ -158,11 +160,22 @@ const Navbar = () => {
                     </Link>
 
                     {/* Location Selector */}
-                    <div style={styles.locationSelector} onClick={() => setShowLocationModal(true)}>
+                    <div 
+                        style={{
+                            ...styles.locationSelector,
+                            position: 'relative'
+                        }} 
+                        onClick={() => setShowLocationModal(true)}
+                    >
+                        {(!userLocation?.city || userLocation.city === 'All of India') && (
+                            <div className="location-pulse-hint animate-bounce-subtle">
+                                <span style={{ marginRight: '4px' }}>📍</span> Plz select location first
+                            </div>
+                        )}
                         <div className="location-label">
                             <span className="text-small">LOCATION</span>
                         </div>
-                        <div className="location-value">
+                        <div className={`location-value ${(!userLocation?.city || userLocation.city === 'All of India') ? 'pulse-highlight' : ''}`}>
                             <MapPin size={16} color="var(--primary)" />
                             <span className="loc-text truncate">
                                 {userLocation?.city && userLocation?.city !== 'All of India'
@@ -461,6 +474,59 @@ const Navbar = () => {
                     .location-label { display: none; }
                     .nav-search { display: none; }
                 }
+
+                @keyframes pulse-border {
+                    0% { box-shadow: 0 0 0 0px rgba(79, 70, 229, 0.4); border-color: rgba(79, 70, 229, 0.5); }
+                    70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); border-color: rgba(79, 70, 229, 0.1); }
+                    100% { box-shadow: 0 0 0 0px rgba(79, 70, 229, 0); border-color: rgba(79, 70, 229, 0.5); }
+                }
+
+                @keyframes bounce-subtle {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-3px); }
+                }
+
+                .animate-bounce-subtle {
+                    animation: bounce-subtle 2s ease-in-out infinite;
+                }
+
+                .pulse-highlight {
+                    animation: pulse-border 2s infinite;
+                    border-radius: 12px;
+                    padding: 6px 12px;
+                    background: rgba(79, 70, 229, 0.08);
+                    border: 1.5px solid rgba(79, 70, 229, 0.3);
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                .location-pulse-hint {
+                    position: absolute;
+                    top: 55px;
+                    left: 0;
+                    background: #1e293b;
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 8px;
+                    font-size: 11px;
+                    font-weight: 800;
+                    white-space: nowrap;
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+                    z-index: 10001;
+                    display: flex;
+                    align-items: center;
+                }
+
+                .location-pulse-hint::after {
+                    content: '';
+                    position: absolute;
+                    top: -6px;
+                    left: 20px;
+                    border-left: 6px solid transparent;
+                    border-right: 6px solid transparent;
+                    border-bottom: 6px solid #1e293b;
+                }
             `}</style>
 
             {/* Location Selection Modal */}
@@ -536,6 +602,33 @@ const Navbar = () => {
                                 onChange={(e) => setSelectedPincode(e.target.value)}
                             />
                         </div>
+
+                        {user?.locationHistory?.length > 0 && (
+                            <div style={{ marginBottom: '24px' }}>
+                                <label style={{ ...styles.label, fontSize: '0.75rem', color: '#64748b' }}>RECENT LOCATIONS</label>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '120px', overflowY: 'auto', padding: '4px' }} className="no-scrollbar">
+                                    {[...user.locationHistory].reverse().slice(0, 5).map((loc, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => {
+                                                const parts = loc.address.split(',').map(p => p.trim());
+                                                const city = parts[0] || '';
+                                                const stateWithPin = parts[1] || '';
+                                                const state = stateWithPin.split(' ')[0] || '';
+                                                const pin = stateWithPin.split(' ')[1] || '';
+                                                
+                                                setLocation({ city, state, pincode: pin });
+                                                setShowLocationModal(false);
+                                            }}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '10px', fontSize: '12px', color: '#1e293b', fontWeight: '600', textAlign: 'left', cursor: 'pointer' }}
+                                        >
+                                            <MapPin size={14} color="#64748b" />
+                                            <span style={{ flex: 1 }} className="truncate">{loc.address}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <button
                             className="btn-primary"

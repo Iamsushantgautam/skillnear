@@ -25,23 +25,26 @@ export const updateLocation = async (req, res) => {
             };
 
             // Maintain movement history
-            if (lat && lng) {
-                user.locationHistory = user.locationHistory || [];
-                user.locationHistory.push({
-                    latitude: Number(lat),
-                    longitude: Number(lng),
-                    address: `${city || ''}, ${state || ''}`.replace(/^, /, ''),
-                    timestamp: new Date()
-                });
+            user.locationHistory = user.locationHistory || [];
+            user.locationHistory.push({
+                latitude: lat ? Number(lat) : null,
+                longitude: lng ? Number(lng) : null,
+                address: `${city || ''}, ${state || ''} ${pincode || ''}`.trim().replace(/^, /, ''),
+                timestamp: new Date()
+            });
 
-                // Keep only last 50 locations to avoid document bloating
-                if (user.locationHistory.length > 50) {
-                    user.locationHistory.shift();
-                }
+            // Keep only last 50 locations to avoid document bloating
+            if (user.locationHistory.length > 50) {
+                user.locationHistory.shift();
             }
 
             await user.save();
-            res.json({ message: 'Location updated successfully', location: user.address, geoCoordinates: user.geoCoordinates });
+            res.json({ 
+                message: 'Location updated successfully', 
+                location: user.address, 
+                geoCoordinates: user.geoCoordinates,
+                locationHistory: user.locationHistory
+            });
         } else {
             res.status(404).json({ message: 'User not found' });
         }
