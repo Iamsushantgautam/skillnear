@@ -1,0 +1,263 @@
+import React from 'react';
+import { 
+    Calendar as CalendarIcon, 
+    MapPin, 
+    User, 
+    MessageSquare, 
+    History 
+} from 'lucide-react';
+import '../../../styles/desktop-dashboard-styles/DesktopMyBookingsTab.css';
+
+const DesktopMyBookingsTab = ({
+    myBookings = [],
+    bookingsLoading,
+    bookingFilter,
+    setBookingFilter,
+    updateBookingStatus,
+    setBookingForRevision,
+    setRevisionNote,
+    setSelectedBookingDetails,
+    setDashActiveRoom,
+    setActiveTab,
+    role,
+    navigate,
+    setBookingWithRevisions,
+    setShowRevisions
+}) => {
+    const filteredBookings = (myBookings || []).filter(b => {
+        if (!b || !b.status) return false;
+        if (bookingFilter === 'all') return true;
+        if (bookingFilter === 'pending') return b.status === 'pending';
+        if (bookingFilter === 'confirmed') return b.status === 'confirmed';
+        if (bookingFilter === 'in_progress') return ['in_progress', 'revision_requested', 'delivered'].includes(b.status);
+        if (bookingFilter === 'completed') return b.status === 'completed';
+        if (bookingFilter === 'cancelled') return ['cancelled', 'rejected'].includes(b.status);
+        return true;
+    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const getStatusStyles = (status) => {
+        let color = '#dc2626';
+        let bg = '#fee2e2';
+        if (status === 'pending') { color = '#b45309'; bg = '#fef3c7'; }
+        if (status === 'confirmed') { color = '#1d4ed8'; bg = '#dbeafe'; }
+        if (['in_progress', 'revision_requested', 'delivered'].includes(status)) { color = '#7c3aed'; bg = '#f5f3ff'; }
+        if (status === 'completed') { color = '#047857'; bg = '#d1fae5'; }
+        if (['cancelled', 'rejected'].includes(status)) { color = '#dc2626'; bg = '#fee2e2'; }
+        return { color, bg };
+    };
+
+    const totalValue = (myBookings || [])
+        .filter(b => b?.status !== 'cancelled' && b?.status !== 'rejected')
+        .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+
+    return (
+        <div className="bookings-tab-container animate-fade-in">
+            {/* Header & Filter */}
+            <div className="bookings-header">
+                <div>
+                    <p className="bookings-subtitle">
+                        Manage your active collaborations and professional service records from one central hub.
+                    </p>
+                </div>
+                <div className="filter-pills">
+                    {['all', 'pending', 'confirmed', 'in_progress', 'completed', 'cancelled'].map(filter => (
+                        <button
+                            key={filter}
+                            onClick={() => setBookingFilter(filter)}
+                            className={`filter-pill ${bookingFilter === filter ? 'active' : ''}`}
+                        >
+                            {filter.charAt(0).toUpperCase() + filter.slice(1).replace('_', ' ')}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="bookings-grid">
+                {/* Bookings List Column */}
+                <div className="bookings-list-col">
+                    {bookingsLoading ? (
+                        Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="booking-card skeleton-container">
+                                <div style={{ display: 'flex', gap: '24px' }}>
+                                    <div className="skeleton" style={{ width: '100px', height: '100px', borderRadius: '16px' }}></div>
+                                    <div style={{ flex: 1 }}>
+                                        <div className="skeleton" style={{ width: '30%', height: '12px', marginBottom: '8px' }}></div>
+                                        <div className="skeleton" style={{ width: '60%', height: '24px', marginBottom: '8px' }}></div>
+                                        <div className="skeleton" style={{ width: '40%', height: '16px' }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : filteredBookings.length === 0 ? (
+                        <p style={{ textAlign: 'center', padding: '40px', color: '#64748b', background: '#ffffff', borderRadius: '24px', border: '1px solid rgba(195, 198, 214, 0.2)' }}>
+                            No {bookingFilter} bookings found.
+                        </p>
+                    ) : (
+                        filteredBookings.map(b => {
+                            if (!b || !b._id) return null;
+                            const { color: statusColor, bg: statusBg } = getStatusStyles(b.status || '');
+                            const isCompleted = b.status === 'completed';
+                            const isCancelled = ['cancelled', 'rejected'].includes(b.status || '');
+
+                            return (
+                                <div 
+                                    key={b._id} 
+                                    className={`booking-card ${isCompleted ? 'completed' : ''} ${isCancelled ? 'cancelled' : ''}`}
+                                >
+                                    <div style={{ display: 'flex', gap: '24px' }}>
+                                        {/* Image */}
+                                        <div className="booking-image-wrapper">
+                                            <img
+                                                src={b.service?.images?.[0]?.url || b.service?.images?.[0] || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1000&auto=format&fit=crop'}
+                                                alt={b.service?.title}
+                                                className="booking-image"
+                                                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1000&auto=format&fit=crop'; }}
+                                            />
+                                        </div>
+
+                                        <div className="booking-content">
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                                        <span 
+                                                            className="status-badge"
+                                                            style={{ background: statusBg, color: statusColor }}
+                                                        >
+                                                            {(b.status || '').replace('_', ' ')}
+                                                        </span>
+                                                        <span className="booking-id">ID: #{(b._id || '').slice(-6).toUpperCase()}</span>
+                                                    </div>
+                                                    <h3 className="booking-title">{b.service?.title}</h3>
+                                                    <p className="provider-info">
+                                                        <User size={14} /> Provider: <span style={{ fontWeight: '600', color: '#434654' }}>{b.provider?.name}</span>
+                                                    </p>
+                                                </div>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <p className={`booking-price ${isCompleted ? 'price-completed' : ''}`}>₹{b.totalPrice}</p>
+                                                    <p className="price-subtext">
+                                                        {isCompleted ? 'Paid' : 'Escrow Secured'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="booking-meta">
+                                                <div className="meta-item">
+                                                    <CalendarIcon size={16} color="#94a3b8" /> {b.date ? new Date(b.date).toLocaleDateString() : 'N/A'}
+                                                </div>
+                                                <div className="meta-item">
+                                                    <CalendarIcon size={16} color="#94a3b8" /> {b.timeSlot || 'N/A'}
+                                                </div>
+                                                <div className="meta-item">
+                                                    <MapPin size={16} color="#94a3b8" /> {b.address?.city || 'Remote Delivery'}
+                                                </div>
+                                            </div>
+
+                                            {/* Actions */}
+                                            <div className="booking-actions">
+                                                {b.status === 'delivered' ? (
+                                                    <>
+                                                        <button 
+                                                            onClick={() => updateBookingStatus(b._id, 'completed')} 
+                                                            className="action-btn-primary"
+                                                        >Accept & Mark Complete</button>
+                                                        <button 
+                                                            onClick={() => { setBookingForRevision(b); setRevisionNote(''); }} 
+                                                            className="action-btn-outline"
+                                                        >Request Revision</button>
+                                                    </>
+                                                ) : isCompleted ? (
+                                                    <>
+                                                        <button 
+                                                            onClick={() => navigate(`/invoice/${b._id}`)} 
+                                                            className="action-btn-ghost"
+                                                        >View Invoice</button>
+                                                        <button 
+                                                            onClick={() => navigate(`/services/${b.service?._id || b.service}`)} 
+                                                            className="action-btn-outline"
+                                                        >Rate Professional</button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button 
+                                                            onClick={() => setSelectedBookingDetails(b)} 
+                                                            className="action-btn-primary"
+                                                        >View Details & Tracking</button>
+                                                        <button 
+                                                            onClick={() => { 
+                                                                setDashActiveRoom({ 
+                                                                    roomId: b._id, 
+                                                                    otherUser: role === 'provider' ? b.user : b.provider, 
+                                                                    title: b.service?.title 
+                                                                }); 
+                                                                setActiveTab('chat'); 
+                                                            }} 
+                                                            className="message-btn"
+                                                        >
+                                                            <MessageSquare size={18} /> Message
+                                                        </button>
+                                                        {b.revisions?.length > 0 && (
+                                                            <button 
+                                                                onClick={() => { setBookingWithRevisions(b); setShowRevisions(true); }}
+                                                                className="revision-history-btn"
+                                                            >
+                                                                <History size={18} /> Revisions ({b.revisions.length})
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+
+                {/* Sidebar Widgets */}
+                <div className="bookings-sidebar-col">
+                    <div className="analytics-card">
+                        <div style={{ position: 'relative', zIndex: 10 }}>
+                            <h4 className="analytics-title">Activity Summary</h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                <div>
+                                    <p className="analytics-value">₹{totalValue}</p>
+                                    <p className="analytics-subtitle">Total Bookings Value</p>
+                                </div>
+                                <div className="analytics-stats-grid">
+                                    <div className="stat-box">
+                                        <p className="stat-value">
+                                            {(myBookings || []).filter(b => b?.status !== 'cancelled' && b?.status !== 'rejected').length}
+                                        </p>
+                                        <p className="stat-label">Bookings</p>
+                                    </div>
+                                    <div className="stat-box">
+                                        <p className="stat-value">98%</p>
+                                        <p className="stat-label">Success Rate</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Help Widget */}
+                    <div className="help-widget">
+                        <div className="help-widget-icon-wrapper">
+                            <MessageSquare size={28} color="#003d9b" />
+                        </div>
+                        <h5 className="help-widget-title">Need Support?</h5>
+                        <p className="help-widget-subtitle">Our support team is available 24/7 to help you with any issues.</p>
+                        <button 
+                            onClick={() => setActiveTab('help')} 
+                            className="help-widget-btn"
+                        >
+                            Contact Support
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default DesktopMyBookingsTab;

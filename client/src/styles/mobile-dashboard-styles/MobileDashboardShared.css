@@ -1,0 +1,145 @@
+:root {
+    --mobile-primary: #003d9b;
+    --mobile-primary-light: rgba(0, 61, 155, 0.08);
+    --mobile-bg: #faf8ff;
+    --mobile-text: #1e293b;
+    --mobile-text-muted: #64748b;
+    --mobile-border: #f1f5f9;
+}
+
+/* Shell Layout */
+.mobile-shell-container {
+    min-height: 100dvh;
+    background-color: var(--mobile-bg);
+    font-family: 'Inter', sans-serif;
+    padding-bottom: 100px;
+}
+
+.mobile-shell-header {
+    background-color: var(--mobile-primary);
+    display: flex;
+    justify-content: center;
+}
+
+.mobile-shell-header-content {
+    width: 100%;
+    max-width: 800px;
+    padding: 52px 20px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mobile-shell-back-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.mobile-shell-title {
+    color: white;
+    font-weight: 900;
+    font-size: 1.25rem;
+    flex: 1;
+    margin: 0;
+}
+
+.mobile-shell-main {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 16px;
+}
+
+/* Badge System */
+.mobile-badge {
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    height: fit-content;
+    display: inline-block;
+}
+
+.badge-pending {
+    background: #f3f3fd;
+    color: #434654;
+}
+
+.badge-confirmed {
+    background: #dae2ff;
+    color: #0040a2;
+}
+
+.badge-in_progress {
+    background: #dae2ff;
+    color: #344573;
+}
+
+.badge-delivered {
+    background: #ffdbcf;
+    color: #812800;
+}
+
+.badge-completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-cancelled {
+    background: #ffdad6;
+    color: #93000a;
+}
+
+.badge-live {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-rejected {
+    background: #ffdad6;
+    color: #93000a;
+}
+
+.badge-review {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Standard Inputs */
+.mobile-input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 2px solid var(--mobile-border);
+    background-color: #fff;
+    font-size: 0.95rem;
+    color: var(--mobile-text);
+    font-weight: 500;
+    margin-bottom: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.mobile-input:focus {
+    border-color: var(--mobile-primary);
+}
+
+.mobile-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--mobile-text-muted);
+    margin-bottom: 8px;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}

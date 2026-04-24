@@ -1,0 +1,345 @@
+/* Overview Screen Header */
+.overview-header {
+    background: linear-gradient(135deg, #003d9b 0%, #1e40af 100%);
+    padding: 64px 24px 100px;
+    border-radius: 0 0 32px 32px;
+}
+
+.overview-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.overview-header-text {
+    flex: 1;
+    padding-right: 16px;
+}
+
+.overview-welcome-title {
+    color: white;
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+
+.overview-provider-title {
+    color: rgba(255, 255, 255, 0.9);
+    margin: 4px 0 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.overview-provider-about {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.overview-profile-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    object-fit: cover;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Overview Main Content */
+.overview-main {
+    margin-top: -50px;
+    padding: 0 16px 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Stats Card */
+.overview-stats-card {
+    background: white;
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.overview-stats-bg-circle {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(0, 61, 155, 0.08);
+    opacity: 0.5;
+}
+
+.overview-stats-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.overview-stats-amount-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin: 8px 0;
+}
+
+.overview-stats-currency {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #003d9b;
+}
+
+.overview-stats-value {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: -1px;
+}
+
+.overview-available-label {
+    font-size: 9px;
+    font-weight: 800;
+    color: #10b981;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.overview-available-value {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #10b981;
+    margin: 0;
+}
+
+.overview-stats-grid {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.overview-stat-item {
+    flex: 1;
+    background: #f8fafc;
+    padding: 12px 8px;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.overview-stat-item-label {
+    font-size: 10px;
+    color: #64748b;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.overview-stat-item-value {
+    font-weight: 900;
+    font-size: 1.1rem;
+    color: #1e293b;
+    margin: 0;
+}
+
+/* Become Provider Banner */
+.overview-become-provider-banner {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border-radius: 28px;
+    padding: 24px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 15px 30px rgba(79, 70, 229, 0.2);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.overview-banner-bg-icon {
+    position: absolute;
+    right: -10px;
+    bottom: -10px;
+    opacity: 0.1;
+    transform: rotate(-15deg);
+}
+
+.overview-banner-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.overview-banner-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.overview-banner-desc {
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+/* Quick Actions */
+.overview-section-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0 0 16px 4px;
+    color: #1e293b;
+}
+
+.overview-quick-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.overview-action-btn {
+    background: white;
+    border-radius: 24px;
+    padding: 24px 20px;
+    border: 1px solid #f1f5f9;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.overview-action-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.overview-action-label {
+    margin: 0;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #334155;
+}
+
+/* Recent Activity */
+.overview-recent-activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 4px 16px;
+}
+
+.overview-view-all-btn {
+    background: none;
+    border: none;
+    color: #0052cc;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.overview-activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.overview-activity-item {
+    background: white;
+    border-radius: 20px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.overview-activity-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.overview-activity-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.overview-activity-title {
+    margin: 0 0 4px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.overview-activity-meta {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.overview-activity-status {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+/* Pro Tip */
+.overview-pro-tip {
+    background: linear-gradient(to right, #4f46e5, #7c3aed);
+    border-radius: 24px;
+    padding: 20px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.overview-pro-tip-icon-wrapper {
+    background: rgba(255, 255, 255, 0.2);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.overview-pro-tip-title {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.overview-pro-tip-text {
+    margin: 2px 0 0;
+    font-size: 0.75rem;
+    opacity: 0.9;
+}

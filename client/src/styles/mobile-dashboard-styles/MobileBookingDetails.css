@@ -1,0 +1,155 @@
+.booking-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.order-id-label {
+    font-size: 11px;
+    font-weight: 900;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.order-user-info {
+    font-size: 13px;
+    font-weight: 800;
+    color: #003d9b;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.status-badge.pending {
+    background-color: #fff7ed;
+    color: #f97316;
+}
+
+.status-badge.success {
+    background-color: #f0fdf4;
+    color: #22c55e;
+}
+
+.status-badge.danger {
+    background-color: #fef2f2;
+    color: #ef4444;
+}
+
+.booking-title-main {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #1e293b;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.booking-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 24px;
+}
+
+.price-summary-card {
+    background: #f8fafc;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.price-label {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.price-value {
+    font-size: 20px;
+    color: #003d9b;
+    font-weight: 900;
+}
+
+.payment-info-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.payment-method-badge {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.payment-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+.payment-method-text {
+    font-size: 13px;
+    color: #22c55e;
+    font-weight: 800;
+}
+
+.distance-badge {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    background-color: #eff6ff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    color: #1d4ed8;
+    font-weight: 800;
+}
+
+.detail-item-row {
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-item-label {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.detail-item-value {
+    font-size: 13px;
+    color: #1e293b;
+    font-weight: 800;
+    text-align: right;
+}
+
+.direction-btn {
+    background: #f0f9ff;
+    color: #0ea5e9;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}

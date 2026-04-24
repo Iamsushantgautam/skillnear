@@ -1,0 +1,144 @@
+.ss-hero {
+    position: relative;
+    height: 500px;
+    overflow: hidden;
+}
+
+.ss-hero-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right, rgba(0, 61, 155, 0.9), rgba(0, 0, 0, 0.4));
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.ss-hero-title {
+    font-size: 4rem;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 24px;
+    line-height: 1.1;
+}
+
+.ss-hero-desc {
+    font-size: 1.2rem;
+    color: #e2e8f0;
+    line-height: 1.6;
+    margin-bottom: 32px;
+}
+
+.ss-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 32px;
+    text-align: center;
+}
+
+.ss-stories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 40px;
+}
+
+.ss-story-card {
+    background: #fff;
+    border-radius: 32px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f1f5f9;
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.ss-section-padding {
+    padding: 100px 20px;
+}
+
+.ss-cta-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1024px) {
+    .ss-stories-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .ss-hero {
+        height: auto;
+        min-height: 450px;
+    }
+
+    .ss-hero-content {
+        background: linear-gradient(to bottom, rgba(0, 61, 155, 0.95), rgba(0, 0, 0, 0.7));
+        padding: 60px 20px;
+        position: relative;
+        height: auto;
+        min-height: 450px;
+    }
+
+    .ss-hero-title {
+        font-size: 2.75rem;
+    }
+
+    .ss-section-padding {
+        padding: 60px 20px;
+    }
+
+    .ss-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+    }
+}
+
+@media (max-width: 640px) {
+    .ss-story-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 32px 24px;
+    }
+
+    .ss-story-card img {
+        width: 80px !important;
+        height: 80px !important;
+    }
+
+    .ss-story-footer {
+        flex-direction: column;
+        align-items: center !important;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ss-hero-title {
+        font-size: 2.2rem;
+    }
+
+    .ss-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ss-cta-title {
+        font-size: 1.8rem;
+    }
+
+    .ss-cta-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .ss-cta-buttons a {
+        width: 100%;
+        justify-content: center;
+    }
+}

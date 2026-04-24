@@ -1,0 +1,280 @@
+/* Payment Tab Styles */
+.payment-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.payment-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.balance-card {
+    border-radius: 24px;
+    padding: 24px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 10px 30px rgba(0, 61, 155, 0.1);
+}
+
+.balance-card.provider {
+    background-color: #003d9b;
+}
+
+.balance-card.customer {
+    background-color: #0f172a;
+}
+
+.balance-icon-bg {
+    position: absolute;
+    right: -20px;
+    bottom: -20px;
+    opacity: 0.1;
+}
+
+.balance-content {
+    position: relative;
+    z-index: 10;
+}
+
+.balance-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    margin-bottom: 8px;
+}
+
+.balance-amount {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin: 0;
+}
+
+.withdrawal-section {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 16px;
+    border-radius: 16px;
+    position: relative;
+    z-index: 10;
+}
+
+.withdrawal-info span:first-child {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.7;
+    margin-bottom: 4px;
+}
+
+.withdrawal-info span:last-child {
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.btn-withdraw {
+    background: white;
+    color: #003d9b;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 900;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-withdraw:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.customer-stats-row {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+    position: relative;
+    z-index: 10;
+}
+
+.customer-stat-box {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 12px;
+    border-radius: 16px;
+    flex: 1;
+}
+
+.customer-stat-box span:first-child {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.7;
+}
+
+.customer-stat-box span:last-child {
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.mini-stat-card {
+    background-color: #fff;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 16px;
+    border: 1px solid rgba(195, 198, 214, 0.2);
+}
+
+.stat-icon-container {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-details p:first-child {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.stat-details h4 {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #1e293b;
+    margin: 0;
+}
+
+.stat-subtext {
+    font-size: 10px;
+    color: #94a3b8;
+    font-weight: 600;
+    margin: 0;
+}
+
+.payment-history-grid {
+    display: grid;
+    gap: 24px;
+}
+
+.payment-history-grid.provider {
+    grid-template-columns: 1fr 1fr;
+}
+
+.payment-history-grid.customer {
+    grid-template-columns: 1fr;
+}
+
+.history-card {
+    background-color: #fff;
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.history-card h3 {
+    font-size: 1.25rem;
+    font-weight: '800';
+    margin-bottom: 24px;
+}
+
+.history-table-container {
+    overflow-x: auto;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.history-table th {
+    padding: 16px 8px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    text-align: left;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.history-table td {
+    padding: 16px 8px;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.tx-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.tx-date {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.tx-amount {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.tx-amount.positive {
+    color: #059669;
+}
+
+.tx-amount.negative {
+    color: #e11d48;
+}
+
+.status-badge-mini {
+    font-size: 10px;
+    font-weight: 900;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+
+.status-badge-mini.paid {
+    background-color: #ecfdf5;
+    color: #059669;
+}
+
+.status-badge-mini.pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge-mini.withdrawal-successful {
+    background-color: #ecfdf5;
+    color: #059669;
+}
+
+.status-badge-mini.withdrawal-pending {
+    background-color: #eff6ff;
+    color: #2563eb;
+}
+
+.status-badge-mini.withdrawal-failed {
+    background-color: #fef2f2;
+    color: #e11d48;
+}

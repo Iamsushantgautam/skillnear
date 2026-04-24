@@ -1,0 +1,122 @@
+.admin-search-wrapper {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.admin-search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.admin-search-input {
+    width: 100%;
+    padding: 14px 16px 14px 44px;
+    border-radius: 16px;
+    border: 2px solid #f1f5f9;
+    background: white;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.admin-search-input:focus {
+    border-color: #003d9b;
+}
+
+.admin-user-card {
+    background: white;
+    padding: 20px;
+    border-radius: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f1f5f9;
+}
+
+.admin-user-card.banned {
+    border: 2px solid #fee2e2;
+}
+
+.admin-user-header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.admin-user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.admin-user-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.admin-user-email {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.admin-badge-container {
+    display: flex;
+    gap: 8px;
+    marginTop: 4px;
+}
+
+.admin-badge {
+    fontSize: 10px;
+    fontWeight: 900;
+    textTransform: uppercase;
+    padding: 2px 8px;
+    borderRadius: 99px;
+}
+
+.admin-badge-role {
+    background: rgba(0, 61, 155, 0.08);
+    color: #003d9b;
+}
+
+.admin-badge-banned {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.admin-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.admin-select {
+    flex: 1;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+    font-size: 0.8rem;
+    background: #f8fafc;
+    font-weight: 700;
+}
+
+.admin-action-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: white;
+}
+
+.admin-action-btn-ban {
+    background: #ef4444;
+}
+
+.admin-action-btn-unban {
+    background: #10b981;
+}

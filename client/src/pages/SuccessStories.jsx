@@ -2,6 +2,7 @@ import React from 'react';
 import { Quote, Star, ArrowRight, TrendingUp, Award, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import heroImg from '../assets/success_stories_hero.png';
+import './SuccessStories.css';
 
 const SuccessStories = () => {
     const PC = '#003d9b'; // Primary Color
@@ -40,32 +41,22 @@ const SuccessStories = () => {
     return (
         <div style={{ backgroundColor: '#fff', minHeight: '100vh' }}>
             {/* Hero Section */}
-            <div style={{ position: 'relative', height: '500px', overflow: 'hidden' }}>
+            <div className="ss-hero">
                 <img
                     src={heroImg}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
                     alt="Success Stories"
                 />
-                <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'linear-gradient(to right, rgba(0,61,155,0.9), rgba(0,0,0,0.4))',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0 20px'
-                }}>
+                <div className="ss-hero-content">
                     <div className="container">
                         <div style={{ maxWidth: '600px' }}>
-                            <h1 style={{ fontSize: '4rem', fontWeight: '900', color: '#fff', marginBottom: '24px', lineHeight: '1.1' }}>
+                            <h1 className="ss-hero-title">
                                 Changing Lives, One <span style={{ color: '#60a5fa' }}>Skill</span> at a Time.
                             </h1>
-                            <p style={{ fontSize: '1.2rem', color: '#e2e8f0', lineHeight: '1.6', marginBottom: '32px' }}>
+                            <p className="ss-hero-desc">
                                 Discover how thousands of professionals and customers are thriving together on India's most trusted skill platform.
                             </p>
-                            <div style={{ display: 'flex', gap: '16px' }}>
+                            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                                 <Link to="/services" className="btn-primary" style={{ borderRadius: '100px', textDecoration: 'none' }}>Start Your Story</Link>
                             </div>
                         </div>
@@ -76,7 +67,7 @@ const SuccessStories = () => {
             {/* Stats Bar */}
             <div style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', padding: '40px 20px' }}>
                 <div className="container">
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', textAlign: 'center' }}>
+                    <div className="ss-stats-grid">
                         <div>
                             <div style={{ fontSize: '2.5rem', fontWeight: '900', color: PC }}>10k+</div>
                             <div style={{ color: '#64748b', fontWeight: '600' }}>Active Professionals</div>
@@ -98,29 +89,20 @@ const SuccessStories = () => {
             </div>
 
             {/* Stories Grid */}
-            <div style={{ padding: '100px 20px' }}>
+            <div className="ss-section-padding">
                 <div className="container">
                     <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#1e293b', textAlign: 'center', marginBottom: '60px' }}>Featured Stories</h2>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '40px' }}>
+                    <div className="ss-stories-grid">
                         {stories.map((story, idx) => (
-                            <div key={idx} style={{
-                                background: '#fff',
-                                borderRadius: '32px',
-                                padding: '40px',
-                                boxShadow: '0 20px 40px rgba(0,0,0,0.04)',
-                                border: '1px solid #f1f5f9',
-                                display: 'flex',
-                                gap: '24px',
-                                alignItems: 'flex-start'
-                            }}>
+                            <div key={idx} className="ss-story-card">
                                 <img src={story.img} style={{ width: '100px', height: '100px', borderRadius: '24px', objectFit: 'cover' }} alt={story.name} />
                                 <div style={{ flex: 1 }}>
                                     <Quote size={32} color={PC} style={{ opacity: 0.2, marginBottom: '8px' }} />
                                     <p style={{ fontSize: '1.05rem', color: '#334155', fontStyle: 'italic', lineHeight: '1.6', marginBottom: '24px' }}>
                                         "{story.story}"
                                     </p>
-                                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                    <div className="ss-story-footer" style={{ borderTop: '1px solid #f1f5f9', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                                         <div>
                                             <h4 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#1e293b', margin: 0 }}>{story.name}</h4>
                                             <p style={{ fontSize: '0.85rem', color: PC, fontWeight: '700' }}>{story.role}</p>
@@ -137,12 +119,12 @@ const SuccessStories = () => {
             </div>
 
             {/* Call to Action */}
-            <div style={{ backgroundColor: '#1e293b', padding: '100px 20px', color: '#fff', textAlign: 'center' }}>
+            <div style={{ backgroundColor: '#1e293b', padding: '100px 20px', color: '#fff', textAlign: 'center' }} className="ss-section-padding">
                 <div className="container" style={{ maxWidth: '700px', margin: '0 auto' }}>
                     <Heart size={48} color="#ef4444" fill="#ef4444" style={{ marginBottom: '24px' }} />
-                    <h2 style={{ fontSize: '2.5rem', fontWeight: '900', marginBottom: '20px' }}>Ready to start your own success journey?</h2>
+                    <h2 className="ss-cta-title">Ready to start your own success journey?</h2>
                     <p style={{ fontSize: '1.1rem', opacity: 0.8, marginBottom: '40px' }}>Join India's fastest-growing network of local experts and customers. It's free to get started.</p>
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                    <div className="ss-cta-buttons" style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
                         <Link to="/register" className="btn-primary" style={{ borderRadius: '100px', padding: '16px 40px', textDecoration: 'none' }}>Join as Professional</Link>
                         <Link to="/services" style={{ color: '#fff', fontWeight: '700', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             Browse Services <ArrowRight size={18} />
