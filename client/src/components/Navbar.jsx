@@ -95,7 +95,7 @@ const Navbar = () => {
                         style={{ position: 'relative' }} 
                         onClick={() => setShowLocationModal(true)}
                     >
-                        {(!userLocation?.city || userLocation.city === 'All of India') && (
+                        {(!userLocation?.city || userLocation.city === 'All of India') && !['/login', '/register', '/dashboard'].includes(window.location.pathname) && (
                             <div className="location-pulse-hint animate-bounce-subtle">
                                 <span style={{ marginRight: '4px' }}>📍</span> Plz select location first
                             </div>

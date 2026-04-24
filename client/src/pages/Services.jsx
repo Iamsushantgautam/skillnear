@@ -4,6 +4,7 @@ import { Search, MapPin, Star, Filter, Map, List, X, Heart } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
 import ServiceMap from '../components/ServiceMap';
+import { SERVICE_CATEGORIES, BUSINESS_TYPES } from '../utils/constants';
 
 const Services = () => {
     const { user, userLocation, toggleFavorite } = useAuthStore();
@@ -69,31 +70,26 @@ const Services = () => {
                 <label style={styles.label}>Category</label>
                 <select className="input-field" value={category} onChange={(e) => setCategory(e.target.value)}>
                     <option value="">All Categories</option>
-                    <option value="Salon">Salon</option>
-                    <option value="Carpenters">Carpenters</option>
-                    <option value="Plumbers">Plumbers</option>
-                    <option value="Electricians">Electricians</option>
-                    <option value="Cleaning">Cleaning</option>
-                    <option value="AC Repair">AC Repair</option>
-                    <option value="Painters">Painters</option>
-                    <option value="Tutors">Tutors</option>
-                    <option value="Groceries">Groceries</option>
-                    <option value="Electronics">Electronics</option>
+                    {SERVICE_CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                    ))}
                 </select>
             </div>
 
             <div style={styles.filterGroup}>
                 <label style={styles.label}>Provider Type</label>
                 <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
-                        <input type="radio" name="bizType" value="" checked={businessType === ''} onChange={() => setBusinessType('')} /> Any Type
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
-                        <input type="radio" name="bizType" value="service" checked={businessType === 'service'} onChange={() => setBusinessType('service')} /> Services Only
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
-                        <input type="radio" name="bizType" value="shop" checked={businessType === 'shop'} onChange={() => setBusinessType('shop')} /> Shops Only
-                    </label>
+                    {BUSINESS_TYPES.map(type => (
+                        <label key={type.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', cursor: 'pointer' }}>
+                            <input 
+                                type="radio" 
+                                name="bizType" 
+                                value={type.value} 
+                                checked={businessType === type.value} 
+                                onChange={() => setBusinessType(type.value)} 
+                            /> {type.label}
+                        </label>
+                    ))}
                 </div>
             </div>
 
