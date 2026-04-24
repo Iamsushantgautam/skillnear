@@ -186,13 +186,22 @@ const LocationModal = ({
                                 <button
                                     key={i}
                                     onClick={() => {
-                                        const parts = loc.address.split(',').map(p => p.trim());
-                                        const city = parts[0] || '';
-                                        const stateWithPin = parts[1] || '';
-                                        const state = stateWithPin.split(' ')[0] || '';
-                                        const pin = stateWithPin.split(' ')[1] || '';
-                                        
-                                        setLocation({ city, state, pincode: pin });
+                                        // Use structured fields if available, fall back to splitting if old data
+                                        if (loc.city || loc.state || loc.pincode) {
+                                            setLocation({ 
+                                                city: loc.city || '', 
+                                                state: loc.state || '', 
+                                                pincode: loc.pincode || '' 
+                                            });
+                                        } else {
+                                            // Fallback for older entries (string splitting)
+                                            const parts = loc.address.split(',').map(p => p.trim());
+                                            const city = parts[0] || '';
+                                            const stateWithPin = parts[1] || '';
+                                            const state = stateWithPin.split(' ')[0] || '';
+                                            const pin = stateWithPin.split(' ')[1] || '';
+                                            setLocation({ city, state, pincode: pin });
+                                        }
                                         onClose();
                                     }}
                                     className="history-item"

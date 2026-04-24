@@ -30,6 +30,9 @@ export const updateLocation = async (req, res) => {
                 latitude: lat ? Number(lat) : null,
                 longitude: lng ? Number(lng) : null,
                 address: `${city || ''}, ${state || ''} ${pincode || ''}`.trim().replace(/^, /, ''),
+                city: city || '',
+                state: state || '',
+                pincode: pincode || '',
                 timestamp: new Date()
             });
 
