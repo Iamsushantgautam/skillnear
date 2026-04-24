@@ -266,7 +266,7 @@
 }
 
 .analytics-card {
-    background: #003d9b;
+    background: linear-gradient(135deg, #003d9b 0%, #1e40af 100%);
     padding: 32px;
     border-radius: 32px;
     color: white;
@@ -275,53 +275,107 @@
     box-shadow: 0 25px 50px -12px rgba(0,61,155,0.25);
 }
 
-.analytics-title {
-    font-size: 0.875rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    opacity: 0.7;
+.analytics-pattern {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.analytics-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 24px;
 }
 
-.analytics-value {
-    font-size: 2.25rem;
+.analytics-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.8;
+}
+
+.analytics-main-value {
+    margin-bottom: 32px;
+}
+
+.currency-symbol {
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin-right: 4px;
+    vertical-align: top;
+    opacity: 0.8;
+}
+
+.value-text {
+    font-size: 2.75rem;
     font-weight: 900;
-    line-height: 1;
+    letter-spacing: -0.02em;
 }
 
 .analytics-subtitle {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    opacity: 0.8;
+    opacity: 0.7;
     margin-top: 4px;
 }
 
 .analytics-stats-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 16px;
-    margin-top: 24px;
 }
 
-.stat-box {
-    background: rgba(255,255,255,0.1);
+.stat-box-modern {
+    background: rgba(255, 255, 255, 0.08);
     padding: 16px;
-    border-radius: 16px;
-    backdrop-filter: blur(4px);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s;
 }
 
-.stat-value {
-    font-size: 1.25rem;
-    font-weight: 700;
+.stat-box-modern:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateX(4px);
 }
 
-.stat-label {
-    font-size: 0.625rem;
+.stat-icon-circle {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-info-modern {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value-modern {
+    font-size: 1.125rem;
+    font-weight: 800;
+}
+
+.stat-label-modern {
+    font-size: 0.7rem;
     font-weight: 700;
-    opacity: 0.7;
+    opacity: 0.6;
     text-transform: uppercase;
-    margin-top: 2px;
+    letter-spacing: 0.05em;
 }
 
 .help-widget {

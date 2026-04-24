@@ -158,23 +158,53 @@ const DesktopBookingRequestTab = ({
                                                     </div>
                                                 </div>
 
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
-                                                    {(req.address?.googleMapLink || (req.address?.lat && req.address?.lng)) && (
-                                                        <button
-                                                            onClick={() => {
-                                                                let link = (req.address?.lat && req.address?.lng)
-                                                                    ? `https://www.google.com/maps/dir/?api=1&destination=${req.address.lat},${req.address.lng}`
-                                                                    : req.address?.googleMapLink;
-                                                                if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
-                                                                if (link) window.open(link, '_blank');
-                                                            }}
-                                                            className="btn-location"
-                                                            style={{ flex: 'none', height: '40px', padding: '0 16px' }}
-                                                        >
-                                                            <MapPin size={16} /> Direction Link 📍
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                {!['completed', 'cancelled'].includes(req.status) && (
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
+                                                        {/* 1. GPS Based Live Location */}
+                                                        {req.address?.lat && req.address?.lng && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    const link = `https://www.google.com/maps/dir/?api=1&destination=${req.address.lat},${req.address.lng}`;
+                                                                    window.open(link, '_blank');
+                                                                }}
+                                                                className="btn-location"
+                                                                style={{ flex: 'none', height: '36px', padding: '0 12px', fontSize: '13px', backgroundColor: '#059669', color: 'white' }}
+                                                            >
+                                                                <MapPin size={14} /> Live Location 📍
+                                                            </button>
+                                                        )}
+
+                                                        {/* 2. Customer Provided Map Link */}
+                                                        {req.address?.googleMapLink && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    let link = req.address.googleMapLink;
+                                                                    if (!/^https?:\/\//i.test(link)) link = 'https://' + link;
+                                                                    window.open(link, '_blank');
+                                                                }}
+                                                                className="btn-location"
+                                                                style={{ flex: 'none', height: '36px', padding: '0 12px', fontSize: '13px', backgroundColor: '#003d9b', color: 'white' }}
+                                                            >
+                                                                <MapPin size={14} /> Map Link 🗺️
+                                                            </button>
+                                                        )}
+
+                                                        {/* 3. Fallback Address Search (Only if neither 1 nor 2 exists) */}
+                                                        {!(req.address?.lat && req.address?.lng) && !req.address?.googleMapLink && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    const query = encodeURIComponent(`${req.address?.street || ''} ${req.address?.city || ''} ${req.address?.zipCode || ''}`.trim() || 'Customer Location');
+                                                                    const link = `https://www.google.com/maps/search/?api=1&query=${query}`;
+                                                                    window.open(link, '_blank');
+                                                                }}
+                                                                className="btn-location"
+                                                                style={{ flex: 'none', height: '36px', padding: '0 12px', fontSize: '13px' }}
+                                                            >
+                                                                <MapPin size={14} /> Search Address 🔍
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Action Buttons */}
@@ -190,23 +220,9 @@ const DesktopBookingRequestTab = ({
                                                     </>
                                                 )}
                                                 {req.status === 'confirmed' && (
-                                                    <>
-                                                        <button onClick={() => updateBookingStatus(req._id, 'in_progress')} className="btn-start">
-                                                            Start Service
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => {
-                                                                let link = (req.address?.lat && req.address?.lng)
-                                                                    ? `https://www.google.com/maps/dir/?api=1&destination=${req.address.lat},${req.address.lng}`
-                                                                    : (req.address?.googleMapLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.address?.street || ''} ${req.address?.city || ''} ${req.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
-                                                                if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
-                                                                if (link) window.open(link, '_blank');
-                                                            }}
-                                                            className="btn-location"
-                                                        >
-                                                            <MapPin size={18} /> Location
-                                                        </button>
-                                                    </>
+                                                    <button onClick={() => updateBookingStatus(req._id, 'in_progress')} className="btn-start">
+                                                        Start Service
+                                                    </button>
                                                 )}
                                                 {['in_progress', 'revision_requested'].includes(req.status) && (
                                                     <button onClick={() => handleDeliverClick(req._id)} className="btn-deliver">

@@ -4,7 +4,9 @@ import {
     MapPin, 
     User, 
     MessageSquare, 
-    History 
+    History,
+    TrendingUp,
+    Star
 } from 'lucide-react';
 import '../../../styles/desktop-dashboard-styles/DesktopMyBookingsTab.css';
 
@@ -217,23 +219,38 @@ const DesktopMyBookingsTab = ({
                 {/* Sidebar Widgets */}
                 <div className="bookings-sidebar-col">
                     <div className="analytics-card">
+                        <div className="analytics-pattern"></div>
                         <div style={{ position: 'relative', zIndex: 10 }}>
-                            <h4 className="analytics-title">Activity Summary</h4>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                                <div>
-                                    <p className="analytics-value">₹{totalValue}</p>
-                                    <p className="analytics-subtitle">Total Bookings Value</p>
-                                </div>
-                                <div className="analytics-stats-grid">
-                                    <div className="stat-box">
-                                        <p className="stat-value">
+                            <div className="analytics-header-row">
+                                <h4 className="analytics-title">Activity Summary</h4>
+                                <TrendingUp size={16} style={{ opacity: 0.6 }} />
+                            </div>
+                            
+                            <div className="analytics-main-value">
+                                <span className="currency-symbol">₹</span>
+                                <span className="value-text">{totalValue.toLocaleString()}</span>
+                                <p className="analytics-subtitle">Lifetime Booking Volume</p>
+                            </div>
+
+                            <div className="analytics-stats-grid">
+                                <div className="stat-box-modern">
+                                    <div className="stat-icon-circle">
+                                        <History size={14} />
+                                    </div>
+                                    <div className="stat-info-modern">
+                                        <p className="stat-value-modern">
                                             {(myBookings || []).filter(b => b?.status !== 'cancelled' && b?.status !== 'rejected').length}
                                         </p>
-                                        <p className="stat-label">Bookings</p>
+                                        <p className="stat-label-modern">Total Bookings</p>
                                     </div>
-                                    <div className="stat-box">
-                                        <p className="stat-value">98%</p>
-                                        <p className="stat-label">Success Rate</p>
+                                </div>
+                                <div className="stat-box-modern">
+                                    <div className="stat-icon-circle" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}>
+                                        <Star size={14} fill="currentColor" />
+                                    </div>
+                                    <div className="stat-info-modern">
+                                        <p className="stat-value-modern">98%</p>
+                                        <p className="stat-label-modern">Success Rate</p>
                                     </div>
                                 </div>
                             </div>

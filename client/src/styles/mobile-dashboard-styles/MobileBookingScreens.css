@@ -142,14 +142,25 @@
     color: #003d9b;
 }
 
-.booking-card-actions {
+.booking-card-actions-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.booking-card-primary-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.booking-card-secondary-actions {
     display: flex;
     gap: 10px;
 }
 
 .booking-btn {
     flex: 1;
-    padding: 12px;
+    padding: 12px 8px;
     border-radius: 14px;
     border: none;
     font-weight: 800;
@@ -158,6 +169,8 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
+    text-align: center;
+    line-height: 1.2;
 }
 
 .booking-btn-primary { background: #003d9b; color: white; }
@@ -165,6 +178,7 @@
 .booking-btn-success { background: #10b981; color: white; }
 .booking-btn-info { background: #eff6ff; color: #3b82f6; }
 .booking-btn-muted { background: #f1f5f9; color: #475569; }
+.booking-btn-light { background: #fff; color: #003d9b; border: 1px solid #e0e7ff; }
 
 /* Booking Details Screen */
 .booking-detail-section {

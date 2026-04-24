@@ -83,52 +83,61 @@ export default function MobileRequestsScreen({
                                 </div>
 
                                 {!isCancelled && !isCompleted && (
-                                    <div className="booking-card-actions">
-                                        {req.status === 'pending' && (
-                                            <>
-                                                <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'confirmed'); }}
-                                                    className="booking-btn booking-btn-primary">
-                                                    Accept
+                                    <div className="booking-card-actions-wrapper">
+                                        <div className="booking-card-primary-actions">
+                                            {req.status === 'pending' && (
+                                                <>
+                                                    <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'confirmed'); }}
+                                                        className="booking-btn booking-btn-primary">
+                                                        Accept Request
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'cancelled'); }}
+                                                        className="booking-btn booking-btn-danger">
+                                                        Decline
+                                                    </button>
+                                                </>
+                                            )}
+                                            {req.status === 'confirmed' && (
+                                                <>
+                                                    <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'in_progress'); }}
+                                                        className="booking-btn booking-btn-success">
+                                                        Start Service
+                                                    </button>
+                                                    <button onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const lat = req.address?.lat; const lng = req.address?.lng;
+                                                        const link = lat && lng
+                                                            ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+                                                            : (req.address?.googleMapLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(req.address?.street || req.address?.city || 'Customer Location')}`);
+                                                        window.open(link.startsWith('http') ? link : 'https://' + link, '_blank');
+                                                    }} className="booking-btn booking-btn-info">
+                                                        <MapPin size={16} /> Navigate
+                                                    </button>
+                                                </>
+                                            )}
+                                            {['in_progress', 'revision_requested'].includes(req.status) && (
+                                                <button onClick={(e) => { e.stopPropagation(); onDeliverClick(req); }}
+                                                    className="booking-btn booking-btn-success" style={{ flex: '2' }}>
+                                                    Deliver & Request Payment
                                                 </button>
-                                                <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'cancelled'); }}
-                                                    className="booking-btn booking-btn-danger">
-                                                    Decline
-                                                </button>
-                                            </>
-                                        )}
-                                        {req.status === 'confirmed' && (
-                                            <>
-                                                <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'in_progress'); }}
-                                                    className="booking-btn booking-btn-success">
-                                                    Start Service
-                                                </button>
-                                                <button onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    const lat = req.address?.lat; const lng = req.address?.lng;
-                                                    const link = lat && lng
-                                                        ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
-                                                        : (req.address?.googleMapLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(req.address?.street || req.address?.city || 'Customer Location')}`);
-                                                    window.open(link.startsWith('http') ? link : 'https://' + link, '_blank');
-                                                }} className="booking-btn booking-btn-info">
-                                                    <MapPin size={16} /> Navigate
-                                                </button>
-                                            </>
-                                        )}
-                                        {['in_progress', 'revision_requested'].includes(req.status) && (
-                                            <button onClick={(e) => { e.stopPropagation(); onDeliverClick(req); }}
-                                                className="booking-btn booking-btn-success">
-                                                Deliver & Request Payment
+                                            )}
+                                            {req.status === 'delivered' && (
+                                                <div style={{ flex: 1, padding: '12px', borderRadius: 14, background: '#fffbeb', color: '#d97706', fontWeight: 800, fontSize: 12, textAlign: 'center' }}>
+                                                    ⏳ Awaiting Approval
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="booking-card-secondary-actions">
+                                            <button onClick={(e) => { e.stopPropagation(); onSelectBooking(req); }}
+                                                className="booking-btn booking-btn-light">
+                                                Details
                                             </button>
-                                        )}
-                                        {req.status === 'delivered' && (
-                                            <div style={{ flex: 1, padding: '12px', borderRadius: 14, background: '#fffbeb', color: '#d97706', fontWeight: 800, fontSize: 13, textAlign: 'center' }}>
-                                                ⏳ Awaiting Customer Approval
-                                            </div>
-                                        )}
-                                        <button onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: req._id, otherUser: req.user }); }}
-                                            className="booking-btn booking-btn-muted">
-                                            Chat
-                                        </button>
+                                            <button onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: req._id, otherUser: req.user }); }}
+                                                className="booking-btn booking-btn-muted">
+                                                Chat
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
 

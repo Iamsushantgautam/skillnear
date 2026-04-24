@@ -18,6 +18,7 @@ import DesktopRevisionHistoryModal from "./DesktopRevisionHistoryModal";
 import DesktopRevisionModal from "./DesktopRevisionModal";
 import DesktopWithdrawalModal from "./DesktopWithdrawalModal";
 import DesktopOrderDetailsModal from "./DesktopOrderDetailsModal";
+import DesktopDashboardNavigation from './DesktopDashboardNavigation';
 import { City } from 'country-state-city';
 import api from '../../../utils/api';
 import toast from 'react-hot-toast';
@@ -302,6 +303,14 @@ const DashboardDesktop = ({
         }
     }, [activeTab]);
 
+    const [selectedBooking, setSelectedBooking] = React.useState(null);
+    const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
+
+    const handleSelectBooking = (booking) => {
+        setSelectedBooking(booking);
+        setIsDetailsOpen(true);
+    };
+
     const handleDeliverClick = (bookingId) => {
         setBookingForPayment(bookingId);
     };
@@ -323,173 +332,33 @@ const DashboardDesktop = ({
             toast.error('Failed to send revision request');
         }
     };
-    const getTabStyle = (tabName) => ({
-        display: 'flex',
-        alignItems: 'center',
-        gap: '20px',
-        width: '100%',
-        padding: '16px 32px',
-        textAlign: 'left',
-        backgroundColor: activeTab === tabName ? '#f1f5f9' : 'transparent',
-        color: activeTab === tabName ? '#007bff' : '#475569',
-        borderLeft: activeTab === tabName ? '4px solid #007bff' : '4px solid transparent',
-        transition: 'all 0.2s',
-        fontWeight: activeTab === tabName ? '700' : '500',
-        borderTop: 'none',
-        borderRight: 'none',
-        borderBottom: 'none',
-        cursor: 'pointer',
-        fontSize: '0.95rem'
-    });
-
-    const renderCustomerTabs = () => (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <button style={getTabStyle('home')} onClick={() => navigate('/')}>
-                <Home size={22} strokeWidth={1.5} /> Home
-            </button>
-            <button style={getTabStyle('overview')} onClick={() => setActiveTab('overview')}>
-                <BarChart size={22} strokeWidth={1.5} /> Overview
-            </button>
-            <button style={getTabStyle('bookings')} onClick={() => setActiveTab('bookings')}>
-                <Inbox size={22} strokeWidth={1.5} /> My Bookings
-            </button>
-            <button style={getTabStyle('chat')} onClick={() => setActiveTab('chat')}>
-                <MessageSquare size={22} strokeWidth={1.5} /> Messages
-            </button>
-            <button style={getTabStyle('reviews')} onClick={() => setActiveTab('reviews')}>
-                <Star size={22} strokeWidth={1.5} /> Reviews
-            </button>
-            <button style={getTabStyle('profile')} onClick={() => setActiveTab('profile')}>
-                <User size={22} strokeWidth={1.5} /> Profile
-            </button>
-            <button style={getTabStyle('become_provider')} onClick={() => setActiveTab('become_provider')}>
-                <Briefcase size={22} strokeWidth={1.5} /> Become a Seller
-            </button>
-            <button style={getTabStyle('favorites')} onClick={() => setActiveTab('favorites')}>
-                <Heart size={22} strokeWidth={1.5} /> Favorites
-            </button>
-            <button style={getTabStyle('help')} onClick={() => setActiveTab('help')}>
-                <HelpCircle size={22} strokeWidth={1.5} /> Help & Support
-            </button>
-            {user?.role === 'admin' && (
-                <button style={getTabStyle('admin')} onClick={() => setActiveTab('admin')}>
-                    <Settings size={22} strokeWidth={1.5} /> Admin Panel
-                </button>
-            )}
-        </div>
-    );
-
-    const renderProviderTabs = () => (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {providerStatus === 'pending' && (
-                <div style={{ padding: '0 32px 16px', fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' }}>
-                    Pending Approval
-                </div>
-            )}
-            <button style={getTabStyle('home')} onClick={() => navigate('/')}>
-                <Home size={22} strokeWidth={1.5} /> Home
-            </button>
-            <button style={getTabStyle('overview')} onClick={() => setActiveTab('overview')}>
-                <BarChart size={22} strokeWidth={1.5} /> Overview
-            </button>
-            <button style={getTabStyle('mygigs')} onClick={() => setActiveTab('mygigs')}>
-                <Briefcase size={22} strokeWidth={1.5} /> My Gigs
-            </button>
-            <button style={getTabStyle('services')} onClick={() => { resetGigForm(); setActiveTab('services'); }}>
-                <Settings size={22} strokeWidth={1.5} /> Add New Gig
-            </button>
-            <button style={getTabStyle('profile')} onClick={() => setActiveTab('profile')}>
-                <User size={22} strokeWidth={1.5} /> Profile
-            </button>
-            <button style={getTabStyle('requests')} onClick={() => setActiveTab('requests')}>
-                <Inbox size={22} strokeWidth={1.5} /> Booking Requests
-                {bookingRequests.filter(r => r.status === 'pending').length > 0 && (
-                    <span style={{ marginLeft: 'auto', backgroundColor: '#ef4444', color: 'white', borderRadius: '10px', padding: '2px 8px', fontSize: '10px', fontWeight: '800' }}>
-                        {bookingRequests.filter(r => r.status === 'pending').length}
-                    </span>
-                )}
-            </button>
-            {user?.role === 'provider' && (
-                <button style={getTabStyle('payments')} onClick={() => setActiveTab('payments')}>
-                    <Wallet size={22} strokeWidth={1.5} /> Payments
-                </button>
-            )}
-            <button style={getTabStyle('bookings')} onClick={() => setActiveTab('bookings')}>
-                <CalendarIcon size={22} strokeWidth={1.5} /> My Orders (Purchased)
-            </button>
-            <button style={getTabStyle('favorites')} onClick={() => setActiveTab('favorites')}>
-                <Heart size={22} strokeWidth={1.5} /> Favorites
-            </button>
-            <button style={getTabStyle('chat')} onClick={() => setActiveTab('chat')}>
-                <MessageSquare size={22} strokeWidth={1.5} /> Messages
-            </button>
-            <button style={getTabStyle('reviews')} onClick={() => setActiveTab('reviews')}>
-                <Star size={22} strokeWidth={1.5} /> Reviews
-            </button>
-            <button style={getTabStyle('help')} onClick={() => setActiveTab('help')}>
-                <HelpCircle size={22} strokeWidth={1.5} /> Help & Support
-            </button>
-            {user?.role === 'admin' && (
-                <button style={getTabStyle('admin')} onClick={() => setActiveTab('admin')}>
-                    <Settings size={22} strokeWidth={1.5} /> Admin Panel
-                </button>
-            )}
-        </div>
-    );
 
     return (
         <div style={{ backgroundColor: '#faf8ff', minHeight: '100vh', padding: '0', overflowX: 'hidden', display: 'flex', width: '100%' }}>
-            {/* Sidebar Navigation */}
-            <aside style={{
-                height: '100vh', width: '280px', position: 'fixed', left: 0, top: 0,
-                borderRight: '1px solid #e2e8f0', background: '#fff',
-                display: 'flex', flexDirection: 'column',
-                padding: '40px 0 32px', zIndex: 1000, boxShadow: '10px 0 50px rgba(0,0,0,0.02)'
-            }}>
-                <div style={{ marginBottom: '40px', padding: '0 32px' }}>
-                    <h1 style={{ fontSize: '1.4rem', fontWeight: '900', color: '#003d9b', marginBottom: '4px', letterSpacing: '-0.02em' }}>SkillNear</h1>
-                    <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#003d9b', opacity: 0.6, fontWeight: '800' }}>Your Trusted Platform for Local Services</p>
-                </div>
+            <DesktopDashboardNavigation 
+                user={user}
+                role={role}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                bookingRequests={bookingRequests}
+                providerStatus={providerStatus}
+                resetGigForm={resetGigForm}
+                handleLogout={handleLogout}
+                getAvatar={getAvatar}
+            />
 
-                <nav className="no-scrollbar" style={{ flex: 1, overflowY: 'auto' }}>
-                    {role === 'customer' ? renderCustomerTabs() : renderProviderTabs()}
-                </nav>
-
-                <div style={{ marginTop: 'auto', padding: '0 24px' }}>
-                    <div style={{ paddingTop: '24px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <img
-                            src={getAvatar(user)}
-                            alt={user?.name}
-                            style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #f1f5f9' }}
-                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=ede9fe&color=4f46e5`; }}
-                        />
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '14px', fontWeight: '800', color: '#1e293b' }}>{user?.name || 'User'}</span>
-                            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '500', cursor: 'pointer' }} onClick={() => setActiveTab('profile')}>View Profile</span>
-                        </div>
-                        <div style={{ marginLeft: 'auto' }}>
-                            <button 
-                                onClick={handleLogout}
-                                style={{ background: '#fef2f2', border: 'none', color: '#ef4444', width: '38px', height: '38px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
-                                title="Logout"
-                            >
-                                <LogOut size={20} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </aside>
-
-            {/* Main Content Canvas */}
+            {/* Main Content Area */}
             <main style={{ 
+                flex: 1, 
                 marginLeft: '280px', 
-                padding: '48px', 
+                padding: '48px',
+                position: 'relative',
+                width: 'calc(100% - 280px)',
                 height: '100vh', 
                 display: 'flex', 
                 flexDirection: 'column', 
                 overflow: activeTab === 'chat' ? 'hidden' : 'auto',
-                background: '#faf8ff',
-                flex: 1
+                background: '#faf8ff'
             }}>
                 <div style={{ 
                     width: '100%', 

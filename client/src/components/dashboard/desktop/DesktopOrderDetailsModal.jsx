@@ -9,7 +9,7 @@ const DesktopOrderDetailsModal = ({ isOpen, onClose, booking }) => {
         let link = (booking.address?.lat && booking.address?.lng)
             ? `https://www.google.com/maps/dir/?api=1&destination=${booking.address.lat},${booking.address.lng}`
             : booking.address?.googleMapLink;
-        
+
         if (link) {
             if (!/^https?:\/\//i.test(link)) link = 'https://' + link;
             window.open(link, '_blank');
@@ -25,7 +25,7 @@ const DesktopOrderDetailsModal = ({ isOpen, onClose, booking }) => {
                         <X size={24} />
                     </button>
                 </div>
-                
+
                 <div className="order-details-content">
                     <div className="order-summary-card">
                         <div className="summary-row">
@@ -64,15 +64,55 @@ const DesktopOrderDetailsModal = ({ isOpen, onClose, booking }) => {
                             </span>
                         </div>
 
-                        {(booking.address?.googleMapLink || (booking.address?.lat && booking.address?.lng)) && (
-                            <div className="directions-action">
-                                <span className="detail-label">Interactive Map</span>
-                                <button 
-                                    onClick={handleGetDirections}
-                                    className="directions-btn"
-                                >
-                                    Get Directions 📍
-                                </button>
+                        {!['completed', 'cancelled'].includes(booking.status) && (
+                            <div className="directions-action" style={{ borderTop: '1px solid #f1f5f9', paddingTop: '20px', marginTop: '10px' }}>
+                                <span className="detail-label" style={{ marginBottom: '12px', display: 'block' }}>Navigation & Maps</span>
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    {/* GPS Based Live Location */}
+                                    {booking.address?.lat && booking.address?.lng && (
+                                        <button
+                                            onClick={() => {
+                                                const link = `https://www.google.com/maps/dir/?api=1&destination=${booking.address.lat},${booking.address.lng}`;
+                                                window.open(link, '_blank');
+                                            }}
+                                            className="location-btn-premium"
+                                            style={{ backgroundColor: '#069462', flexDirection: 'column' }}
+                                        >
+                                            <span style={{ color: '#38bdf8', fontSize: '15px', fontWeight: '900' }}>Live Location</span>
+                                            <span style={{ fontSize: '20px' }}></span>
+                                        </button>
+                                    )}
+
+                                    {/* Customer Provided Map Link */}
+                                    {booking.address?.googleMapLink && (
+                                        <button
+                                            onClick={() => {
+                                                let link = booking.address.googleMapLink;
+                                                if (!/^https?:\/\//i.test(link)) link = 'https://' + link;
+                                                window.open(link, '_blank');
+                                            }}
+                                            className="location-btn-premium"
+                                            style={{ backgroundColor: '#003d9b' }}
+                                        >
+                                            <span style={{ color: '#38bdf8', fontSize: '15px', fontWeight: '900' }}>Map Link 🗺️</span>
+                                        </button>
+                                    )}
+
+                                    {/* Fallback Search */}
+                                    {!(booking.address?.lat && booking.address?.lng) && !booking.address?.googleMapLink && (
+                                        <button
+                                            onClick={() => {
+                                                const query = encodeURIComponent(`${booking.address?.street || ''} ${booking.address?.city || ''} ${booking.address?.zipCode || ''}`.trim() || 'Customer Location');
+                                                const link = `https://www.google.com/maps/search/?api=1&query=${query}`;
+                                                window.open(link, '_blank');
+                                            }}
+                                            className="location-btn-premium"
+                                            style={{ backgroundColor: '#475569' }}
+                                        >
+                                            <span style={{ color: '#38bdf8', fontSize: '15px', fontWeight: '900' }}>Search Address 🔍</span>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>

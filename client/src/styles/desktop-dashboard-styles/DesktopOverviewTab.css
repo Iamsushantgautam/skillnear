@@ -148,74 +148,66 @@
     margin-top: auto;
 }
 
-.stat-card {
+.stat-card-new {
     flex: 1;
-    background-color: #f8fafc;
+    background-color: #ffffff;
     border: 1px solid #f1f5f9;
     padding: 16px;
-    border-radius: 16px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card-new:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: #e2e8f0;
+}
+
+.stat-icon-mini {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-details {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
-.stat-card-highlight {
-    background-color: #fffbeb;
-    border-color: #fef3c7;
-}
-
-.stat-card-success {
-    background-color: #ecfdf5;
-    border-color: #dcfce7;
-}
-
-.stat-label {
-    font-size: 0.75rem;
+.stat-label-new {
+    font-size: 0.7rem;
     color: #64748b;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.025em;
 }
 
-.stat-label-highlight {
-    color: #d97706;
+.stat-value-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.stat-label-success {
-    color: #166534;
-}
-
-.stat-value {
-    font-size: 1.25rem;
-    font-weight: 900;
+.stat-value-new {
+    font-size: 1.125rem;
+    font-weight: 800;
     color: #1e293b;
 }
 
-.stat-value-highlight {
-    color: #b45309;
-}
-
-.stat-value-success {
-    color: #166534;
-}
-
-.rating-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.status-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.status-dot {
-    width: 8px;
-    height: 8px;
+.status-dot-mini {
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background-color: #10b981;
+    box-shadow: 0 0 0 2px #ecfdf5;
 }
 
 /* Become Provider Card */

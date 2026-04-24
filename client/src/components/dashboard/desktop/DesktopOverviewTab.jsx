@@ -8,7 +8,11 @@ import {
     MessageSquare, 
     Star, 
     DollarSign, 
-    Wallet 
+    Wallet,
+    TrendingUp,
+    Award,
+    Calendar as CalendarIcon,
+    PackageOpen
 } from 'lucide-react';
 import '../../../styles/desktop-dashboard-styles/DesktopOverviewTab.css';
 
@@ -71,44 +75,30 @@ const DesktopOverviewTab = ({
                         </p>
 
                         {/* Stats Bar */}
+                        {/* Stats Bar */}
                         <div className="stats-bar">
-                            {role === 'provider' ? (
-                                <>
-                                    <div className="stat-card">
-                                        <span className="stat-label">Response Rate</span>
-                                        <span className="stat-value">98%</span>
+                            {(role === 'provider' ? [
+                                { label: 'Response Rate', value: '98%', icon: TrendingUp, color: '#003d9b', bg: '#eff6ff' },
+                                { label: 'Experience', value: `${user?.providerDetails?.experienceYears || 0} Yrs`, icon: Award, color: '#059669', bg: '#ecfdf5' },
+                                { label: 'Rating', value: '4.9', icon: Star, color: '#d97706', bg: '#fffbeb', isRating: true }
+                            ] : [
+                                { label: 'Member Since', value: user?.createdAt ? new Date(user.createdAt).getFullYear() : 2024, icon: CalendarIcon, color: '#003d9b', bg: '#eff6ff' },
+                                { label: 'Total Bookings', value: (myBookings || []).length, icon: PackageOpen, color: '#7c3aed', bg: '#f5f3ff' },
+                                { label: 'Account Status', value: 'Active', icon: CheckCircle, color: '#059669', bg: '#ecfdf5', isStatus: true }
+                            ]).map((stat, i) => (
+                                <div key={i} className="stat-card-new">
+                                    <div className="stat-icon-mini" style={{ backgroundColor: stat.bg, color: stat.color }}>
+                                        <stat.icon size={16} fill={stat.isRating ? stat.color : 'none'} />
                                     </div>
-                                    <div className="stat-card">
-                                        <span className="stat-label">Experience</span>
-                                        <span className="stat-value">{user?.providerDetails?.experienceYears || 0} Yrs</span>
-                                    </div>
-                                    <div className="stat-card stat-card-highlight">
-                                        <span className="stat-label stat-label-highlight">Rating</span>
-                                        <div className="rating-row">
-                                            <span className="stat-value stat-value-highlight">4.9</span>
-                                            <Star size={16} color="#d97706" fill="#d97706" />
+                                    <div className="stat-details">
+                                        <span className="stat-label-new">{stat.label}</span>
+                                        <div className="stat-value-row">
+                                            <span className="stat-value-new">{stat.value}</span>
+                                            {stat.isStatus && <div className="status-dot-mini"></div>}
                                         </div>
                                     </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="stat-card">
-                                        <span className="stat-label">Member Since</span>
-                                        <span className="stat-value">{user?.createdAt ? new Date(user.createdAt).getFullYear() : 2024}</span>
-                                    </div>
-                                    <div className="stat-card">
-                                        <span className="stat-label">Total Bookings</span>
-                                        <span className="stat-value">{(myBookings || []).length}</span>
-                                    </div>
-                                    <div className="stat-card stat-card-success">
-                                        <span className="stat-label stat-label-success">Account Status</span>
-                                        <div className="status-row">
-                                            <div className="status-dot"></div>
-                                            <span className="stat-value stat-value-success">Active</span>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
