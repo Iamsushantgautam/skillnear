@@ -27,8 +27,45 @@ const DesktopOverviewTab = ({
     providerAbout,
     myBookings,
     myGigs,
-    stats
+    stats,
+    isStatsLoading
 }) => {
+    if (isStatsLoading && (!stats?.chartData || stats.chartData.length === 0)) {
+        return (
+            <div className="overview-container skeleton-container">
+                <section className="bio-card">
+                    <div className="header-banner"><div className="header-pattern"></div></div>
+                    <div className="profile-content">
+                        <div className="avatar-container">
+                            <div className="avatar-wrapper">
+                                <div className="skeleton skeleton-circle" style={{ width: '120px', height: '120px' }}></div>
+                            </div>
+                        </div>
+                        <div className="info-section">
+                            <div className="skeleton skeleton-title" style={{ width: '200px' }}></div>
+                            <div className="skeleton skeleton-text" style={{ width: '150px' }}></div>
+                            <div className="skeleton skeleton-text" style={{ width: '80%', height: '40px', marginTop: '12px' }}></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="quick-status-card">
+                    <div className="skeleton skeleton-title" style={{ width: '150px' }}></div>
+                    <div className="skeleton skeleton-text" style={{ height: '100px', marginTop: '20px' }}></div>
+                </section>
+
+                <div className="quick-links-grid">
+                    <div className="action-card skeleton"><div className="skeleton-text" style={{ height: '120px' }}></div></div>
+                    <div className="action-card skeleton"><div className="skeleton-text" style={{ height: '120px' }}></div></div>
+                </div>
+
+                <section className="snapshot-section" style={{ background: '#1e293b' }}>
+                    <div className="skeleton" style={{ width: '100%', height: '300px', borderRadius: '32px' }}></div>
+                </section>
+            </div>
+        );
+    }
+
     return (
         <div id="account-settings-section" className="animate-fade-in overview-container">
             {/* Main Bio & Avatar Card */}

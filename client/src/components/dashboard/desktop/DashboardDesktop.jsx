@@ -62,6 +62,7 @@ const DashboardDesktop = ({
     handleApplyProvider,
     isSubmitting,
     bookingsLoading,
+    isStatsLoading,
     updateBookingStatus,
     bookingForRevision,
     setBookingForRevision,
@@ -298,6 +299,8 @@ const DashboardDesktop = ({
         }
     };
 
+    const [isSubmittingRevision, setIsSubmittingRevision] = React.useState(false);
+
     React.useEffect(() => {
         if (activeTab === 'reviews') {
             fetchMyReviews();
@@ -331,7 +334,8 @@ const DashboardDesktop = ({
     };
 
     const handleRequestRevision = async () => {
-        if (!bookingForRevision || !revisionNote.trim()) return;
+        if (!bookingForRevision || !revisionNote.trim() || isSubmittingRevision) return;
+        setIsSubmittingRevision(true);
         try {
             await updateBookingStatus(bookingForRevision._id, 'revision_requested', revisionNote);
             setBookingForRevision(null);
@@ -340,6 +344,8 @@ const DashboardDesktop = ({
         } catch (err) {
             console.error(err);
             toast.error('Failed to send revision request');
+        } finally {
+            setIsSubmittingRevision(false);
         }
     };
 
@@ -436,6 +442,7 @@ const DashboardDesktop = ({
                     myBookings={myBookings}
                     myGigs={myGigs}
                     stats={stats}
+                    isStatsLoading={isStatsLoading}
                 />
             )}
 
@@ -719,6 +726,7 @@ const DashboardDesktop = ({
                 onSubmit={handleRequestRevision}
                 note={revisionNote}
                 setNote={setRevisionNote}
+                submitting={isSubmittingRevision}
             />
 
             {/* Order Details Modal */}

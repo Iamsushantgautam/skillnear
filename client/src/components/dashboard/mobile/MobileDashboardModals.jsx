@@ -1,5 +1,4 @@
-import React from 'react';
-import { Wallet, DollarSign, X, XCircle } from 'lucide-react';
+import { Wallet, DollarSign, X, XCircle, RotateCw } from 'lucide-react';
 import { PC, PL } from './MobileDashboardShared';
 import '../../../styles/mobile-dashboard-styles/MobileDashboardModals.css';
 
@@ -113,7 +112,7 @@ export function MobileRevisionHistoryModal({ isOpen, onClose, revisions }) {
 }
 
 /* ─── Revision Request Modal ─── */
-export function MobileRevisionModal({ isOpen, onClose, onSubmit, note, setNote }) {
+export function MobileRevisionModal({ isOpen, onClose, onSubmit, note, setNote, submitting }) {
     if (!isOpen) return null;
     return (
         <div className="mobile-modal-overlay">
@@ -121,12 +120,34 @@ export function MobileRevisionModal({ isOpen, onClose, onSubmit, note, setNote }
                 <div className="modal-handle"></div>
                 <h3 className="modal-title">Request Revision</h3>
                 <p className="modal-desc">Please describe what changes you would like the professional to make.</p>
-                <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Describe your revision requirements..." className="modal-textarea" style={{ minHeight: 120, marginBottom: 24 }} />
+                <textarea 
+                    value={note} 
+                    onChange={(e) => setNote(e.target.value)} 
+                    placeholder="Describe your revision requirements..." 
+                    className="modal-textarea" 
+                    style={{ minHeight: 120, marginBottom: 24 }} 
+                    disabled={submitting}
+                />
                 <div className="modal-action-footer">
-                    <button onClick={onClose} className="modal-btn modal-btn-cancel">Cancel</button>
-                    <button onClick={onSubmit} disabled={!note.trim()} className="modal-btn modal-btn-confirm" style={{ opacity: note.trim() ? 1 : 0.6 }}>Submit Request</button>
+                    <button onClick={onClose} className="modal-btn modal-btn-cancel" disabled={submitting}>Cancel</button>
+                    <button 
+                        onClick={onSubmit} 
+                        disabled={!note.trim() || submitting} 
+                        className="modal-btn modal-btn-confirm" 
+                        style={{ opacity: (note.trim() && !submitting) ? 1 : 0.6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                    >
+                        {submitting ? (
+                            <>
+                                <RotateCw size={18} className="spin" />
+                                Sending...
+                            </>
+                        ) : (
+                            'Submit Request'
+                        )}
+                    </button>
                 </div>
             </div>
         </div>
     );
 }
+

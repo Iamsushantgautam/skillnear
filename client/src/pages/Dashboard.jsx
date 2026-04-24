@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import io from 'socket.io-client';
 import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, Loader, Home, LogOut, Wallet, Inbox, Heart, Star, HelpCircle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -18,7 +18,7 @@ const Dashboard = () => {
     const [role, setRole] = useState(user?.role || 'customer');
     const queryParams = new URLSearchParams(window.location.search);
     const initialTab = queryParams.get('tab');
-    
+
     const [activeTab, setActiveTab] = useState(initialTab || 'overview');
     const [revisionNote, setRevisionNote] = useState('');
     const [bookingForRevision, setBookingForRevision] = useState(null);
@@ -33,6 +33,21 @@ const Dashboard = () => {
     // My Gigs state
     const [myGigs, setMyGigs] = useState([]);
     const [gigsLoading, setGigsLoading] = useState(false);
+
+    // Bookings state
+    const [myBookings, setMyBookings] = useState([]);
+    const [bookingRequests, setBookingRequests] = useState([]);
+    const [bookingsLoading, setBookingsLoading] = useState(false);
+
+    // Admin States
+    const [allUsers, setAllUsers] = useState([]);
+    const [usersLoading, setUsersLoading] = useState(false);
+    const [adminServices, setAdminServices] = useState([]);
+    const [servicesLoading, setServicesLoading] = useState(false);
+
+    // Favorites state
+    const [favorites, setFavorites] = useState([]);
+    const [favoritesLoading, setFavoritesLoading] = useState(false);
     const [gigSearchQuery, setGigSearchQuery] = useState('');
     const [gigTypeFilter, setGigTypeFilter] = useState('all'); // all, service, shop
 
@@ -116,60 +131,90 @@ const Dashboard = () => {
     const [withdrawals, setWithdrawals] = useState([]);
     const [withdrawalsLoading, setWithdrawalsLoading] = useState(false);
 
-    const fetchStats = async () => {
+    const fetchMyBookings = useCallback(async (silent = false) => {
+        if (!user?.token) return;
+        if (!silent) setBookingsLoading(true);
         try {
-            setIsStatsLoading(true);
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.get('/api/bookings/mybookings', config);
+            setMyBookings(data);
+        } catch (err) {
+            console.error('Failed to fetch bookings', err);
+        } finally {
+            if (!silent) setBookingsLoading(false);
+        }
+    }, [user?.token]);
+
+    const fetchProviderRequests = useCallback(async (silent = false) => {
+        if (!user || user.role !== 'provider' || !user.token) return;
+        if (!silent) setBookingsLoading(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.get('/api/bookings/provider', config);
+            setBookingRequests(data);
+        } catch (err) {
+            console.error('Failed to fetch provider requests', err);
+        } finally {
+            if (!silent) setBookingsLoading(false);
+        }
+    }, [user?.token, user?.role]);
+
+    const fetchMyGigs = useCallback(async (silent = false) => {
+        if (!user?.token) return;
+        if (!silent) setGigsLoading(true);
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await api.get('/api/services/mine', config);
+            setMyGigs(data);
+        } catch (err) {
+            console.error('Failed to fetch gigs', err);
+        } finally {
+            if (!silent) setGigsLoading(false);
+        }
+    }, [user?.token]);
+
+    const fetchStats = useCallback(async (silent = false) => {
+        if (!user?.token) return;
+        try {
+            if (!silent) setIsStatsLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data } = await api.get('/api/bookings/provider/stats', config);
             setStats(data);
-            setIsStatsLoading(false);
         } catch (error) {
             console.error('Error fetching dashboard stats', error);
-            setIsStatsLoading(false);
+        } finally {
+            if (!silent) setIsStatsLoading(false);
         }
-    };
+    }, [user?.token]);
 
-    const fetchWithdrawals = async () => {
-        if (!user || user.role !== 'provider') return;
+    const fetchWithdrawals = useCallback(async (silent = false) => {
+        if (!user || user.role !== 'provider' || !user.token) return;
         try {
-            setWithdrawalsLoading(true);
+            if (!silent) setWithdrawalsLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data } = await api.get('/api/withdrawals/my', config);
             setWithdrawals(data);
-            setWithdrawalsLoading(false);
         } catch (error) {
             console.error('Error fetching withdrawals', error);
-            setWithdrawalsLoading(false);
+        } finally {
+            if (!silent) setWithdrawalsLoading(false);
         }
-    };
+    }, [user?.token, user?.role]);
 
-    // Bookings state
-    const [myBookings, setMyBookings] = useState([]);
-    const [bookingRequests, setBookingRequests] = useState([]);
-    const [bookingsLoading, setBookingsLoading] = useState(false);
 
-    // Admin States
-    const [allUsers, setAllUsers] = useState([]);
-    const [usersLoading, setUsersLoading] = useState(false);
-    const [adminServices, setAdminServices] = useState([]);
-    const [servicesLoading, setServicesLoading] = useState(false);
 
-    // Favorites state
-    const [favorites, setFavorites] = useState([]);
-    const [favoritesLoading, setFavoritesLoading] = useState(false);
-
-    const fetchAdminData = async () => {
-        if (user?.role !== 'admin') return;
+    const fetchAdminData = useCallback(async (silent = false) => {
+        if (user?.role !== 'admin' || !user?.token) return;
         try {
-            setUsersLoading(true);
+            if (!silent) setUsersLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const usersRes = await api.get('/api/admin/users', config);
             setAllUsers(usersRes.data);
-            
-            setServicesLoading(true);
+
+            if (!silent) setServicesLoading(true);
             const servicesRes = await api.get('/api/admin/services', config);
             setAdminServices(servicesRes.data);
-            
+
             setUsersLoading(false);
             setServicesLoading(false);
         } catch (error) {
@@ -177,11 +222,11 @@ const Dashboard = () => {
             setUsersLoading(false);
             setServicesLoading(false);
         }
-    };
+    }, [user?.token, user?.role]);
 
-    const fetchFavorites = async () => {
-        if (!user) return;
-        setFavoritesLoading(true);
+    const fetchFavorites = useCallback(async (silent = false) => {
+        if (!user?.token) return;
+        if (!silent) setFavoritesLoading(true);
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data } = await api.get('/api/users/favorites', config);
@@ -189,9 +234,9 @@ const Dashboard = () => {
         } catch (err) {
             console.error('Error fetching favorites', err);
         } finally {
-            setFavoritesLoading(false);
+            if (!silent) setFavoritesLoading(false);
         }
-    };
+    }, [user?.token]);
 
     useEffect(() => {
         if (activeTab === 'favorites') {
@@ -358,12 +403,32 @@ const Dashboard = () => {
         fetchDashMessages();
     }, [fetchDashMessages]);
 
-    // Auto-refresh (polling fallback) every 1 second
+    // Auto-refresh (polling fallback) every 1 second for chat
     useEffect(() => {
         if (!dashActiveRoom || !user) return;
         const interval = setInterval(fetchDashMessages, 1000);
         return () => clearInterval(interval);
     }, [fetchDashMessages, dashActiveRoom, user]);
+
+    // Auto-refresh Dashboard data every 10 seconds (Bookings, Requests, Stats, etc.)
+    useEffect(() => {
+        if (!user) return;
+
+        const pollDashboardData = () => {
+            fetchMyBookings(true);
+            if (user.role === 'provider') {
+                fetchProviderRequests(true);
+                fetchStats(true);
+            }
+            if (activeTab === 'favorites') fetchFavorites(true);
+            if (activeTab === 'payments' && user.role === 'provider') fetchWithdrawals(true);
+            if (activeTab === 'mygigs' && user.role === 'provider') fetchMyGigs(true);
+            if (user.role === 'admin') fetchAdminData(true);
+        };
+
+        const dashboardInterval = setInterval(pollDashboardData, 1000); // 1 second
+        return () => clearInterval(dashboardInterval);
+    }, [user, activeTab, fetchMyBookings, fetchProviderRequests, fetchStats, fetchFavorites, fetchWithdrawals, fetchMyGigs, fetchAdminData]);
 
     // Auto-open chat if provider in URL
     useEffect(() => {
@@ -427,7 +492,7 @@ const Dashboard = () => {
         if (!dashSocket || !dashActiveRoom) return;
 
         dashSocket.emit('typing', { roomId: dashActiveRoom.roomId });
-        
+
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = setTimeout(() => {
             dashSocket.emit('stopTyping', { roomId: dashActiveRoom.roomId });
@@ -436,7 +501,7 @@ const Dashboard = () => {
 
     const handleSendMessageDash = (type = 'text', url = null) => {
         if ((type === 'text' && !dashMessageInput.trim()) || !dashActiveRoom || !user || !dashSocket) return;
-        
+
         const tempId = Date.now().toString();
         const msgData = {
             _id: tempId,
@@ -463,7 +528,7 @@ const Dashboard = () => {
             fileUrl: url,
             tempId: tempId
         });
-        
+
         if (type === 'text') setDashMessageInput('');
         dashSocket.emit('stopTyping', { roomId: dashActiveRoom.roomId });
     };
@@ -561,7 +626,7 @@ const Dashboard = () => {
                 if (user.role === 'provider' && data.role === 'customer') {
                     toast('Professional status updated. Visit "Become a Seller" to re-apply.', { icon: 'ℹ️', duration: 5000 });
                 }
-                
+
                 if (data.role !== role) {
                     setRole(data.role);
                 }
@@ -580,41 +645,17 @@ const Dashboard = () => {
         }
     }, [activeTab]);
 
-    const fetchMyBookings = async () => {
-        if (!user) return;
-        setBookingsLoading(true);
-        try {
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await api.get('/api/bookings/mybookings', config);
-            setMyBookings(data);
-        } catch (err) {
-            console.error('Failed to fetch bookings', err);
-        } finally {
-            setBookingsLoading(false);
-        }
-    };
 
-    const fetchProviderRequests = async () => {
-        if (!user || user.role !== 'provider') return;
-        setBookingsLoading(true);
-        try {
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await api.get('/api/bookings/provider', config);
-            setBookingRequests(data);
-        } catch (err) {
-            console.error('Failed to fetch provider requests', err);
-        } finally {
-            setBookingsLoading(false);
-        }
-    };
+
+
 
     const updateBookingStatus = async (bookingId, status, note = '', paymentMode = '') => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await api.put(`/api/bookings/${bookingId}/status`, { 
-                status, 
+            await api.put(`/api/bookings/${bookingId}/status`, {
+                status,
                 revisionNote: note || revisionNote,
-                paymentMode: paymentMode 
+                paymentMode: paymentMode
             }, config);
             fetchMyBookings();
             fetchProviderRequests();
@@ -626,18 +667,7 @@ const Dashboard = () => {
         }
     };
 
-    const fetchMyGigs = async () => {
-        setGigsLoading(true);
-        try {
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await api.get('/api/services/mine', config);
-            setMyGigs(data);
-        } catch (err) {
-            console.error('Failed to fetch gigs', err);
-        } finally {
-            setGigsLoading(false);
-        }
-    };
+
 
     /* ── Upload a single file to Cloudinary via backend ── */
     const uploadSingleFile = async (file) => {
@@ -846,7 +876,7 @@ const Dashboard = () => {
             } else {
                 await api.post('/api/services', payload, config);
             }
-            
+
             const createdOrUpdated = editingGigId ? "Gig updated successfully!" : "Gig published successfully!";
             toast.success(createdOrUpdated);
 
@@ -1071,6 +1101,7 @@ const Dashboard = () => {
                     setShowRevisions={setShowRevisions}
                     bookingWithRevisions={bookingWithRevisions}
                     setBookingWithRevisions={setBookingWithRevisions}
+                    isStatsLoading={isStatsLoading}
                 />
             </div>
 
@@ -1102,6 +1133,7 @@ const Dashboard = () => {
                     handleApplyProvider={handleApplyProvider}
                     isSubmitting={isSubmitting}
                     bookingsLoading={bookingsLoading}
+                    isStatsLoading={isStatsLoading}
                     updateBookingStatus={updateBookingStatus}
                     bookingForRevision={bookingForRevision}
                     setBookingForRevision={setBookingForRevision}

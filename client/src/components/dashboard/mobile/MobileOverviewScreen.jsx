@@ -3,7 +3,32 @@ import { Briefcase, ShoppingBag, Heart, ShoppingCart, Star, User, Search, Messag
 import { PC, PL } from './MobileDashboardShared';
 import '../../../styles/mobile-dashboard-styles/MobileOverviewScreen.css';
 
-export default function MobileOverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, getAvatar, setActiveTab, navigate, providerTitle, providerAbout, onMenuClick, onShowRevisions }) {
+export default function MobileOverviewScreen({ user, role, stats, myGigs, myBookings, profileAvatar, getAvatar, setActiveTab, navigate, providerTitle, providerAbout, onMenuClick, onShowRevisions, isStatsLoading }) {
+    if (isStatsLoading && (!stats?.chartData || stats.chartData.length === 0)) {
+        return (
+            <div className="skeleton-container" style={{ paddingBottom: 100 }}>
+                <section className="overview-header">
+                    <div className="overview-header-content">
+                        <div className="overview-header-text">
+                            <div className="skeleton skeleton-title" style={{ width: '150px' }}></div>
+                            <div className="skeleton skeleton-text" style={{ width: '80%' }}></div>
+                        </div>
+                        <div className="skeleton skeleton-circle" style={{ width: '64px', height: '64px' }}></div>
+                    </div>
+                </section>
+                <main className="overview-main" style={{ marginTop: -40 }}>
+                    <div className="overview-stats-card skeleton" style={{ height: '180px' }}></div>
+                    <div className="skeleton" style={{ height: '80px', borderRadius: '28px' }}></div>
+                    <div className="overview-quick-actions-grid">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="overview-action-btn skeleton" style={{ height: '120px' }}></div>
+                        ))}
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
     const pendingRevisions = (myBookings || []).filter(b => b.status === 'revision_requested');
 
     return (

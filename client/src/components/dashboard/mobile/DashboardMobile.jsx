@@ -63,6 +63,7 @@ export default function DashboardMobile(props) {
     const [withdrawalAmount, setWithdrawalAmount] = useState('');
     const [withdrawalMethod, setWithdrawalMethod] = useState('Bank Transfer');
     const [withdrawalDetails, setWithdrawalDetails] = useState('');
+    const [isSubmittingRevision, setIsSubmittingRevision] = useState(false);
 
     // ── Gig filter ──
     const filteredGigs = (myGigs || []).filter(gig => {
@@ -80,12 +81,19 @@ export default function DashboardMobile(props) {
     const handleRequestRevision = (booking) => { setBookingForRevision(booking); setRevisionNote(''); };
 
     const submitRevision = async () => {
-        if (!bookingForRevision || !revisionNote.trim()) return;
+        if (!bookingForRevision || !revisionNote.trim() || isSubmittingRevision) return;
+        setIsSubmittingRevision(true);
         try {
             await updateBookingStatus(bookingForRevision._id, 'revision_requested', revisionNote);
             setBookingForRevision(null);
             setRevisionNote('');
-        } catch (err) { console.error(err); }
+            toast.success('Revision request sent!');
+        } catch (err) { 
+            console.error(err); 
+            toast.error('Failed to send revision request');
+        } finally {
+            setIsSubmittingRevision(false);
+        }
     };
 
     const confirmDelivery = async (paymentMode) => {
@@ -179,6 +187,7 @@ export default function DashboardMobile(props) {
                         profileAvatar={profileAvatar} getAvatar={getAvatar}
                         setActiveTab={setActiveTab} navigate={navigate}
                         onShowRevisions={handleShowRevisions}
+                        isStatsLoading={props.isStatsLoading}
                     />
                 );
 
@@ -304,6 +313,7 @@ export default function DashboardMobile(props) {
                 onSubmit={submitRevision}
                 note={revisionNote}
                 setNote={setRevisionNote}
+                submitting={isSubmittingRevision}
             />
             <MobilePaymentModal
                 isOpen={!!bookingForPayment}
