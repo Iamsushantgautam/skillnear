@@ -1713,12 +1713,18 @@ const DashboardDesktop = ({
                                                         </div>
 
                                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
-                                                            {req.address?.lat && req.address?.lng && (
+                                                            {(req.address?.googleMapLink || (req.address?.lat && req.address?.lng)) && (
                                                                 <button
-                                                                    onClick={() => window.open(`https://www.google.com/maps?q=${req.address.lat},${req.address.lng}`, '_blank')}
-                                                                    style={{ backgroundColor: '#fff', color: '#003d9b', border: '1px solid #e2e8f0', padding: '10px 20px', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
+                                                                    onClick={() => {
+                                                                        let link = (req.address?.lat && req.address?.lng)
+                                                                            ? `https://www.google.com/maps/dir/?api=1&destination=${req.address.lat},${req.address.lng}`
+                                                                            : req.address?.googleMapLink;
+                                                                        if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+                                                                        if (link) window.open(link, '_blank');
+                                                                    }}
+                                                                    style={{ backgroundColor: '#fff', color: '#0ea5e9', border: '1px solid #e0f2fe', padding: '10px 20px', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
                                                                 >
-                                                                    <MapPin size={16} /> Maps
+                                                                    <MapPin size={16} /> Direction Link 📍
                                                                 </button>
                                                             )}
                                                             {req.service?.businessType === 'shop' && (
@@ -1755,8 +1761,11 @@ const DashboardDesktop = ({
                                                                 </button>
                                                                 <button 
                                                                     onClick={() => {
-                                                                        const link = req.address?.googleMapLink || (req.address?.lat && req.address?.lng ? `https://www.google.com/maps?q=${req.address.lat},${req.address.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.address?.street || ''} ${req.address?.city || ''} ${req.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
-                                                                        window.open(link, '_blank');
+                                                                        let link = (req.address?.lat && req.address?.lng)
+                                                                            ? `https://www.google.com/maps/dir/?api=1&destination=${req.address.lat},${req.address.lng}`
+                                                                            : (req.address?.googleMapLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${req.address?.street || ''} ${req.address?.city || ''} ${req.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
+                                                                        if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+                                                                        if (link) window.open(link, '_blank');
                                                                     }}
                                                                     style={{ flex: 1, background: '#fff', border: '1px solid #e2e8f0', color: '#1e293b', padding: '14px 0', borderRadius: '14px', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                                                                 >
@@ -3206,14 +3215,28 @@ function OrderDetailsModal({ isOpen, onClose, booking }) {
                             <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>Location</span>
                             <span style={{ fontSize: '14px', color: '#1e293b', fontWeight: 800, textAlign: 'right', maxWidth: '60%' }}>{typeof booking.address === 'object' ? (`${booking.address?.street || ''}, ${booking.address?.city || ''}`.trim() || 'Standard') : (booking.address || 'Standard Location')}</span>
                         </div>
+
+                        {booking.address?.googleMapLink && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
+                                <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>Maps URL</span>
+                                <button onClick={() => {
+                                    let link = booking.address.googleMapLink;
+                                    if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+                                    window.open(link, '_blank');
+                                }} style={{ background: '#f0f9ff', color: '#0ea5e9', border: 'none', padding: '8px 16px', borderRadius: '12px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>Direction Link 📍</button>
+                            </div>
+                        )}
                         
                         {(booking.address?.googleMapLink || (booking.address?.lat && booking.address?.lng)) && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px' }}>
                                 <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 600 }}>Interactive Map</span>
                                 <button 
                                     onClick={() => {
-                                        const link = booking.address.googleMapLink || `https://www.google.com/maps?q=${booking.address.lat},${booking.address.lng}`;
-                                        window.open(link, '_blank');
+                                        let link = (booking.address?.lat && booking.address?.lng)
+                                            ? `https://www.google.com/maps/dir/?api=1&destination=${booking.address.lat},${booking.address.lng}`
+                                            : booking.address?.googleMapLink;
+                                        if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+                                        if (link) window.open(link, '_blank');
                                     }}
                                     style={{ background: '#f0f9ff', color: '#0ea5e9', border: 'none', padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}
                                     onMouseOver={(e) => { e.currentTarget.style.background = '#e0f2fe'; e.currentTarget.style.transform = 'translateY(-1px)'; }}

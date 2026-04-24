@@ -1429,7 +1429,11 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                         {detailRow('Customer Phone', ['completed', 'cancelled'].includes(booking.status) ? 'Hidden' : (booking.customerPhone || booking.user?.phone || 'Not provided'))}
                         {detailRow('Location', typeof booking.address === 'object' ? (`${booking.address?.street || ''}, ${booking.address?.city || ''}`.trim() || 'Standard') : (booking.address || 'Standard Location'))}
 
-                        {booking.address?.googleMapLink && detailRow('Maps URL', <a href={booking.address.googleMapLink} target="_blank" rel="noreferrer" style={{ color: '#0ea5e9', textDecoration: 'none', fontWeight: 800 }}>Visit Link 🔗</a>)}
+                        {booking.address?.googleMapLink && detailRow('Maps URL', <button onClick={() => {
+                            let link = booking.address.googleMapLink;
+                            if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+                            window.open(link, '_blank');
+                        }} style={{ background: '#f0f9ff', color: '#0ea5e9', border: 'none', padding: '8px 16px', borderRadius: 12, fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>Direction Link 📍</button>)}
 
                         {(booking.address?.googleMapLink || (booking.address?.lat && booking.address?.lng)) && (
                             <div style={{ padding: '16px 0', borderBottom: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1437,8 +1441,11 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                                     <span style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>Interactive Map</span>
                                     <button
                                         onClick={() => {
-                                            const link = booking.address.googleMapLink || `https://www.google.com/maps?q=${booking.address.lat},${booking.address.lng}`;
-                                            window.open(link, '_blank');
+                                            let link = (booking.address?.lat && booking.address?.lng) 
+                                                ? `https://www.google.com/maps/dir/?api=1&destination=${booking.address.lat},${booking.address.lng}` 
+                                                : booking.address?.googleMapLink;
+                                            if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+                                            if (link) window.open(link, '_blank');
                                         }}
                                         style={{ background: '#f0f9ff', color: '#0ea5e9', border: 'none', padding: '8px 16px', borderRadius: 12, fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
                                     >
@@ -1446,8 +1453,11 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                                     </button>
                                 </div>
                                 <div onClick={() => {
-                                    const link = booking.address.googleMapLink || `https://www.google.com/maps?q=${booking.address.lat},${booking.address.lng}`;
-                                    window.open(link, '_blank');
+                                    let link = (booking.address?.lat && booking.address?.lng) 
+                                        ? `https://www.google.com/maps?q=${booking.address.lat},${booking.address.lng}` 
+                                        : booking.address?.googleMapLink;
+                                    if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+                                    if (link) window.open(link, '_blank');
                                 }} style={{ width: '100%', height: 120, borderRadius: 16, background: '#f1f5f9', border: '1px solid #e2e8f0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
                                     <div style={{ position: 'absolute', inset: 0, opacity: 0.1, background: `repeating-linear-gradient(45deg, ${PC}, ${PC} 10px, transparent 10px, transparent 20px)` }}></div>
                                     <div style={{ textAlign: 'center', zIndex: 1 }}>
@@ -1503,7 +1513,10 @@ function BookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, 
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                const link = booking.address?.googleMapLink || (booking.address?.lat && booking.address?.lng ? `https://www.google.com/maps?q=${booking.address.lat},${booking.address.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${booking.address?.street || ''} ${booking.address?.city || ''} ${booking.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
+                                let link = (booking.address?.lat && booking.address?.lng) 
+                                    ? `https://www.google.com/maps/dir/?api=1&destination=${booking.address.lat},${booking.address.lng}` 
+                                    : (booking.address?.googleMapLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${booking.address?.street || ''} ${booking.address?.city || ''} ${booking.address?.zipCode || ''}`.trim() || 'Customer Location')}`);
+                                if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
                                 window.open(link, '_blank');
                             }}
                             style={{ width: '100%', padding: '16px', borderRadius: 16, background: '#f1f5f9', color: '#1e293b', border: '1px solid #e2e8f0', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
