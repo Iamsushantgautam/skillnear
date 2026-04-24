@@ -4,7 +4,7 @@ import {
     Briefcase, MessageSquare, Wallet, User,
     Star, PlusCircle, ArrowLeft, Loader, CheckCircle, Calendar as CalendarIcon,
     ChevronRight, Edit3, Send, Search, ShoppingBag, MapPin, ChevronLeft, Plus as PlusIcon,
-    ShoppingCart, Video, Trash2, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, X, Phone, MoreVertical, CreditCard, RotateCw, History, DollarSign, Clock, XCircle, TrendingUp, Download
+    ShoppingCart, Video, Trash2, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, X, Phone, MoreVertical, CreditCard, RotateCw, History, DollarSign, Clock, XCircle, TrendingUp, Download, Mail
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import io from 'socket.io-client';
@@ -1135,7 +1135,7 @@ function RequestsScreen({ bookingRequests, bookingsLoading, updateBookingStatus,
                     <div style={{ position: 'relative', zIndex: 10 }}>
                         <h4 style={{ color: 'white', fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Need Help?</h4>
                         <p style={{ color: '#c4d2ff', fontSize: 14, lineHeight: 1.5, marginBottom: 24, maxWidth: 200 }}>Our support team is available 24/7 for booking disputes.</p>
-                        <button style={{ padding: '8px 24px', background: 'white', color: PC, fontWeight: 800, fontSize: 14, borderRadius: 9999, border: 'none' }}>Contact Support</button>
+                        <button onClick={() => setActiveTab('help')} style={{ padding: '8px 24px', background: 'white', color: PC, fontWeight: 800, fontSize: 14, borderRadius: 9999, border: 'none' }}>Contact Support</button>
                     </div>
                     <div style={{ position: 'absolute', bottom: -32, right: -32, width: 128, height: 128, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(32px)' }} />
                     <div style={{ position: 'absolute', top: -16, right: -16, width: 96, height: 96, background: 'rgba(0,0,0,0.2)', borderRadius: '50%', filter: 'blur(24px)' }} />
@@ -1297,10 +1297,63 @@ function OrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onS
                     <div style={{ position: 'relative', zIndex: 10 }}>
                         <h4 style={{ color: 'white', fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Need Help?</h4>
                         <p style={{ color: '#c4d2ff', fontSize: 14, lineHeight: 1.5, marginBottom: 24, maxWidth: 200 }}>Our support team is available 24/7 for booking disputes.</p>
-                        <button style={{ padding: '8px 24px', background: 'white', color: PC, fontWeight: 800, fontSize: 14, borderRadius: 9999, border: 'none' }}>Contact Support</button>
+                        <button onClick={() => setActiveTab('help')} style={{ padding: '8px 24px', background: 'white', color: PC, fontWeight: 800, fontSize: 14, borderRadius: 9999, border: 'none' }}>Contact Support</button>
                     </div>
                     <div style={{ position: 'absolute', bottom: -32, right: -32, width: 128, height: 128, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(32px)' }} />
                     <div style={{ position: 'absolute', top: -16, right: -16, width: 96, height: 96, background: 'rgba(0,0,0,0.2)', borderRadius: '50%', filter: 'blur(24px)' }} />
+                </div>
+            </div>
+        </Shell>
+    );
+}
+
+/* ─── Help & Support Screen ─── */
+function HelpScreen({ setActiveTab }) {
+    return (
+        <Shell title="Help & Support" onBack={() => setActiveTab('overview')}>
+            <div className="animate-fade-in" style={{ padding: '0 20px 20px' }}>
+                <div style={{ backgroundColor: 'white', borderRadius: 28, padding: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.04)', marginBottom: 24, border: '1px solid #f1f5f9', textAlign: 'center' }}>
+                    <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                        <MessageSquare size={40} color={PC} />
+                    </div>
+                    <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#1e293b', marginBottom: 8 }}>How can we help?</h2>
+                    <p style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: 24 }}>Get in touch with our support team or browse our FAQs.</p>
+                </div>
+                
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e293b', marginBottom: 16 }}>Contact Us</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 32 }}>
+                    <a href="mailto:support@skillnear.com" style={{ textDecoration: 'none', background: 'white', padding: 20, borderRadius: 20, display: 'flex', alignItems: 'center', gap: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 14, background: '#eff6ff', color: '#0052cc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Mail size={24} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 800, fontSize: 15, color: '#1e293b' }}>Email Support</div>
+                            <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>support@skillnear.com</div>
+                        </div>
+                    </a>
+                    <a href="tel:+18001234567" style={{ textDecoration: 'none', background: 'white', padding: 20, borderRadius: 20, display: 'flex', alignItems: 'center', gap: 16, border: '1px solid #f1f5f9', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 14, background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Phone size={24} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 800, fontSize: 15, color: '#1e293b' }}>Call Us</div>
+                            <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>+1 (800) 123-4567</div>
+                        </div>
+                    </a>
+                </div>
+
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1e293b', marginBottom: 16 }}>FAQs</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {[
+                        { q: 'How do I request a withdrawal?', a: 'Go to your Payments tab, ensure you have an available balance, and click "Withdraw".' },
+                        { q: 'How do I contact a professional?', a: 'Once an order is placed, you can message them directly from the Order Details screen.' },
+                        { q: 'What is a revision request?', a: 'If a service isn\'t exactly what you wanted, you can request a revision from the professional.' }
+                    ].map((faq, i) => (
+                        <div key={i} style={{ background: 'white', padding: 20, borderRadius: 20, border: '1px solid #f1f5f9' }}>
+                            <h4 style={{ fontSize: 14, fontWeight: 800, color: '#1e293b', margin: '0 0 8px' }}>{faq.q}</h4>
+                            <p style={{ fontSize: 13, color: '#64748b', margin: 0, lineHeight: 1.5 }}>{faq.a}</p>
+                        </div>
+                    ))}
                 </div>
             </div>
         </Shell>
@@ -2817,6 +2870,7 @@ export default function DashboardMobile(props) {
             case 'profile': return <ProfileScreen user={user} profileAvatar={profileAvatar} getAvatar={getAvatar} profileName={profileName} setProfileName={setProfileName} profilePhone={profilePhone} setProfilePhone={setProfilePhone} profileUsername={profileUsername} setProfileUsername={setProfileUsername} providerTitle={providerTitle} providerAbout={providerAbout} providerTitleSetter={providerTitleSetter} providerAboutSetter={providerAboutSetter} handleSaveProfile={handleSaveProfile} savingProfile={savingProfile} uploadingAvatar={uploadingAvatar} handleAvatarUpload={handleAvatarUpload} role={role} setActiveTab={setActiveTab} />;
             case 'favorites': return <FavoritesScreen favorites={favorites} favoritesLoading={favoritesLoading} fetchFavorites={fetchFavorites} setActiveTab={setActiveTab} navigate={navigate} user={user} />;
             case 'reviews': return <ReviewsScreen user={user} role={role} setActiveTab={setActiveTab} />;
+            case 'help': return <HelpScreen setActiveTab={setActiveTab} />;
             default: return <OverviewScreen user={user} role={role} stats={stats} myGigs={myGigs} myBookings={myBookings} providerTitle={providerTitle} providerAbout={providerAbout} profileAvatar={profileAvatar} getAvatar={getAvatar} setActiveTab={setActiveTab} navigate={navigate} onShowRevisions={handleShowRevisions} />;
         }
     };

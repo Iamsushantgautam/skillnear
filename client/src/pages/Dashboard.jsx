@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
-import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, Loader, Home, LogOut, Wallet, Inbox, Heart, Star } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, Settings, MessageSquare, BarChart, Loader, Home, LogOut, Wallet, Inbox, Heart, Star, HelpCircle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/useAuthStore';
@@ -980,6 +980,9 @@ const Dashboard = () => {
             <button style={getTabStyle('favorites')} onClick={() => setActiveTab('favorites')}>
                 <Heart size={22} strokeWidth={1.5} /> Favorites
             </button>
+            <button style={getTabStyle('help')} onClick={() => setActiveTab('help')}>
+                <HelpCircle size={22} strokeWidth={1.5} /> Help & Support
+            </button>
             {user?.role === 'admin' && (
                 <button style={getTabStyle('admin')} onClick={() => setActiveTab('admin')}>
                     <Settings size={22} strokeWidth={1.5} /> Admin Panel
@@ -1034,6 +1037,9 @@ const Dashboard = () => {
             </button>
             <button style={getTabStyle('reviews')} onClick={() => setActiveTab('reviews')}>
                 <Star size={22} strokeWidth={1.5} /> Reviews
+            </button>
+            <button style={getTabStyle('help')} onClick={() => setActiveTab('help')}>
+                <HelpCircle size={22} strokeWidth={1.5} /> Help & Support
             </button>
             {user?.role === 'admin' && (
                 <button style={getTabStyle('admin')} onClick={() => setActiveTab('admin')}>

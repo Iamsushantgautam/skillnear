@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, Search, Phone, Video, Lock, PlusCircle, ZoomIn, RotateCw, Camera, Award, History, BadgeCheck, Clock, PlayCircle, DollarSign, PackageOpen, RotateCcw, XCircle } from 'lucide-react';
+import { User, Briefcase, Calendar as CalendarIcon, MapPin, Edit, Trash2, X, Plus, Loader, Star, CheckCircle, BarChart, MessageSquare, Send, ChevronRight, Wallet, CreditCard, ArrowDownLeft, ArrowUpRight, Heart, FileText, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, Search, Phone, Video, Lock, PlusCircle, ZoomIn, RotateCw, Camera, Award, History, BadgeCheck, Clock, PlayCircle, DollarSign, PackageOpen, RotateCcw, XCircle, Mail } from 'lucide-react';
 import ChatList from '../../ChatList';
 import { City } from 'country-state-city';
 import api from '../../../utils/api';
@@ -936,10 +936,10 @@ const DashboardDesktop = ({
                                 </div>
                                 <h4 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#191b23', marginBottom: '8px' }}>Need Help?</h4>
                                 <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '32px', lineHeight: 1.6 }}>Having trouble with a booking or a provider? Our 24/7 support team is here to assist you.</p>
-                                <button style={{ width: '100%', background: 'white', border: '1px solid rgba(0,61,155,0.2)', color: '#003d9b', padding: '16px', borderRadius: '100px', fontWeight: '700', fontSize: '0.875rem', cursor: 'pointer', transition: 'all 0.3s' }}>
+                                <button onClick={() => setActiveTab('help')} style={{ width: '100%', background: 'white', border: '1px solid rgba(0,61,155,0.2)', color: '#003d9b', padding: '16px', borderRadius: '100px', fontWeight: '700', fontSize: '0.875rem', cursor: 'pointer', transition: 'all 0.3s' }}>
                                     Contact Support
                                 </button>
-                                <a href="#" style={{ display: 'inline-block', marginTop: '24px', fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', textDecoration: 'none' }}>Read FAQs</a>
+                                <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('help'); }} style={{ display: 'inline-block', marginTop: '24px', fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', textDecoration: 'none' }}>Read FAQs</a>
                             </div>
 
                             {/* Location Guide */}
@@ -1418,7 +1418,7 @@ const DashboardDesktop = ({
                                     <h5 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '800', color: '#191b23' }}>Need help with your listing?</h5>
                                     <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: '#64748b' }}>Watch our quick 2-minute guide on creating a winning gig profile.</p>
                                 </div>
-                                <button style={{ padding: '8px 16px', borderRadius: '10px', border: '1px solid var(--primary)', background: 'transparent', color: 'var(--primary)', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}>Watch Tutorial</button>
+                                <button onClick={() => setActiveTab('help')} style={{ padding: '8px 16px', borderRadius: '10px', border: '1px solid var(--primary)', background: 'transparent', color: 'var(--primary)', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}>Contact Support</button>
                             </div>
                         </div>
                     </div>
@@ -2868,6 +2868,56 @@ const DashboardDesktop = ({
                             ))}
                         </div>
                     )}
+                </div>
+            )}
+
+            {activeTab === 'help' && (
+                <div className="animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                    <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '40px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', textAlign: 'center', marginBottom: '32px' }}>
+                        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                            <MessageSquare size={40} color="#003d9b" />
+                        </div>
+                        <h2 style={{ fontSize: '2rem', fontWeight: 900, color: '#1e293b', marginBottom: '12px' }}>How can we help you today?</h2>
+                        <p style={{ fontSize: '1rem', color: '#64748b', fontWeight: 500, maxWidth: '500px', margin: '0 auto' }}>Get in touch with our support team or browse our FAQs to find answers to your questions.</p>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '32px', marginBottom: '40px' }}>
+                        <a href="mailto:support@skillnear.com" style={{ textDecoration: 'none', background: 'white', padding: '32px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.02)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                            <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: '#eff6ff', color: '#0052cc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Mail size={32} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#1e293b', marginBottom: '4px' }}>Email Support</div>
+                                <div style={{ fontSize: '0.95rem', color: '#64748b', fontWeight: 500 }}>support@skillnear.com</div>
+                            </div>
+                        </a>
+
+                        <a href="tel:+18001234567" style={{ textDecoration: 'none', background: 'white', padding: '32px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.02)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                            <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Phone size={32} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#1e293b', marginBottom: '4px' }}>Call Us</div>
+                                <div style={{ fontSize: '0.95rem', color: '#64748b', fontWeight: 500 }}>+1 (800) 123-4567</div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div style={{ background: 'white', borderRadius: '24px', padding: '40px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', marginBottom: '24px' }}>Frequently Asked Questions</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {[
+                                { q: 'How do I request a withdrawal?', a: 'Go to your Payments tab, ensure you have an available balance, and click "Withdraw".' },
+                                { q: 'How do I contact a professional?', a: 'Once an order is placed, you can message them directly from the Order Details screen.' },
+                                { q: 'What is a revision request?', a: 'If a service isn\'t exactly what you wanted, you can request a revision from the professional.' }
+                            ].map((faq, i) => (
+                                <div key={i} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                                    <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1e293b', margin: '0 0 12px' }}>{faq.q}</h4>
+                                    <p style={{ fontSize: '0.95rem', color: '#64748b', margin: 0, lineHeight: 1.6 }}>{faq.a}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             )}
 
