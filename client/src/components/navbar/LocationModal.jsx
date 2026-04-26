@@ -178,41 +178,7 @@ const LocationModal = ({
                     />
                 </div>
 
-                {/* {user?.locationHistory?.length > 0 && (
-                    <div style={{ marginBottom: '24px' }}>
-                        <label className="navbar-label" style={{ fontSize: '0.75rem', color: '#64748b' }}>RECENT LOCATIONS</label>
-                        <div className="history-container no-scrollbar">
-                            {[...user.locationHistory].reverse().slice(0, 5).map((loc, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => {
-                                        // Use structured fields if available, fall back to splitting if old data
-                                        if (loc.city || loc.state || loc.pincode) {
-                                            setLocation({ 
-                                                city: loc.city || '', 
-                                                state: loc.state || '', 
-                                                pincode: loc.pincode || '' 
-                                            });
-                                        } else {
-                                            // Fallback for older entries (string splitting)
-                                            const parts = loc.address.split(',').map(p => p.trim());
-                                            const city = parts[0] || '';
-                                            const stateWithPin = parts[1] || '';
-                                            const state = stateWithPin.split(' ')[0] || '';
-                                            const pin = stateWithPin.split(' ')[1] || '';
-                                            setLocation({ city, state, pincode: pin });
-                                        }
-                                        onClose();
-                                    }}
-                                    className="history-item"
-                                >
-                                    <MapPin size={14} color="#64748b" />
-                                    <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{loc.address}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )} */}
+
 
                 <button
                     className="btn-primary"

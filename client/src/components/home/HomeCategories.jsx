@@ -3,13 +3,25 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Star, Heart, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import '../../styles/HomeCategories.css';
 
-const HomeCategories = ({ 
-    loading, 
-    userLocation, 
-    servicesByCategory, 
-    mainCategories, 
-    user, 
-    toggleFavorite 
+// --- CONFIGURATION: Control the order of Home Page Sections here ---
+const SECTION_DISPLAY_ORDER = [
+    'Tutors',
+    'Salon',
+    'Cleaning',
+    'Electricians',
+    'Plumbers',
+    'Carpenters',
+    'AC Repair',
+    'Painters'
+];
+
+const HomeCategories = ({
+    loading,
+    userLocation,
+    servicesByCategory,
+    mainCategories,
+    user,
+    toggleFavorite
 }) => {
     const navigate = useNavigate();
     const scrollRefs = useRef({});
@@ -101,9 +113,8 @@ const HomeCategories = ({
         <>
             {Object.keys(servicesByCategory)
                 .sort((a, b) => {
-                    const order = mainCategories.map(c => c.name);
-                    const indexA = order.indexOf(a);
-                    const indexB = order.indexOf(b);
+                    const indexA = SECTION_DISPLAY_ORDER.indexOf(a);
+                    const indexB = SECTION_DISPLAY_ORDER.indexOf(b);
                     if (indexA === -1 && indexB === -1) return 0;
                     if (indexA === -1) return 1;
                     if (indexB === -1) return -1;
@@ -162,7 +173,7 @@ const HomeCategories = ({
 
                                         <div className="service-content-body">
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                                                <span 
+                                                <span
                                                     className="category-tag"
                                                     style={{ cursor: 'pointer' }}
                                                     onClick={(e) => {
