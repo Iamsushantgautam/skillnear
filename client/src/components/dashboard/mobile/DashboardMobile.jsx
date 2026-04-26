@@ -3,7 +3,7 @@ import { useNavigate as useNav } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../../utils/api';
 import useAuthStore from '../../../store/useAuthStore';
-import DashboardMobileNav from '../../DashboardMobileNav';
+import DashboardMobileNav from './DashboardMobileNav';
 
 // ── Modular Screen Components ──
 import MobileOverviewScreen from './MobileOverviewScreen';

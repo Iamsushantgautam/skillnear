@@ -21,7 +21,8 @@ const HomeCategories = ({
     servicesByCategory,
     mainCategories,
     user,
-    toggleFavorite
+    toggleFavorite,
+    locationContext
 }) => {
     const navigate = useNavigate();
     const scrollRefs = useRef({});
@@ -126,7 +127,14 @@ const HomeCategories = ({
                             <div className="section-header">
                                 <div className="section-info">
                                     <h2>{category}</h2>
-                                    <p>Handpicked experts for your {category.toLowerCase()} needs</p>
+                                    <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        Handpicked experts for your {category.toLowerCase()} needs
+                                        {locationContext && (
+                                            <span className={`location-badge ${locationContext.includes('India') ? 'warning' : 'primary'}`}>
+                                                <MapPin size={10} /> {locationContext}
+                                            </span>
+                                        )}
+                                    </p>
                                 </div>
                                 <div className="section-actions">
                                     <div className="scroll-controls">

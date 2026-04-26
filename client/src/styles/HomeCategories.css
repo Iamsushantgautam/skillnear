@@ -331,3 +331,52 @@
         display: none;
     }
 }
+.location-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-weight: 700;
+    margin-left: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.location-badge.primary {
+    background-color: #eef2ff;
+    color: #4338ca;
+    border: 1px solid #e0e7ff;
+}
+
+.location-badge.warning {
+    background-color: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #ffedd5;
+    animation: locationPulse 2s infinite;
+}
+
+@keyframes locationPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(251, 146, 60, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(251, 146, 60, 0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

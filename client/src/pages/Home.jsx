@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { Link, useNavigate } from 'react-router-dom';
-import CategoryBanners from '../components/CategoryBanners';
+import CategoryBanners from '../components/home/CategoryBanners';
 import Hero, { mainCategories } from '../components/home/Hero';
 import HomeCategories from '../components/home/HomeCategories';
 import AdBanner from '../components/home/AdBanner';
@@ -53,24 +53,57 @@ const Home = () => {
         detectLocation();
     }, []);
 
+    const [locationContext, setLocationContext] = useState('');
+
     useEffect(() => {
         const fetchServices = async () => {
             const city = userLocation?.city;
-
-            // If no location is selected, don't fetch (or handle differently)
-            if (!city || city === 'All of India') {
-                setServicesByCategory({});
-                setLoading(false);
-                return;
-            }
+            const pincode = userLocation?.pincode;
+            const state = userLocation?.state;
 
             setLoading(true);
             try {
-                // Fetch services filtered by current user city
-                const { data } = await api.get(`/api/services?location=${city}`);
+                let finalData = [];
+                let context = '';
 
-                const grouped = data.reduce((acc, curr) => {
-                    // Normalize category name for case-insensitive grouping
+                // CASCADE 1: Pincode
+                if (pincode) {
+                    const { data } = await api.get(`/api/services?pincode=${pincode}`);
+                    if (data.length > 0) {
+                        finalData = data;
+                        context = `your Pincode (${pincode})`;
+                    }
+                }
+
+                // CASCADE 2: City (if pincode failed or not available)
+                if (finalData.length === 0 && city && city !== 'All of India') {
+                    const { data } = await api.get(`/api/services?location=${city}`);
+                    if (data.length > 0) {
+                        finalData = data;
+                        context = `your City (${city})`;
+                    }
+                }
+
+                // CASCADE 3: State (if city failed)
+                if (finalData.length === 0 && state) {
+                    // Note: We need to make sure backend handles state search. 
+                    // For now we'll reuse the 'location' param if backend supports state there, 
+                    // or we might need a new 'state' param.
+                    const { data } = await api.get(`/api/services?location=${state}`);
+                    if (data.length > 0) {
+                        finalData = data;
+                        context = `your State (${state})`;
+                    }
+                }
+
+                // CASCADE 4: All of India
+                if (finalData.length === 0) {
+                    const { data } = await api.get(`/api/services`);
+                    finalData = data;
+                    context = `all of India`;
+                }
+
+                const grouped = finalData.reduce((acc, curr) => {
                     const rawCat = curr.category || 'Other';
                     const matchedCat = mainCategories.find(c => c.name.toLowerCase() === rawCat.toLowerCase());
                     const cat = matchedCat ? matchedCat.name : rawCat.charAt(0).toUpperCase() + rawCat.slice(1).toLowerCase();
@@ -79,7 +112,9 @@ const Home = () => {
                     if (acc[cat].length < 10) acc[cat].push(curr);
                     return acc;
                 }, {});
+
                 setServicesByCategory(grouped);
+                setLocationContext(context);
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching services", error);
@@ -123,6 +158,7 @@ const Home = () => {
                 mainCategories={mainCategories}
                 user={user}
                 toggleFavorite={toggleFavorite}
+                locationContext={locationContext}
             />
 
             <AdBanner image={allCategoryLineup} />

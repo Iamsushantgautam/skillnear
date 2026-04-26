@@ -1,7 +1,7 @@
 import {
     LayoutDashboard, Briefcase, MessageSquare, Wallet, User, LogOut, ShoppingBag
 } from 'lucide-react';
-import useAuthStore from '../store/useAuthStore';
+import useAuthStore from '../../../store/useAuthStore';
 
 const PC = '#003d9b';
 
