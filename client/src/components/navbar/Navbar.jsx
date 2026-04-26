@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, User, Menu, MapPin, ChevronDown, X, LocateFixed, Info, Mail, Shield, FileText, LogOut, Zap, Award, Bell, Trash } from 'lucide-react';
-import useAuthStore from '../store/useAuthStore';
-import useNotificationStore from '../store/useNotificationStore';
-import api, { API_URL } from '../utils/api';
+import useAuthStore from '../../store/useAuthStore';
+import useNotificationStore from '../../store/useNotificationStore';
+import api, { API_URL } from '../../utils/api';
 import { toast } from 'react-hot-toast';
 import io from 'socket.io-client';
 import logo from '/favicon.png';
 
 // Sub-components
-import LocationModal from './navbar/LocationModal';
-import NotificationMenu from './navbar/NotificationMenu';
-import UserMenu from './navbar/UserMenu';
-import MobileDrawer from './navbar/MobileDrawer';
-import NavbarSearch from './navbar/NavbarSearch';
+import LocationModal from './LocationModal';
+import NotificationMenu from './NotificationMenu';
+import UserMenu from './UserMenu';
+import MobileDrawer from './MobileDrawer';
+import NavbarSearch from './NavbarSearch';
 
-import './navbar/Navbar.css';
+import '../../styles/Navbar.css';
 
 const Navbar = () => {
     const { user, logout, userLocation, setLocation, updateUserInfo } = useAuthStore();
