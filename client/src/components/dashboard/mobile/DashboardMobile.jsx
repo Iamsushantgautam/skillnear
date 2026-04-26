@@ -282,6 +282,7 @@ export default function DashboardMobile(props) {
                         handleApplyProvider={props.handleApplyProvider}
                         isSubmitting={props.isSubmitting}
                         setActiveTab={setActiveTab}
+                        providerStatus={providerStatus}
                     />
                 );
 

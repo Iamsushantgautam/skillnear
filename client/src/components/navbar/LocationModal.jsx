@@ -4,13 +4,13 @@ import { toast } from 'react-hot-toast';
 import { City, State } from 'country-state-city';
 import api from '../../utils/api';
 
-const LocationModal = ({ 
-    show, 
-    onClose, 
-    user, 
-    userLocation, 
-    setLocation, 
-    updateUserInfo 
+const LocationModal = ({
+    show,
+    onClose,
+    user,
+    userLocation,
+    setLocation,
+    updateUserInfo
 }) => {
     const indianStates = State.getStatesOfCountry('IN');
     const [selectedStateCode, setSelectedStateCode] = useState('');
@@ -26,7 +26,7 @@ const LocationModal = ({
 
     if (!show) return null;
 
-    const citiesOfState = selectedStateCode ? 
+    const citiesOfState = selectedStateCode ?
         City.getCitiesOfState('IN', selectedStateCode) : [];
 
     const handleSaveLocation = async () => {
@@ -178,7 +178,7 @@ const LocationModal = ({
                     />
                 </div>
 
-                {user?.locationHistory?.length > 0 && (
+                {/* {user?.locationHistory?.length > 0 && (
                     <div style={{ marginBottom: '24px' }}>
                         <label className="navbar-label" style={{ fontSize: '0.75rem', color: '#64748b' }}>RECENT LOCATIONS</label>
                         <div className="history-container no-scrollbar">
@@ -212,7 +212,7 @@ const LocationModal = ({
                             ))}
                         </div>
                     </div>
-                )}
+                )} */}
 
                 <button
                     className="btn-primary"

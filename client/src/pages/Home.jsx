@@ -65,9 +65,18 @@ const Home = () => {
 
     useEffect(() => {
         const fetchServices = async () => {
+            const city = userLocation?.city;
+            
+            // If no location is selected, don't fetch (or handle differently)
+            if (!city || city === 'All of India') {
+                setServicesByCategory({});
+                setLoading(false);
+                return;
+            }
+
+            setLoading(true);
             try {
-                // Fetch services filtered by current user city if available
-                const city = userLocation?.city || '';
+                // Fetch services filtered by current user city
                 const { data } = await api.get(`/api/services?location=${city}`);
 
                 const grouped = data.reduce((acc, curr) => {
@@ -228,6 +237,59 @@ const Home = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+            ) : (!userLocation?.city || userLocation?.city === 'All of India') ? (
+                <div className="container" style={{ padding: '80px 20px', textAlign: 'center' }}>
+                    <div style={{ 
+                        maxWidth: '500px', 
+                        margin: '0 auto', 
+                        padding: '40px', 
+                        borderRadius: '32px', 
+                        backgroundColor: '#f8fafc',
+                        border: '2px dashed #e2e8f0'
+                    }}>
+                        <div style={{ 
+                            width: '80px', 
+                            height: '80px', 
+                            backgroundColor: '#fff', 
+                            borderRadius: '24px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            margin: '0 auto 24px',
+                            boxShadow: '0 10px 20px rgba(0,0,0,0.05)'
+                        }}>
+                            <MapPin size={40} color="var(--primary)" />
+                        </div>
+                        <h2 style={{ fontSize: '1.75rem', fontWeight: '900', color: '#1e293b', marginBottom: '16px' }}>Select Your Location</h2>
+                        <p style={{ color: '#64748b', fontSize: '1.1rem', marginBottom: '32px', lineHeight: '1.6' }}>
+                            Please select your city to discover skilled professionals and local services available in your neighborhood.
+                        </p>
+                        <button 
+                            onClick={() => {
+                                // Find the location selector in navbar and click it, or just use the same logic
+                                document.querySelector('.navbar-location-selector')?.click();
+                            }}
+                            className="btn-primary" 
+                            style={{ padding: '14px 32px', borderRadius: '12px', fontWeight: '800', fontSize: '1rem' }}
+                        >
+                            Set Location Now
+                        </button>
+                    </div>
+                </div>
+            ) : Object.keys(servicesByCategory).length === 0 ? (
+                <div className="container" style={{ padding: '80px 20px', textAlign: 'center' }}>
+                    <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+                        <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🔍</div>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px' }}>No Services in {userLocation.city}</h2>
+                        <p style={{ color: '#64748b', marginBottom: '24px' }}>We haven't expanded to your specific area yet. Try searching in a nearby city!</p>
+                        <button 
+                            onClick={() => document.querySelector('.navbar-location-selector')?.click()}
+                            style={{ color: 'var(--primary)', fontWeight: '700', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                            Change Location
+                        </button>
+                    </div>
                 </div>
             ) : (
                 Object.keys(servicesByCategory)

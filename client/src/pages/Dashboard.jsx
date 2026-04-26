@@ -382,6 +382,8 @@ const Dashboard = () => {
             setRole(user.role);
             if (user.role === 'provider') {
                 setProviderStatus(user.providerDetails?.isApproved ? 'approved' : 'pending');
+            } else {
+                setProviderStatus('none');
             }
             setProfileAvatar(user.avatar || '');
             setProfileName(user.name || '');

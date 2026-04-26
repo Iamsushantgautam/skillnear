@@ -126,7 +126,7 @@ const Register = () => {
                                     onChange={handleInputChange(setPassword)}
                                     required
                                 />
-                                <button 
+                                <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', padding: '4px' }}
@@ -147,7 +147,7 @@ const Register = () => {
                                     onChange={handleInputChange(setConfirmPassword)}
                                     required
                                 />
-                                <button 
+                                <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                     style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', padding: '4px' }}
@@ -159,7 +159,7 @@ const Register = () => {
                     </div>
 
                     <button type="submit" className="btn-primary" style={{ marginTop: '12px', width: '100%', padding: '14px', borderRadius: '12px', fontWeight: 800, fontSize: '1rem' }} disabled={loading}>
-                        {loading ? 'Creating Account...' : 'Sign Up Free'}
+                        {loading ? 'Creating Account...' : 'Create an account'}
                     </button>
                 </form>
 
@@ -167,7 +167,7 @@ const Register = () => {
                     <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
                         Already have an account?{' '}
                         <Link to="/login" style={{ color: 'var(--primary)', fontWeight: '800' }}>
-                            Sign In Instead
+                            Log in
                         </Link>
                     </p>
                 </div>

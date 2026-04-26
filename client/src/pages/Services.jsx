@@ -234,8 +234,25 @@ const Services = () => {
                                     </div>
                                 </div>
                             ))
+                        ) : (!userLocation?.city || userLocation?.city === 'All of India') ? (
+                            <div style={{ gridColumn: '1 / -1', padding: '60px 20px', textAlign: 'center', backgroundColor: '#f9fafb', borderRadius: '24px', border: '2px dashed #e2e8f0' }}>
+                                <div style={{ width: '64px', height: '64px', backgroundColor: '#fff', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+                                    <MapPin size={32} color="var(--primary)" />
+                                </div>
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px' }}>Location Required</h3>
+                                <p style={{ color: '#64748b', marginBottom: '24px', maxWidth: '400px', margin: '0 auto 24px' }}>Please select a city to see available services and professionals in your area.</p>
+                                <button 
+                                    onClick={() => document.querySelector('.navbar-location-selector')?.click()}
+                                    className="btn-primary" 
+                                    style={{ padding: '10px 24px', borderRadius: '10px' }}
+                                >
+                                    Select Location
+                                </button>
+                            </div>
                         ) : servicesList.length === 0 ? (
-                            <p>No services found matching your criteria.</p>
+                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 20px' }}>
+                                <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>No services found matching your criteria in {userLocation.city}.</p>
+                            </div>
                         ) : (
                             servicesList.map((srv) => (
                             <Link to={`/services/${srv._id}`} key={srv._id} className="card service-card-premium" style={styles.serviceCard}>

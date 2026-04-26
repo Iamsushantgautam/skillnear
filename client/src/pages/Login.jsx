@@ -103,7 +103,7 @@ const Login = () => {
                     </div>
 
                     <button type="submit" className="btn-primary" style={{ marginTop: '12px', width: '100%', padding: '14px', borderRadius: '12px', fontWeight: 800, fontSize: '1rem' }} disabled={loading}>
-                        {loading ? 'Signing In...' : 'Sign In Now'}
+                        {loading ? 'Logging In...' : 'Log In'}
                     </button>
                 </form>
 
@@ -111,7 +111,7 @@ const Login = () => {
                     <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
                         New to SkillNear?{' '}
                         <Link to="/register" style={{ color: 'var(--primary)', fontWeight: '800' }}>
-                            Join for Free
+                            Create an Account
                         </Link>
                     </p>
                 </div>

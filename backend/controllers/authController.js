@@ -164,11 +164,16 @@ export const applyToBeProvider = async (req, res) => {
 // @access  Public
 export const forgotPassword = async (req, res) => {
     try {
-        const { email } = req.body;
-        const user = await User.findOne({ email });
+        const { email: identifier } = req.body;
+        const user = await User.findOne({ 
+            $or: [
+                { email: identifier.trim() },
+                { username: identifier.trim() }
+            ]
+        });
 
         if (!user) {
-            return res.status(404).json({ message: 'User with this email does not exist' });
+            return res.status(404).json({ message: 'User with this email or username does not exist' });
         }
 
         // Generate 6 digit OTP
@@ -190,7 +195,7 @@ export const forgotPassword = async (req, res) => {
             htmlContent: emailHtml,
         });
 
-        res.json({ message: 'OTP sent to your email successfully.' });
+        res.json({ message: 'OTP sent to your registered email successfully.', email: user.email });
     } catch (error) {
         console.error("ForgotPassword Error:", error);
         res.status(500).json({ message: error.message });
@@ -202,8 +207,13 @@ export const forgotPassword = async (req, res) => {
 // @access  Public
 export const resetPassword = async (req, res) => {
     try {
-        const { email, otp, newPassword } = req.body;
-        const user = await User.findOne({ email });
+        const { email: identifier, otp, newPassword } = req.body;
+        const user = await User.findOne({ 
+            $or: [
+                { email: identifier.trim() },
+                { username: identifier.trim() }
+            ]
+        });
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
