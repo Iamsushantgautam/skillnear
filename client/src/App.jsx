@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -38,7 +39,7 @@ function MainLayout() {
           <Route path="/services/:id" element={<ServiceDetails />} />
           <Route path="/book/:id" element={<BookingFlow />} />
           <Route path="/u/:username" element={<PublicProfile />} />
-          <Route path="/chat" element={<Chat />} />
+          <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -63,7 +64,7 @@ function App() {
       <div className="app-container">
         <Toaster position="top-center" reverseOrder={false} />
         <Routes>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/*" element={<MainLayout />} />
         </Routes>
       </div>

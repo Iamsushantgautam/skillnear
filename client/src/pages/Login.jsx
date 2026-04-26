@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
 
@@ -10,13 +10,15 @@ const Login = () => {
 
     const navigate = useNavigate();
     const { login, loading, error, user, clearError } = useAuthStore();
+    const location = useLocation();
+    const from = location.state?.from?.pathname || '/';
 
     useEffect(() => {
         if (user) {
-            navigate('/');
+            navigate(from, { replace: true });
         }
         return () => clearError();
-    }, [user, navigate, clearError]);
+    }, [user, navigate, clearError, from]);
 
     const handleInputChange = (setter) => (e) => {
         setter(e.target.value);
@@ -27,7 +29,7 @@ const Login = () => {
         e.preventDefault();
         const success = await login(email, password);
         if (success) {
-            navigate('/');
+            navigate(from, { replace: true });
         }
     };
 
