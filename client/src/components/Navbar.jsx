@@ -6,6 +6,7 @@ import useNotificationStore from '../store/useNotificationStore';
 import api, { API_URL } from '../utils/api';
 import { toast } from 'react-hot-toast';
 import io from 'socket.io-client';
+import logo from '/favicon.png';
 
 // Sub-components
 import LocationModal from './navbar/LocationModal';
@@ -31,10 +32,10 @@ const Navbar = () => {
     useEffect(() => {
         if (user) {
             fetchNotifications(user.token);
-            
+
             const socket = io(API_URL);
             socket.emit('setup', user._id);
-            
+
             socket.on('newNotification', (notif) => {
                 addNotification(notif);
                 toast(notif.title, {
@@ -86,13 +87,14 @@ const Navbar = () => {
                 <div className="nav-left">
                     {/* Logo */}
                     <Link to="/" className="navbar-logo skillnear-logo">
+                        <img src={logo} alt="SkillNear" className="navbar-logo-img" />
                         SkillNear
                     </Link>
- 
+
                     {/* Location Selector */}
-                    <div 
+                    <div
                         className="navbar-location-selector"
-                        style={{ position: 'relative' }} 
+                        style={{ position: 'relative' }}
                         onClick={() => setShowLocationModal(true)}
                     >
                         {(!userLocation?.city || userLocation.city === 'All of India') && !['/login', '/register', '/dashboard'].includes(window.location.pathname) && (
@@ -114,14 +116,14 @@ const Navbar = () => {
                         </div>
                     </div>
                 </div>
- 
+
                 {/* Search Bar */}
-                <NavbarSearch 
-                    searchKeyword={searchKeyword} 
-                    setSearchKeyword={setSearchKeyword} 
-                    handleSearch={handleSearch} 
+                <NavbarSearch
+                    searchKeyword={searchKeyword}
+                    setSearchKeyword={setSearchKeyword}
+                    handleSearch={handleSearch}
                 />
- 
+
                 {/* Right Nav Links */}
                 <div className="nav-right">
                     <div className="nav-links-desktop hide-on-mobile hide-on-tablet">
@@ -129,10 +131,10 @@ const Navbar = () => {
                         <Link to="/services" className="navbar-link">Services</Link>
                         <div className="navbar-divider"></div>
                     </div>
- 
+
                     {user ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                            <NotificationMenu 
+                            <NotificationMenu
                                 show={showNotifications}
                                 setShow={setShowNotifications}
                                 notifications={notifications}
@@ -155,7 +157,7 @@ const Navbar = () => {
                             </Link>
                         </div>
                     )}
- 
+
                     {/* Mobile Hamburger Logic */}
                     <button
                         onClick={() => setIsDrawerOpen(true)}
@@ -166,9 +168,9 @@ const Navbar = () => {
                     </button>
                 </div>
             </div>
- 
+
             {/* Mobile Drawer */}
-            <MobileDrawer 
+            <MobileDrawer
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
                 user={user}
@@ -176,9 +178,9 @@ const Navbar = () => {
                 handleLogout={handleLogout}
                 navigate={navigate}
             />
- 
+
             {/* Location Selection Modal */}
-            <LocationModal 
+            <LocationModal
                 show={showLocationModal}
                 onClose={() => setShowLocationModal(false)}
                 user={user}

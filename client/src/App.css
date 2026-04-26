@@ -8,13 +8,14 @@
 .main-content {
   flex-grow: 1;
   padding-top: 0;
-  padding-bottom: 2rem;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 /* Mobile responsive generic adjustments */
 @media (max-width: 768px) {
   .main-content {
-    padding-bottom: 6rem;
+    padding-bottom: 1rem;
   }
 
   .hide-on-mobile {

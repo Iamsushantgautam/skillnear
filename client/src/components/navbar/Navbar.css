@@ -22,6 +22,13 @@
     flex-shrink: 0;
 }
 
+.navbar-logo-img {
+    width: 35px;
+    height: 35px;
+    size: 10%;
+    margin-right: 8px;
+}
+
 .navbar-location-selector {
     display: flex;
     flex-direction: column;

@@ -1,73 +1,91 @@
 import React from 'react';
+import '../styles/LegalPages.css';
+
+const sections = [
+    {
+        title: 'Information We Collect',
+        content: 'We collect information you provide directly to us when you create an account, update your profile, use our messaging features, or book services. This may include your name, email, phone number, location, and payment details.'
+    },
+    {
+        title: 'How We Use Your Information',
+        content: 'We use the information to facilitate bookings, improve our services, communicate with you about your account, and provide customer support. We also use location data to show you the most relevant local service providers.'
+    },
+    {
+        title: 'Sharing of Information',
+        content: 'We share necessary details (like name and service location) between customers and service providers to ensure successful service delivery. We do not sell your personal information to third parties.'
+    },
+    {
+        title: 'Data Security',
+        content: 'We implement strict security measures to protect your data. This includes encryption of sensitive data and secure server protocols. However, no method of transmission over the internet is 100% secure.'
+    },
+    {
+        title: 'Your Rights',
+        content: 'You have the right to access, correct, or delete your personal data at any time through your profile settings. For any specific data requests, you can reach out to our support team.'
+    },
+];
 
 const PrivacyPolicy = () => {
     return (
-        <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', padding: 'clamp(20px, 5vw, 60px) 16px' }}>
-            <div style={{ maxWidth: '900px', margin: '0 auto', background: 'white', padding: 'clamp(24px, 6vw, 60px)', borderRadius: '32px', boxShadow: '0 10px 40px rgba(0,0,0,0.03)' }}>
-                <h1 style={{ fontSize: 'clamp(1.75rem, 5vw, 2.5rem)', fontWeight: 900, marginBottom: '10px', color: '#1e293b' }}>Privacy Policy</h1>
-                <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '40px' }}>Last updated: April 19, 2026</p>
+        <div className="legal-container">
 
-                <div style={styles.section}>
-                    <h2 style={styles.heading}>1. Information We Collect</h2>
-                    <p style={styles.text}>
-                        We collect information you provide directly to us when you create an account, update your profile, use our messaging features, or book services. This may include your name, email, phone number, location, and payment details.
-                    </p>
+            {/* ── Page Header ── */}
+            <header className="legal-hero">
+                <div className="legal-hero-inner">
+                    <span className="legal-badge">SkillNear · Legal Document</span>
+                    <h1 className="legal-title">Privacy Policy</h1>
+                    <div className="legal-meta-row">
+                        <span className="legal-meta-item">Last updated: April 19, 2026</span>
+                        <span className="legal-meta-dot" />
+                        <span className="legal-meta-item">{sections.length} sections</span>
+                        <span className="legal-meta-dot" />
+                        <span className="legal-meta-item">~3 min read</span>
+                    </div>
                 </div>
+            </header>
 
-                <div style={styles.section}>
-                    <h2 style={styles.heading}>2. How We Use Your Information</h2>
-                    <p style={styles.text}>
-                        We use the information to facilitate bookings, improve our services, communicate with you about your account, and provide customer support. We also use location data to show you the most relevant local service providers.
-                    </p>
-                </div>
+            {/* ── Two-Column Layout ── */}
+            <div className="legal-layout">
 
-                <div style={styles.section}>
-                    <h2 style={styles.heading}>3. Sharing of Information</h2>
-                    <p style={styles.text}>
-                        We share necessary details (like name and service location) between customers and service providers to ensure successful service delivery. We do not sell your personal information to third parties.
-                    </p>
-                </div>
+                {/* Sidebar Table of Contents */}
+                <aside className="legal-toc">
+                    <p className="legal-toc-title">Contents</p>
+                    <ul className="legal-toc-list">
+                        {sections.map((s, i) => (
+                            <li key={i} className="legal-toc-item">
+                                <span className="legal-toc-number">0{i + 1}</span>
+                                {s.title}
+                            </li>
+                        ))}
+                    </ul>
+                </aside>
 
-                <div style={styles.section}>
-                    <h2 style={styles.heading}>4. Data Security</h2>
-                    <p style={styles.text}>
-                        We implement strict security measures to protect your data. This includes encryption of sensitive data and secure server protocols. However, no method of transmission over the internet is 100% secure.
-                    </p>
-                </div>
+                {/* Main Content */}
+                <main className="legal-body">
+                    {sections.map((section, index) => (
+                        <section key={index} className="legal-section">
+                            <div className="legal-section-header">
+                                <span className="section-number">0{index + 1}</span>
+                                <h2 className="legal-heading">{section.title}</h2>
+                            </div>
+                            <p className="legal-text">{section.content}</p>
+                        </section>
+                    ))}
 
-                <div style={styles.section}>
-                    <h2 style={styles.heading}>5. Your Rights</h2>
-                    <p style={styles.text}>
-                        You have the right to access, correct, or delete your personal data at any time through your profile settings. For any specific data requests, you can reach out to our support team.
-                    </p>
-                </div>
+                    {/* Contact Footer */}
+                    <footer className="legal-footer">
+                        <div className="legal-footer-text">
+                            <p className="contact-title">Have questions about your data?</p>
+                            <p className="legal-text">Our data protection team is ready to help.</p>
+                        </div>
+                        <a href="mailto:privacy@skillnear.com" className="contact-email">
+                            privacy@skillnear.com
+                        </a>
+                    </footer>
+                </main>
 
-                <div style={{ marginTop: '60px', padding: '30px', background: '#f0f4ff', borderRadius: '20px', border: '1px solid #dbeafe' }}>
-                    <h3 style={{ ...styles.heading, marginBottom: '10px' }}>Questions?</h3>
-                    <p style={{ ...styles.text, marginBottom: 0 }}>
-                        If you have any questions about this Privacy Policy, please contact us at <strong>privacy@skillnear.com</strong>
-                    </p>
-                </div>
             </div>
         </div>
     );
-};
-
-const styles = {
-    section: {
-        marginBottom: '40px'
-    },
-    heading: {
-        fontSize: '1.4rem',
-        fontWeight: 800,
-        color: '#1e293b',
-        marginBottom: '16px'
-    },
-    text: {
-        fontSize: '1.05rem',
-        lineHeight: 1.7,
-        color: '#64748b'
-    }
 };
 
 export default PrivacyPolicy;

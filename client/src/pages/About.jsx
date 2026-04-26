@@ -66,8 +66,8 @@ const About = () => {
                     </div>
                     <div style={{ flex: 1, minWidth: '300px', borderRadius: '30px', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
                         <img 
-                            src="https://images.unsplash.com/photo-1522071823991-b9671f9d7f1f?auto=format&fit=crop&q=80&w=1000" 
-                            alt="Our Team" 
+                            src="/about-story.png" 
+                            alt="Our Team at SkillNear" 
                             style={{ width: '100%', height: 'auto', display: 'block' }}
                         />
                     </div>

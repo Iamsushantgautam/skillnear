@@ -1,103 +1,83 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import './Footer.css';
+import logo from '/favicon.png';
 
 const Footer = () => {
     return (
-        <footer className="global-footer" style={styles.footer}>
-            <div className="container">
-                <style>{`
-                    @media (max-width: 768px) {
-                        .global-footer { display: none !important; }
-                    }
-                `}</style>
-                <div style={styles.grid}>
-                    {/* Brand Col */}
-                    <div style={styles.col}>
-                        <h3 style={styles.logo}>SkillNear</h3>
-                        <p style={styles.text}>
-                            Connecting you with local shops and expert service providers. Reliable help is just around the corner.
-                        </p>
+        <footer className="site-footer">
+
+            {/* Gradient accent bar */}
+            {/* <div className="footer-accent" /> */}
+
+            <div className="footer-inner">
+
+                {/* Main grid */}
+                <div className="footer-grid">
+
+                    {/* Brand Column */}
+                    <div className="footer-brand">
+                        <div className="footer-brand-text">
+                            <div className="footer-logo-row">
+                                <img src={logo} alt="SkillNear" className="footer-logo-icon" />
+                                <h3 className="footer-logo">SkillNear</h3>
+                            </div>
+                            <p className="footer-tagline">Local Expertise. Trusted Results.</p>
+                            <p className="footer-desc">
+                                SkillNear connects you with vetted local professionals — from repairs to creative services — making reliable help easy to find, right in your neighborhood.
+                            </p>
+                            <a href="mailto:hello@skillnear.com" className="footer-contact-chip">
+                                ✉ hello@skillnear.com
+                            </a>
+                        </div>
                     </div>
 
-                    {/* Links Col 1 */}
-                    <div style={styles.col}>
-                        <h4 style={styles.heading}>For Customers</h4>
-                        <Link to="/services" style={styles.link}>Find a Service</Link>
-                        <Link to="/how-it-works" style={styles.link}>How it Works</Link>
+                    {/* For Customers */}
+                    <div>
+                        <h4 className="footer-col-title">For Customers</h4>
+                        <div className="footer-col-links">
+                            <Link to="/services">Browse Services</Link>
+                            <Link to="/how-it-works">How it Works</Link>
+                            <Link to="/contact">Support Center</Link>
+                        </div>
                     </div>
 
-                    {/* Links Col 2 */}
-                    <div style={styles.col}>
-                        <h4 style={styles.heading}>For Professionals</h4>
-                        <Link to="/register" style={styles.link}>Join as Professional</Link>
-                        <Link to="/provider-guidelines" style={styles.link}>Provider Guidelines</Link>
-                        <Link to="/success-stories" style={styles.link}>Success Stories</Link>
+                    {/* For Professionals */}
+                    <div>
+                        <h4 className="footer-col-title">For Professionals</h4>
+                        <div className="footer-col-links">
+                            <Link to="/register">Join the Network</Link>
+                            <Link to="/provider-guidelines">Service Guidelines</Link>
+                            <Link to="/success-stories">Partner Stories</Link>
+                        </div>
                     </div>
 
-                    {/* Links Col 3 */}
-                    <div style={styles.col}>
-                        <h4 style={styles.heading}>Company</h4>
-                        <Link to="/about" style={styles.link}>About Us</Link>
-                        <Link to="/contact" style={styles.link}>Contact</Link>
-                        <Link to="/privacy" style={styles.link}>Privacy Policy</Link>
-                        <Link to="/terms" style={styles.link}>Terms & Conditions</Link>
+                    {/* Company */}
+                    <div>
+                        <h4 className="footer-col-title">Company</h4>
+                        <div className="footer-col-links">
+                            <Link to="/about">About Us</Link>
+                            <Link to="/privacy">Privacy Policy</Link>
+                            <Link to="/terms">Terms of Service</Link>
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* Bottom bar */}
+                <div className="footer-bottom">
+                    <p className="footer-copyright">
+                        &copy; {new Date().getFullYear()} SkillNear Technologies. All rights reserved.
+                    </p>
+                    <div className="footer-status">
+                        <span className="footer-status-dot" />
+                        <span className="footer-status-text">All Systems Operational</span>
                     </div>
                 </div>
 
-                <div style={styles.bottomBar}>
-                    <p>&copy; {new Date().getFullYear()} SkillNear. All rights reserved.</p>
-                </div>
             </div>
         </footer>
     );
-};
-
-const styles = {
-    footer: {
-        backgroundColor: '#ffffff',
-        borderTop: '1px solid var(--border-color)',
-        paddingTop: '60px',
-        marginTop: 'auto',
-    },
-    grid: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '40px',
-        marginBottom: '40px',
-    },
-    col: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-    },
-    logo: {
-        fontSize: '1.5rem',
-        fontWeight: '700',
-        color: 'var(--primary)',
-        marginBottom: '8px',
-    },
-    heading: {
-        fontSize: '1.1rem',
-        fontWeight: '600',
-        color: 'var(--text-main)',
-        marginBottom: '8px',
-    },
-    text: {
-        color: 'var(--text-muted)',
-        lineHeight: '1.6',
-    },
-    link: {
-        color: 'var(--text-muted)',
-        transition: 'color 0.2s',
-        textDecoration: 'none',
-    },
-    bottomBar: {
-        borderTop: '1px solid var(--border-color)',
-        padding: '24px 0',
-        textAlign: 'center',
-        color: 'var(--text-muted)',
-        fontSize: '0.9rem',
-    }
 };
 
 export default Footer;

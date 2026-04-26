@@ -1,0 +1,220 @@
+/* =========================================
+   Footer.css — SkillNear Site Footer
+   ========================================= */
+
+.site-footer {
+    background-color: #ffffff;
+    border-top: 2px solid #f1f5f9;
+    margin-top: auto;
+    color: var(--text-main);
+}
+
+/* ── Gradient accent top bar ── */
+.footer-accent {
+    height: 3px;
+    background: linear-gradient(90deg, #0284c7 0%, #0d9488 60%, #0284c7 100%);
+}
+
+.footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 56px 24px 0;
+}
+
+/* ── Main Grid ── */
+.footer-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 48px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* ── Brand Column ── */
+.footer-logo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.footer-logo-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.footer-brand .footer-logo {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: -0.03em;
+    margin-bottom: 4px;
+}
+
+.footer-brand .footer-tagline {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+}
+
+.footer-brand .footer-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.75;
+    margin-bottom: 24px;
+}
+
+/* ── Contact chip ── */
+.footer-contact-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 8px 16px;
+    border: 1px solid #bae6fd;
+    background: #f0f9ff;
+    border-radius: 999px;
+    text-decoration: none;
+}
+
+/* ── Link Columns ── */
+.footer-col-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 18px;
+}
+
+.footer-col-links {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+.footer-col-links a {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 450;
+}
+
+/* ── Bottom Bar ── */
+.footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 24px 0 32px;
+}
+
+.footer-copyright {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    font-weight: 500;
+    margin: 0;
+}
+
+.footer-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 14px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 999px;
+}
+
+.footer-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    flex-shrink: 0;
+}
+
+.footer-status-text {
+    font-size: 0.75rem;
+    color: #065f46;
+    font-weight: 600;
+}
+
+/* ── Tablet (≤ 1024px) ── */
+@media (max-width: 1024px) {
+    .footer-inner {
+        padding: 48px 32px 0;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+    }
+
+    .footer-brand {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        align-items: start;
+    }
+
+    .footer-brand-text {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+/* ── Mobile (≤ 640px) ── */
+@media (max-width: 640px) {
+    .footer-inner {
+        padding: 40px 20px 0;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        padding-bottom: 36px;
+    }
+
+    .footer-brand {
+        grid-column: 1 / -1;
+        display: block;
+    }
+
+    .footer-brand .footer-desc {
+        margin-bottom: 20px;
+    }
+
+    .footer-col-title {
+        font-size: 0.7rem;
+        margin-bottom: 14px;
+    }
+
+    .footer-col-links a {
+        font-size: 0.88rem;
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding-bottom: 28px;
+    }
+}
+
+/* ── Very small screens (≤ 380px) ── */
+@media (max-width: 380px) {
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+}
