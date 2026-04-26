@@ -68,29 +68,10 @@ const HomeCategories = ({
             </div>
         );
     }
-
     if (!userLocation?.city || userLocation?.city === 'All of India') {
-        return (
-            <div className="container location-required-container">
-                <div className="location-card">
-                    <div className="location-icon-wrapper">
-                        <MapPin size={40} color="var(--primary)" />
-                    </div>
-                    <h2 style={{ fontSize: '1.75rem', fontWeight: '900', color: '#1e293b', marginBottom: '16px' }}>Select Your Location</h2>
-                    <p style={{ color: '#64748b', fontSize: '1.1rem', marginBottom: '32px', lineHeight: '1.6' }}>
-                        Please select your city to discover skilled professionals and local services available in your neighborhood.
-                    </p>
-                    <button
-                        onClick={() => document.querySelector('.navbar-location-selector')?.click()}
-                        className="btn-primary"
-                        style={{ padding: '14px 32px', borderRadius: '12px', fontWeight: '800', fontSize: '1rem' }}
-                    >
-                        Set Location Now
-                    </button>
-                </div>
-            </div>
-        );
+        return null;
     }
+
 
     if (Object.keys(servicesByCategory).length === 0) {
         return (

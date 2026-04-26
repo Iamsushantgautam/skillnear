@@ -17,12 +17,61 @@ const LocationModal = ({
     const [selectedCity, setSelectedCity] = useState('');
     const [selectedPincode, setSelectedPincode] = useState(userLocation?.pincode || '');
     const [isDetecting, setIsDetecting] = useState(false);
+    const [pincodeError, setPincodeError] = useState('');
+    const [isValidating, setIsValidating] = useState(false);
+    const lastValidated = React.useRef('');
 
     useEffect(() => {
         if (userLocation) {
             setSelectedPincode(userLocation.pincode || '');
         }
     }, [userLocation]);
+
+    // SMART PINCODE VALIDATION - Optimized
+    useEffect(() => {
+        const validatePincode = async () => {
+            // Only validate if it's 6 digits AND different from the last one we checked
+            if (selectedPincode.length === 6 && selectedPincode !== lastValidated.current) {
+                setIsValidating(true);
+                setPincodeError('');
+                try {
+                    const res = await fetch(`https://api.postalpincode.in/pincode/${selectedPincode}`);
+                    const data = await res.json();
+                    
+                    lastValidated.current = selectedPincode; // Mark as validated
+
+                    if (data[0].Status === "Success") {
+                        const info = data[0].PostOffice[0];
+                        const detectedState = info.State;
+                        const detectedDistrict = info.District;
+                        
+                        const selectedStateName = indianStates.find(s => s.isoCode === selectedStateCode)?.name;
+
+                        let errorMsg = '';
+                        if (selectedStateCode && detectedState.toLowerCase() !== selectedStateName?.toLowerCase()) {
+                            errorMsg = `This pincode belongs to ${detectedState}, not ${selectedStateName}.`;
+                        } else if (selectedCity && !detectedDistrict.toLowerCase().includes(selectedCity.toLowerCase()) && !selectedCity.toLowerCase().includes(detectedDistrict.toLowerCase())) {
+                            errorMsg = `This pincode is registered in ${detectedDistrict}. Please double check.`;
+                        }
+                        
+                        setPincodeError(errorMsg);
+                    } else {
+                        setPincodeError("Invalid pincode or not found in records.");
+                    }
+                } catch (error) {
+                    console.error("Pincode validation error", error);
+                } finally {
+                    setIsValidating(false);
+                }
+            } else if (selectedPincode.length !== 6) {
+                setPincodeError('');
+                lastValidated.current = ''; // Reset if user starts typing again
+            }
+        };
+
+        const timer = setTimeout(validatePincode, 600);
+        return () => clearTimeout(timer);
+    }, [selectedPincode, selectedStateCode, selectedCity, indianStates]);
 
     if (!show) return null;
 
@@ -166,17 +215,37 @@ const LocationModal = ({
                     </select>
                 </div>
 
-                <div style={{ marginBottom: '24px' }}>
-                    <label className="navbar-label">Pincode / Zip Code</label>
-                    <input
-                        type="text"
-                        className="input-field"
-                        placeholder="e.g. 226001"
-                        value={selectedPincode}
-                        onChange={(e) => setSelectedPincode(e.target.value)}
-                        style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}
-                    />
-                </div>
+                {selectedCity && (
+                    <div style={{ marginBottom: '24px' }} className="animate-fade-in">
+                        <label className="navbar-label">Pincode / Zip Code</label>
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                type="text"
+                                className="input-field"
+                                placeholder="e.g. 226001"
+                                value={selectedPincode}
+                                onChange={(e) => setSelectedPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                style={{ 
+                                    width: '100%', 
+                                    padding: '12px', 
+                                    borderRadius: '12px', 
+                                    border: `1px solid ${pincodeError ? '#ef4444' : '#e2e8f0'}`,
+                                    outline: 'none'
+                                }}
+                            />
+                            {isValidating && (
+                                <div style={{ position: 'absolute', right: '12px', top: '12px' }}>
+                                    <div className="animate-spin" style={{ width: '16px', height: '16px', border: '2px solid #e2e8f0', borderTopColor: 'var(--primary)', borderRadius: '50%' }}></div>
+                                </div>
+                            )}
+                        </div>
+                        {pincodeError && (
+                            <p style={{ color: '#ef4444', fontSize: '0.7rem', marginTop: '6px', fontWeight: '600' }}>
+                                ⚠️ {pincodeError}
+                            </p>
+                        )}
+                    </div>
+                )}
 
 
 
