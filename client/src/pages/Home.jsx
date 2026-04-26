@@ -24,7 +24,7 @@ const Home = () => {
     const { user, userLocation, setLocation, toggleFavorite } = useAuthStore();
     const [servicesByCategory, setServicesByCategory] = useState({});
     const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [globalSearch, setGlobalSearch] = useState('');
     const navigate = useNavigate();
 
     const scrollRefs = useRef({});
@@ -66,7 +66,7 @@ const Home = () => {
     useEffect(() => {
         const fetchServices = async () => {
             const city = userLocation?.city;
-            
+
             // If no location is selected, don't fetch (or handle differently)
             if (!city || city === 'All of India') {
                 setServicesByCategory({});
@@ -105,8 +105,17 @@ const Home = () => {
 
     const handleSearch = (e) => {
         e.preventDefault();
-        if (searchQuery.trim()) navigate(`/services?keyword=${searchQuery}`);
-        else navigate('/services');
+        if (!globalSearch.trim()) return navigate('/services');
+
+        // Smart Parsing: Extract 6-digit pincode if present
+        const pincodeMatch = globalSearch.match(/\b\d{6}\b/);
+        const pincode = pincodeMatch ? pincodeMatch[0] : '';
+        const keyword = globalSearch.replace(/\b\d{6}\b/, '').trim();
+
+        let url = '/services?';
+        if (keyword) url += `keyword=${keyword}&`;
+        if (pincode) url += `pincode=${pincode}`;
+        navigate(url);
     };
 
     return (
@@ -151,6 +160,32 @@ const Home = () => {
                     color: #fff !important;
                     border-color: var(--primary) !important;
                 }
+
+                @media (max-width: 768px) {
+                    .unified-search-container-mobile { 
+                        flex-direction: column !important; 
+                        padding: 16px !important;
+                        gap: 16px !important;
+                    }
+                    .search-divider-mobile { 
+                        width: 100% !important; 
+                        height: 1px !important; 
+                    }
+                    .search-btn-mobile {
+                        width: 100% !important;
+                        padding: 14px !important;
+                    }
+                }
+
+                .unified-search-container-mobile:focus-within {
+                    border-color: var(--primary) !important;
+                    box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.15) !important;
+                }
+
+                .search-btn-mobile:hover {
+                    transform: scale(1.02);
+                    background-color: var(--primary-hover) !important;
+                }
             `}</style>
 
             {/* HERO SECTION - Urban Company Style */}
@@ -160,22 +195,38 @@ const Home = () => {
                     <div style={styles.heroLeft}>
                         <h1 className="hero-title-mobile" style={styles.heroTitle}>Home services at your doorstep</h1>
 
-                        <div style={styles.searchBoxCard}>
-                            <p style={{ fontWeight: '600', marginBottom: '16px', fontSize: '0.95rem', color: 'var(--text-muted)' }}>What are you looking for?</p>
-                            <form onSubmit={handleSearch} style={styles.heroSearch}>
-                                <Search size={20} color="#94a3b8" />
-                                <input
-                                    type="text"
-                                    placeholder="Search for 'AC Repair', 'Salon'..."
-                                    style={styles.heroSearchInput}
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
+                        <div className="card no-scrollbar" style={styles.searchBoxCard}>
+                            <p style={{ fontWeight: '600', marginBottom: '20px', fontSize: '1.25rem', color: '#334155' }}>What are you looking for?</p>
+                            <form onSubmit={handleSearch} className="unified-search-container-mobile" style={styles.unifiedSearchContainer}>
+                                <div style={styles.searchPart}>
+                                    <Search size={20} color="#94a3b8" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search for 'Salon 226001'..."
+                                        style={styles.heroSearchInput}
+                                        value={globalSearch}
+                                        onChange={(e) => setGlobalSearch(e.target.value)}
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="btn-primary search-btn-mobile"
+                                    style={styles.unifiedSearchBtn}
+                                >
+                                    Find
+                                </button>
                             </form>
 
                             <div className="hero-cat-grid-mobile" style={styles.heroCatGrid}>
-                                {mainCategories.map((cat, i) => (
-                                    <Link key={i} to={cat.link ? cat.link : `/services?category=${cat.name}`} style={styles.heroCatItem}>
+                                {mainCategories.map((cat, i) => {
+                                    const pincodeMatch = globalSearch.match(/\b\d{6}\b/);
+                                    const currentPincode = pincodeMatch ? pincodeMatch[0] : '';
+                                    return (
+                                        <Link
+                                            key={i}
+                                            to={cat.link ? cat.link : `/services?category=${cat.name}${currentPincode ? `&pincode=${currentPincode}` : ''}`}
+                                            style={styles.heroCatItem}
+                                        >
                                         <div style={{ ...styles.heroCatIcon, backgroundColor: cat.bg, overflow: 'hidden' }}>
                                             <img
                                                 src={cat.icon}
@@ -184,8 +235,9 @@ const Home = () => {
                                             />
                                         </div>
                                         <span style={styles.heroCatLabel}>{cat.name}</span>
-                                    </Link>
-                                ))}
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -240,22 +292,22 @@ const Home = () => {
                 </div>
             ) : (!userLocation?.city || userLocation?.city === 'All of India') ? (
                 <div className="container" style={{ padding: '80px 20px', textAlign: 'center' }}>
-                    <div style={{ 
-                        maxWidth: '500px', 
-                        margin: '0 auto', 
-                        padding: '40px', 
-                        borderRadius: '32px', 
+                    <div style={{
+                        maxWidth: '500px',
+                        margin: '0 auto',
+                        padding: '40px',
+                        borderRadius: '32px',
                         backgroundColor: '#f8fafc',
                         border: '2px dashed #e2e8f0'
                     }}>
-                        <div style={{ 
-                            width: '80px', 
-                            height: '80px', 
-                            backgroundColor: '#fff', 
-                            borderRadius: '24px', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
+                        <div style={{
+                            width: '80px',
+                            height: '80px',
+                            backgroundColor: '#fff',
+                            borderRadius: '24px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             margin: '0 auto 24px',
                             boxShadow: '0 10px 20px rgba(0,0,0,0.05)'
                         }}>
@@ -265,12 +317,12 @@ const Home = () => {
                         <p style={{ color: '#64748b', fontSize: '1.1rem', marginBottom: '32px', lineHeight: '1.6' }}>
                             Please select your city to discover skilled professionals and local services available in your neighborhood.
                         </p>
-                        <button 
+                        <button
                             onClick={() => {
                                 // Find the location selector in navbar and click it, or just use the same logic
                                 document.querySelector('.navbar-location-selector')?.click();
                             }}
-                            className="btn-primary" 
+                            className="btn-primary"
                             style={{ padding: '14px 32px', borderRadius: '12px', fontWeight: '800', fontSize: '1rem' }}
                         >
                             Set Location Now
@@ -283,7 +335,7 @@ const Home = () => {
                         <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🔍</div>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px' }}>No Services in {userLocation.city}</h2>
                         <p style={{ color: '#64748b', marginBottom: '24px' }}>We haven't expanded to your specific area yet. Try searching in a nearby city!</p>
-                        <button 
+                        <button
                             onClick={() => document.querySelector('.navbar-location-selector')?.click()}
                             style={{ color: 'var(--primary)', fontWeight: '700', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
                         >
@@ -303,117 +355,117 @@ const Home = () => {
                         return indexA - indexB;
                     })
                     .slice(0, 10).map((category, idx) => (
-                    <section key={idx} style={{ padding: '10px 0', borderTop: '1px solid #f1f5f9' }}>
-                        <div className="container">
-                            <div className="flex-between" style={{ marginBottom: '16px' }}>
-                                <div>
-                                    <h2 className="section-title-mobile" style={{ fontSize: '1.75rem', fontWeight: '900', letterSpacing: '-0.5px', color: '#111827' }}>{category}</h2>
-                                    <p className="section-desc-mobile" style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Handpicked experts for your {category.toLowerCase()} needs</p>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <div style={{ display: 'flex', gap: '8px' }} className="hide-on-mobile">
-                                        <button onClick={() => scroll(category, 'left')} style={styles.scrollBtn}><ChevronLeft size={20} /></button>
-                                        <button onClick={() => scroll(category, 'right')} style={styles.scrollBtn}><ChevronRight size={20} /></button>
+                        <section key={idx} style={{ padding: '10px 0', borderTop: '1px solid #f1f5f9' }}>
+                            <div className="container">
+                                <div className="flex-between" style={{ marginBottom: '16px' }}>
+                                    <div>
+                                        <h2 className="section-title-mobile" style={{ fontSize: '1.75rem', fontWeight: '900', letterSpacing: '-0.5px', color: '#111827' }}>{category}</h2>
+                                        <p className="section-desc-mobile" style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Handpicked experts for your {category.toLowerCase()} needs</p>
                                     </div>
-                                    <Link to={`/services?category=${category}`} className="view-all-btn" style={styles.viewAllBtn}>
-                                        View All <ChevronRight size={18} />
-                                    </Link>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{ display: 'flex', gap: '8px' }} className="hide-on-mobile">
+                                            <button onClick={() => scroll(category, 'left')} style={styles.scrollBtn}><ChevronLeft size={20} /></button>
+                                            <button onClick={() => scroll(category, 'right')} style={styles.scrollBtn}><ChevronRight size={20} /></button>
+                                        </div>
+                                        <Link to={`/services?category=${category}`} className="view-all-btn" style={styles.viewAllBtn}>
+                                            View All <ChevronRight size={18} />
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                <div
+                                    className="services-scroll-container"
+                                    style={styles.scrollContainer}
+                                    ref={el => scrollRefs.current[category] = el}
+                                >
+                                    {servicesByCategory[category].map(service => (
+                                        <Link key={service._id} to={`/services/${service._id}`} className="service-card-premium" style={styles.serviceCard}>
+                                            <div style={styles.serviceImgWrapper}>
+                                                <img
+                                                    src={service.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(service.title)}&background=random`}
+                                                    alt={service.title}
+                                                    style={styles.serviceImg}
+                                                />
+                                                <div style={styles.ratingBadge}>
+                                                    <Star size={12} fill="#FFB800" color="#FFB800" />
+                                                    <span>{service.rating?.toFixed(1) || '4.8'}</span>
+                                                </div>
+                                                <button
+                                                    style={{
+                                                        ...styles.heartBtn,
+                                                        backgroundColor: user?.favorites?.includes(service._id) ? '#ef4444' : 'rgba(0,0,0,0.3)',
+                                                        border: user?.favorites?.includes(service._id) ? 'none' : '1px solid rgba(255,255,255,0.5)'
+                                                    }}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        if (!user) return navigate('/login');
+                                                        toggleFavorite(service._id);
+                                                    }}
+                                                >
+                                                    <Heart size={16} fill={user?.favorites?.includes(service._id) ? "#fff" : "none"} color="#fff" />
+                                                </button>
+                                            </div>
+
+                                            <div style={styles.cardContent}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                                    <span style={{ backgroundColor: '#e0f2fe', color: 'var(--primary)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase' }}>
+                                                        {service.category}
+                                                    </span>
+                                                </div>
+                                                <h4 style={styles.cardTitle}>{service.title}</h4>
+
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '16px' }}>
+                                                    <Star size={14} color="#f59e0b" fill="#f59e0b" />
+                                                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#111827' }}>{service.rating?.toFixed(1) || '4.8'}</span>
+                                                    <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>({service.numReviews || '0'})</span>
+                                                </div>
+
+                                                <div style={styles.cardFooter}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <div style={styles.providerAvatar}>
+                                                            <img src={service.provider?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || 'P')}&background=6366f1&color=fff`} alt="Provider" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                                        </div>
+                                                        <span style={styles.providerName}>{service.provider?.name || 'Professional'}</span>
+                                                    </div>
+                                                    {service.businessType === 'shop' ? (
+                                                        <button
+                                                            style={{
+                                                                backgroundColor: 'var(--primary)',
+                                                                color: '#fff',
+                                                                padding: '8px 16px',
+                                                                borderRadius: '8px',
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: '700',
+                                                                border: 'none',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '6px',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                const lat = service.geoCoordinates?.coordinates?.[1];
+                                                                const lng = service.geoCoordinates?.coordinates?.[0];
+                                                                const link = service.shopDetails?.googleMapsLink || (lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : null);
+                                                                if (link) window.open(link, '_blank');
+                                                            }}
+                                                        >
+                                                            <MapPin size={14} /> Direction
+                                                        </button>
+                                                    ) : (
+                                                        <div style={styles.priceTag}>
+                                                            <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Starting at</span>
+                                                            <span style={{ fontWeight: '800', color: '#111827', fontSize: '1.1rem' }}>₹{service.price || (service.plans?.[0]?.price) || '0'}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
                                 </div>
                             </div>
-
-                            <div
-                                className="services-scroll-container"
-                                style={styles.scrollContainer}
-                                ref={el => scrollRefs.current[category] = el}
-                            >
-                                {servicesByCategory[category].map(service => (
-                                    <Link key={service._id} to={`/services/${service._id}`} className="service-card-premium" style={styles.serviceCard}>
-                                        <div style={styles.serviceImgWrapper}>
-                                            <img
-                                                src={service.images?.[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(service.title)}&background=random`}
-                                                alt={service.title}
-                                                style={styles.serviceImg}
-                                            />
-                                            <div style={styles.ratingBadge}>
-                                                <Star size={12} fill="#FFB800" color="#FFB800" />
-                                                <span>{service.rating?.toFixed(1) || '4.8'}</span>
-                                            </div>
-                                            <button 
-                                                style={{ 
-                                                    ...styles.heartBtn, 
-                                                    backgroundColor: user?.favorites?.includes(service._id) ? '#ef4444' : 'rgba(0,0,0,0.3)',
-                                                    border: user?.favorites?.includes(service._id) ? 'none' : '1px solid rgba(255,255,255,0.5)'
-                                                }} 
-                                                onClick={(e) => { 
-                                                    e.preventDefault(); 
-                                                    if(!user) return navigate('/login');
-                                                    toggleFavorite(service._id);
-                                                }}
-                                            >
-                                                <Heart size={16} fill={user?.favorites?.includes(service._id) ? "#fff" : "none"} color="#fff" />
-                                            </button>
-                                        </div>
-
-                                        <div style={styles.cardContent}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                                                <span style={{ backgroundColor: '#e0f2fe', color: 'var(--primary)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: '800', textTransform: 'uppercase' }}>
-                                                    {service.category}
-                                                </span>
-                                            </div>
-                                            <h4 style={styles.cardTitle}>{service.title}</h4>
-
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '16px' }}>
-                                                <Star size={14} color="#f59e0b" fill="#f59e0b" />
-                                                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#111827' }}>{service.rating?.toFixed(1) || '4.8'}</span>
-                                                <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>({service.numReviews || '0'})</span>
-                                            </div>
-
-                                            <div style={styles.cardFooter}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <div style={styles.providerAvatar}>
-                                                        <img src={service.provider?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(service.provider?.name || 'P')}&background=6366f1&color=fff`} alt="Provider" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                                                    </div>
-                                                    <span style={styles.providerName}>{service.provider?.name || 'Professional'}</span>
-                                                </div>
-                                                {service.businessType === 'shop' ? (
-                                                    <button 
-                                                        style={{ 
-                                                            backgroundColor: 'var(--primary)', 
-                                                            color: '#fff', 
-                                                            padding: '8px 16px', 
-                                                            borderRadius: '8px', 
-                                                            fontSize: '0.8rem', 
-                                                            fontWeight: '700',
-                                                            border: 'none',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '6px',
-                                                            cursor: 'pointer'
-                                                        }}
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            const lat = service.geoCoordinates?.coordinates?.[1];
-                                                            const lng = service.geoCoordinates?.coordinates?.[0];
-                                                            const link = service.shopDetails?.googleMapsLink || (lat && lng ? `https://www.google.com/maps?q=${lat},${lng}` : null);
-                                                            if (link) window.open(link, '_blank');
-                                                        }}
-                                                    >
-                                                        <MapPin size={14} /> Direction
-                                                    </button>
-                                                ) : (
-                                                    <div style={styles.priceTag}>
-                                                        <span style={{ fontSize: '0.65rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Starting at</span>
-                                                        <span style={{ fontWeight: '800', color: '#111827', fontSize: '1.1rem' }}>₹{service.price || (service.plans?.[0]?.price) || '0'}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-                ))
+                        </section>
+                    ))
             )}
 
             {/* AD BANNER */}
@@ -682,6 +734,62 @@ const styles = {
         cursor: 'pointer',
         transition: 'all 0.2s',
         color: '#475569',
+    },
+    unifiedSearchContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        backgroundColor: '#f8fafc',
+        borderRadius: '16px',
+        padding: '12px 16px',
+        border: '1px solid #e2e8f0',
+        gap: '12px',
+        transition: 'all 0.3s ease',
+        marginBottom: '40px',
+    },
+    searchBoxCard: {
+        backgroundColor: '#fff',
+        borderRadius: '32px',
+        padding: '40px',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.05)',
+        border: '1px solid #f1f5f9',
+        marginTop: '40px',
+    },
+    searchPart: {
+        flex: 2,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+    },
+    pincodePart: {
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+    },
+    searchDivider: {
+        width: '1px',
+        height: '20px',
+        backgroundColor: '#e2e8f0',
+    },
+    unifiedSearchBtn: {
+        background: 'none',
+        color: 'var(--primary)',
+        padding: '0',
+        width: 'auto',
+        height: 'auto',
+        boxShadow: 'none',
+        fontSize: '1rem',
+        fontWeight: '600',
+        marginLeft: '8px',
+    },
+    heroSearchInput: {
+        border: 'none',
+        background: 'transparent',
+        outline: 'none',
+        fontSize: '1rem',
+        width: '100%',
+        fontWeight: '400',
+        color: '#64748b',
     }
 };
 

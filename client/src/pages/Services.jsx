@@ -20,11 +20,13 @@ const Services = () => {
     const [location, setLocation] = useState(userLocation?.city && userLocation.city !== 'All of India' ? userLocation.city : '');
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
     const [showMobileFilters, setShowMobileFilters] = useState(false);
+    const [pincode, setPincode] = useState(query.get('pincode') || '');
 
     // Sync state with URL changes
     useEffect(() => {
         setSearchTerm(query.get('keyword') || '');
         setCategory(query.get('category') || '');
+        setPincode(query.get('pincode') || '');
     }, [useLocation().search]);
 
     useEffect(() => {
@@ -41,7 +43,7 @@ const Services = () => {
     useEffect(() => {
         const fetchServices = async () => {
             try {
-                const { data } = await api.get(`/api/services?category=${category}&keyword=${searchTerm}&location=${location}&businessType=${businessType}&gender=${gender}`);
+                const { data } = await api.get(`/api/services?category=${category}&keyword=${searchTerm}&location=${location}&businessType=${businessType}&gender=${gender}&pincode=${pincode}`);
                 setServicesList(data);
                 setLoading(false);
             } catch (error) {
@@ -50,7 +52,7 @@ const Services = () => {
             }
         };
         fetchServices();
-    }, [category, searchTerm, location, businessType, gender]);
+    }, [category, searchTerm, location, businessType, gender, pincode]);
 
     const renderFilters = () => (
         <>
@@ -101,7 +103,24 @@ const Services = () => {
                         {userLocation?.city || 'All of India'}
                     </span>
                 </div>
-                <p className="text-small" style={{ marginTop: '4px', color: 'var(--text-muted)' }}>Change location in header (India only)</p>
+                <p className="text-small" style={{ marginTop: '4px', color: 'var(--text-muted)' }}>Change location in header</p>
+            </div>
+
+            <div style={styles.filterGroup}>
+                <label style={styles.label}>Pincode / Zip Code</label>
+                <div style={{ position: 'relative' }}>
+                    <input 
+                        type="text" 
+                        className="input-field" 
+                        placeholder="e.g. 226001" 
+                        value={pincode}
+                        onChange={(e) => setPincode(e.target.value)}
+                        style={{ paddingLeft: '40px' }}
+                    />
+                    <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }}>
+                        <MapPin size={18} />
+                    </div>
+                </div>
             </div>
 
             {category === 'Salon' && (
@@ -149,7 +168,13 @@ const Services = () => {
 
             {/* Sidebar Filter for Desktop */}
             <aside style={styles.sidebar} className="hide-on-mobile hide-on-tablet">
-                <div className="card" style={{ position: 'sticky', top: '90px' }}>
+                <div className="card no-scrollbar" style={{ 
+                    position: 'sticky', 
+                    top: '90px', 
+                    maxHeight: 'calc(100vh - 110px)', 
+                    overflowY: 'auto',
+                    padding: '24px'
+                }}>
                     {renderFilters()}
                 </div>
             </aside>
@@ -234,7 +259,7 @@ const Services = () => {
                                     </div>
                                 </div>
                             ))
-                        ) : (!userLocation?.city || userLocation?.city === 'All of India') ? (
+                        ) : ((!userLocation?.city || userLocation?.city === 'All of India') && !pincode) ? (
                             <div style={{ gridColumn: '1 / -1', padding: '60px 20px', textAlign: 'center', backgroundColor: '#f9fafb', borderRadius: '24px', border: '2px dashed #e2e8f0' }}>
                                 <div style={{ width: '64px', height: '64px', backgroundColor: '#fff', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
                                     <MapPin size={32} color="var(--primary)" />

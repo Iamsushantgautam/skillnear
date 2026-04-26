@@ -17,7 +17,7 @@ export const getServices = async (req, res) => {
         const category = req.query.category ? { category: req.query.category } : {};
         const businessType = req.query.businessType ? { businessType: req.query.businessType } : {};
 
-        const locFilter = req.query.location
+        const locFilter = (req.query.location && !req.query.pincode)
             ? {
                 'location.city': {
                     $regex: req.query.location,
@@ -26,8 +26,25 @@ export const getServices = async (req, res) => {
             } : {};
 
         const genderFilter = req.query.gender ? { targetGender: req.query.gender } : {};
+        
+        const pincodeFilter = req.query.pincode
+            ? {
+                $or: [
+                    { 'location.zipCode': req.query.pincode },
+                    { coveragePincodes: req.query.pincode }
+                ]
+            } : {};
 
-        const services = await Service.find({ ...keyword, ...category, ...businessType, ...locFilter, ...genderFilter, isActive: true, isApproved: true })
+        const services = await Service.find({ 
+            ...keyword, 
+            ...category, 
+            ...businessType, 
+            ...locFilter, 
+            ...genderFilter, 
+            ...pincodeFilter,
+            isActive: true, 
+            isApproved: true 
+        })
             .populate('provider', 'name username avatar');
 
         res.json(services);
