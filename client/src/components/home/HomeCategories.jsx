@@ -162,7 +162,15 @@ const HomeCategories = ({
 
                                         <div className="service-content-body">
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                                                <span className="category-tag">
+                                                <span 
+                                                    className="category-tag"
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        navigate(`/services?category=${service.category}`);
+                                                    }}
+                                                >
                                                     {service.category}
                                                 </span>
                                             </div>

@@ -123,7 +123,7 @@ const Services = () => {
                 </div>
             </div>
 
-            {category === 'Salon' && (
+            {category?.toLowerCase() === 'salon' && (
                 <div style={styles.filterGroup}>
                     <label style={styles.label}>Service For</label>
                     <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
@@ -289,7 +289,24 @@ const Services = () => {
                                         onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(srv.provider?.name || srv.title || 'S')}&background=f3f4f6&color=4f46e5&size=300`; }} 
                                     />
                                     <div style={{ position: 'absolute', top: '12px', left: '12px' }}>
-                                        <span style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: '4px 10px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '700', color: 'var(--primary)', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                                        <span 
+                                            style={{ 
+                                                backgroundColor: 'rgba(255,255,255,0.9)', 
+                                                padding: '4px 10px', 
+                                                borderRadius: '4px', 
+                                                fontSize: '0.75rem', 
+                                                fontWeight: '700', 
+                                                color: 'var(--primary)', 
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                                cursor: 'pointer'
+                                            }}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setCategory(srv.category);
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
+                                        >
                                             {srv.category}
                                         </span>
                                     </div>

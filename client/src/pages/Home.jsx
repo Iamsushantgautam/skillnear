@@ -70,7 +70,11 @@ const Home = () => {
                 const { data } = await api.get(`/api/services?location=${city}`);
 
                 const grouped = data.reduce((acc, curr) => {
-                    const cat = curr.category;
+                    // Normalize category name for case-insensitive grouping
+                    const rawCat = curr.category || 'Other';
+                    const matchedCat = mainCategories.find(c => c.name.toLowerCase() === rawCat.toLowerCase());
+                    const cat = matchedCat ? matchedCat.name : rawCat.charAt(0).toUpperCase() + rawCat.slice(1).toLowerCase();
+                    
                     if (!acc[cat]) acc[cat] = [];
                     if (acc[cat].length < 10) acc[cat].push(curr);
                     return acc;

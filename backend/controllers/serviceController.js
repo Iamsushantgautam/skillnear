@@ -7,14 +7,23 @@ export const getServices = async (req, res) => {
     try {
         const keyword = req.query.keyword
             ? {
-                title: {
-                    $regex: req.query.keyword,
+                $or: [
+                    { title: { $regex: req.query.keyword, $options: 'i' } },
+                    { category: { $regex: req.query.keyword, $options: 'i' } },
+                    { subCategory: { $regex: req.query.keyword, $options: 'i' } },
+                    { description: { $regex: req.query.keyword, $options: 'i' } },
+                ],
+            }
+            : {};
+
+        const category = req.query.category
+            ? {
+                category: {
+                    $regex: req.query.category,
                     $options: 'i',
                 },
             }
             : {};
-
-        const category = req.query.category ? { category: req.query.category } : {};
         const businessType = req.query.businessType ? { businessType: req.query.businessType } : {};
 
         const locFilter = (req.query.location && !req.query.pincode)
