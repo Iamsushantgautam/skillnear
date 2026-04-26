@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { Toaster } from 'react-hot-toast';
@@ -26,8 +26,51 @@ import SuccessStories from './pages/SuccessStories';
 import ProviderGuidelines from './pages/ProviderGuidelines';
 import Invoice from './pages/Invoice';
 
+import useAuthStore from './store/useAuthStore';
+import api from './utils/api';
+import { toast } from 'react-hot-toast';
 
 function MainLayout() {
+  const { user, userLocation, setLocation } = useAuthStore();
+
+  // Global auto-detect location on every mount
+  useEffect(() => {
+    const detectLocation = async () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+            const data = await res.json();
+            if (data.address) {
+              const city = data.address.city || data.address.town || data.address.village || '';
+              const state = data.address.state || '';
+              const pincode = data.address.postcode || '';
+
+              // Only update if it's actually different to avoid redundant toasts
+              if (city !== userLocation?.city) {
+                setLocation({ city, state, pincode });
+
+                // If logged in, update backend
+                if (user?.token) {
+                  try {
+                    const config = { headers: { Authorization: `Bearer ${user.token}` } };
+                    await api.put('/api/users/location', { lat: latitude, lng: longitude, city, state, pincode }, config);
+                  } catch (err) { console.error("Auto-sync to DB failed", err); }
+                }
+                toast.success(`Location updated to ${city}`);
+              }
+            }
+          } catch (err) { console.error("Reverse geocode failed", err); }
+        }, (err) => {
+            console.error("Geolocation failed:", err);
+            // Optionally notify user if permissions are off
+        }, { enableHighAccuracy: true });
+      }
+    };
+    detectLocation();
+  }, []); // Empty dependency means it runs on first visit/hard refresh
+
   return (
     <>
       <Navbar />
