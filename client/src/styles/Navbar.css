@@ -2,8 +2,7 @@
 .navbar-main {
     background-color: #ffffff;
     border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 1000;
     padding: 12px 0;
 }

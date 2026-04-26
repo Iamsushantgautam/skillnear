@@ -24,8 +24,16 @@ const LocationModal = ({
     useEffect(() => {
         if (userLocation) {
             setSelectedPincode(userLocation.pincode || '');
+            setSelectedCity(userLocation.city || '');
+            
+            if (userLocation.state) {
+                const stateMatch = indianStates.find(s => s.name.toLowerCase() === userLocation.state.toLowerCase());
+                if (stateMatch) {
+                    setSelectedStateCode(stateMatch.isoCode);
+                }
+            }
         }
-    }, [userLocation]);
+    }, [userLocation, indianStates]);
 
     // SMART PINCODE VALIDATION - Optimized
     useEffect(() => {
@@ -136,7 +144,7 @@ const LocationModal = ({
                     }
 
                     setLocation({ city, state, pincode });
-                    onClose();
+                    // onClose(); // Removed immediate close so user can see it set in manual section
                 }
             } catch (error) {
                 console.error("Auto detect error", error);
