@@ -3,6 +3,7 @@ import api from '../utils/api';
 import { Search, MapPin, Shield, Star, Clock, ChevronRight, ChevronLeft, Zap, Target, Heart } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import CategoryBanners from '../components/CategoryBanners';
+import Hero from '../components/home/Hero';
 import allCategoryLineup from '../assets/catg/allCategoryLineup.png';
 import toast from 'react-hot-toast';
 
@@ -122,10 +123,6 @@ const Home = () => {
         <div style={{ backgroundColor: '#fff', overflowX: 'hidden' }}>
             <style>{`
                 @media (max-width: 768px) {
-                    .hero-wrapper-mobile { padding: 20px 0 40px !important; }
-                    .hero-grid-mobile { grid-template-columns: 1fr !important; gap: 24px !important; }
-                    .hero-title-mobile { font-size: 2.2rem !important; margin-bottom: 24px !important; letter-spacing: -1px !important; }
-                    .hero-cat-grid-mobile { grid-template-columns: repeat(3, 1fr) !important; gap: 12px !important; }
                     .ad-banner-mobile { flex-direction: column !important; height: auto !important; }
                     .ad-banner-left { padding: 32px 24px !important; }
                     .ad-banner-right { min-height: 250px !important; }
@@ -160,101 +157,14 @@ const Home = () => {
                     color: #fff !important;
                     border-color: var(--primary) !important;
                 }
-
-                @media (max-width: 768px) {
-                    .unified-search-container-mobile { 
-                        flex-direction: column !important; 
-                        padding: 16px !important;
-                        gap: 16px !important;
-                    }
-                    .search-divider-mobile { 
-                        width: 100% !important; 
-                        height: 1px !important; 
-                    }
-                    .search-btn-mobile {
-                        width: 100% !important;
-                        padding: 14px !important;
-                    }
-                }
-
-                .unified-search-container-mobile:focus-within {
-                    border-color: var(--primary) !important;
-                    box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.15) !important;
-                }
-
-                .search-btn-mobile:hover {
-                    transform: scale(1.02);
-                    background-color: var(--primary-hover) !important;
-                }
             `}</style>
 
-            {/* HERO SECTION - Urban Company Style */}
-            <section className="hero-wrapper-mobile" style={styles.heroWrapper}>
-                <div className="container hero-grid-mobile" style={styles.heroContainer}>
-                    {/* Hero Left - Search & Icons */}
-                    <div style={styles.heroLeft}>
-                        <h1 className="hero-title-mobile" style={styles.heroTitle}>Home services at your doorstep</h1>
-
-                        <div className="card no-scrollbar" style={styles.searchBoxCard}>
-                            <p style={{ fontWeight: '600', marginBottom: '20px', fontSize: '1.25rem', color: '#334155' }}>What are you looking for?</p>
-                            <form onSubmit={handleSearch} className="unified-search-container-mobile" style={styles.unifiedSearchContainer}>
-                                <div style={styles.searchPart}>
-                                    <Search size={20} color="#94a3b8" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search for 'Salon 226001'..."
-                                        style={styles.heroSearchInput}
-                                        value={globalSearch}
-                                        onChange={(e) => setGlobalSearch(e.target.value)}
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    className="btn-primary search-btn-mobile"
-                                    style={styles.unifiedSearchBtn}
-                                >
-                                    Find
-                                </button>
-                            </form>
-
-                            <div className="hero-cat-grid-mobile" style={styles.heroCatGrid}>
-                                {mainCategories.map((cat, i) => {
-                                    const pincodeMatch = globalSearch.match(/\b\d{6}\b/);
-                                    const currentPincode = pincodeMatch ? pincodeMatch[0] : '';
-                                    return (
-                                        <Link
-                                            key={i}
-                                            to={cat.link ? cat.link : `/services?category=${cat.name}${currentPincode ? `&pincode=${currentPincode}` : ''}`}
-                                            style={styles.heroCatItem}
-                                        >
-                                        <div style={{ ...styles.heroCatIcon, backgroundColor: cat.bg, overflow: 'hidden' }}>
-                                            <img
-                                                src={cat.icon}
-                                                alt={cat.name}
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                            />
-                                        </div>
-                                        <span style={styles.heroCatLabel}>{cat.name}</span>
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-
-                    </div>
-
-                    {/* Hero Right - Collage */}
-                    <div style={styles.heroRight} className="hide-on-mobile">
-                        <div style={styles.collageGrid}>
-                            <div style={{ ...styles.collageImg, gridArea: 'a', backgroundImage: 'url("/images/categories/technical.png")' }}></div>
-                            <div style={{ ...styles.collageImg, gridArea: 'b', backgroundImage: 'url("/images/categories/salon.png")' }}></div>
-                            <div style={{ ...styles.collageImg, gridArea: 'c', backgroundImage: 'url("/images/categories/ac_repair.png")' }}></div>
-                            <div style={{ ...styles.collageImg, gridArea: 'd', backgroundImage: 'url("/images/categories/cleaning.png")' }}></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <Hero 
+                globalSearch={globalSearch} 
+                setGlobalSearch={setGlobalSearch} 
+                handleSearch={handleSearch} 
+                mainCategories={mainCategories} 
+            />
 
             {/* CATEGORY BANNERS SECTION */}
             <CategoryBanners />
@@ -490,110 +400,7 @@ const Home = () => {
     );
 };
 
-
-
-
-
 const styles = {
-    heroWrapper: {
-        padding: '60px 0',
-        backgroundColor: '#fff',
-    },
-    heroContainer: {
-        display: 'grid',
-        gridTemplateColumns: '1.2fr 1fr',
-        gap: '40px',
-        alignItems: 'center',
-    },
-    heroLeft: {
-        maxWidth: '540px',
-    },
-    heroTitle: {
-        fontSize: '3.5rem',
-        fontWeight: '900',
-        lineHeight: '1.1',
-        marginBottom: '40px',
-        letterSpacing: '-2px',
-        color: '#111827',
-    },
-    searchBoxCard: {
-        backgroundColor: '#fff',
-        padding: '24px',
-        borderRadius: '24px',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.08)',
-        border: '1px solid #f1f5f9',
-    },
-    heroSearch: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '14px 20px',
-        backgroundColor: '#f8fafc',
-        borderRadius: '12px',
-        marginBottom: '24px',
-        border: '1px solid #e2e8f0',
-    },
-    heroSearchInput: {
-        border: 'none',
-        background: 'transparent',
-        outline: 'none',
-        fontSize: '1rem',
-        width: '100%',
-        fontWeight: '500',
-    },
-    heroCatGrid: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '16px',
-    },
-    heroCatItem: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '8px',
-        textDecoration: 'none',
-        color: 'inherit',
-    },
-    heroCatIcon: {
-        width: '56px',
-        height: '56px',
-        borderRadius: '16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '1.5rem',
-        transition: 'transform 0.2s',
-    },
-    heroCatLabel: {
-        fontSize: '0.75rem',
-        fontWeight: '600',
-        color: '#4b5563',
-    },
-    dot: {
-        width: '6px',
-        height: '6px',
-        backgroundColor: 'var(--primary)',
-        borderRadius: '50%',
-    },
-    heroRight: {
-        height: '500px',
-    },
-    collageGrid: {
-        display: 'grid',
-        height: '100%',
-        gridTemplateAreas: `
-            "a a b"
-            "a a d"
-            "c c d"
-        `,
-        gap: '12px',
-    },
-    collageImg: {
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        borderRadius: '24px',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-    },
     scrollContainer: {
         display: 'flex',
         gap: '24px',
@@ -735,62 +542,6 @@ const styles = {
         transition: 'all 0.2s',
         color: '#475569',
     },
-    unifiedSearchContainer: {
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: '#f8fafc',
-        borderRadius: '16px',
-        padding: '12px 16px',
-        border: '1px solid #e2e8f0',
-        gap: '12px',
-        transition: 'all 0.3s ease',
-        marginBottom: '40px',
-    },
-    searchBoxCard: {
-        backgroundColor: '#fff',
-        borderRadius: '32px',
-        padding: '40px',
-        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.05)',
-        border: '1px solid #f1f5f9',
-        marginTop: '40px',
-    },
-    searchPart: {
-        flex: 2,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-    },
-    pincodePart: {
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-    },
-    searchDivider: {
-        width: '1px',
-        height: '20px',
-        backgroundColor: '#e2e8f0',
-    },
-    unifiedSearchBtn: {
-        background: 'none',
-        color: 'var(--primary)',
-        padding: '0',
-        width: 'auto',
-        height: 'auto',
-        boxShadow: 'none',
-        fontSize: '1rem',
-        fontWeight: '600',
-        marginLeft: '8px',
-    },
-    heroSearchInput: {
-        border: 'none',
-        background: 'transparent',
-        outline: 'none',
-        fontSize: '1rem',
-        width: '100%',
-        fontWeight: '400',
-        color: '#64748b',
-    }
 };
 
 export default Home;
