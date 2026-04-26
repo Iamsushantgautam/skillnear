@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Store, Search, ExternalLink, Navigation } from 'lucide-react';
+import { MapPin, Store, Search, ExternalLink, Navigation, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import useAuthStore from '../store/useAuthStore';
@@ -14,6 +14,33 @@ const ShopFinder = () => {
     const [selectedCity, setSelectedCity] = useState(userLocation?.city || 'All of India');
     const [selectedPincode, setSelectedPincode] = useState(userLocation?.pincode || '');
     const [locationContext, setLocationContext] = useState('');
+    const [userCoords, setUserCoords] = useState(null);
+    const [isNearMeMode, setIsNearMeMode] = useState(false);
+    const [searchRadius, setSearchRadius] = useState(2); // Default 2km
+    const [isRadiusDropdownOpen, setIsRadiusDropdownOpen] = useState(false);
+
+    // Close dropdown on click outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isRadiusDropdownOpen && !event.target.closest('.custom-radius-dropdown')) {
+                setIsRadiusDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isRadiusDropdownOpen]);
+
+    // Distance calculation helper (Haversine formula)
+    const getDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371; // km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    };
 
     useEffect(() => {
         if (userLocation) {
@@ -38,27 +65,57 @@ const ShopFinder = () => {
 
     const filteredShops = React.useMemo(() => {
         if (loading) return [];
-        
+
         const query = searchQuery.toLowerCase().trim();
         const extractedPincode = query.match(/\b\d{6}\b/)?.[0];
         const textQuery = query.replace(/\b\d{6}\b/, '').trim();
 
-        // 1. Initial filter by search query (text + pincode if typed)
-        const searchPool = shops.filter(shop => {
+        // Base search pool by text/category
+        let searchPool = shops.filter(shop => {
             if (!query) return true;
             return (
                 shop.title?.toLowerCase().includes(textQuery) ||
-                shop.category?.toLowerCase().includes(textQuery) ||
-                (extractedPincode && (shop.location?.zipCode === extractedPincode || shop.coveragePincodes?.includes(extractedPincode)))
+                shop.category?.toLowerCase().includes(textQuery)
             );
         });
 
-        // 2. Cascading Hierarchy Logic
-        // Priority 1: User's typed or detected Pincode
+        // 1. If 'Near Me' mode is active, filter by 5km radius
+        if (isNearMeMode && userCoords) {
+            const nearMeResults = searchPool.filter(shop => {
+                // Support multiple coordinate formats (GeoJSON Point [lng, lat] vs simple lat/lng)
+                const shopLat = shop.geoCoordinates?.coordinates?.[1] || shop.location?.coordinates?.lat || shop.location?.lat;
+                const shopLng = shop.geoCoordinates?.coordinates?.[0] || shop.location?.coordinates?.lng || shop.location?.lng;
+
+                if (!shopLat || !shopLng || (shopLat === 0 && shopLng === 0)) return false;
+
+                const dist = getDistance(userCoords.lat, userCoords.lng, shopLat, shopLng);
+                return dist <= searchRadius;
+            });
+
+            if (nearMeResults.length > 0) {
+                setLocationContext(`Showing shops within ${searchRadius}km of your live location`);
+                return nearMeResults;
+            } else {
+                setLocationContext(`No shops found within ${searchRadius}km. Showing nearest instead.`);
+                // Fallback: Show everything but sorted by distance
+                return searchPool.sort((a, b) => {
+                    const latA = a.geoCoordinates?.coordinates?.[1] || a.location?.lat || 0;
+                    const lngA = a.geoCoordinates?.coordinates?.[0] || a.location?.lng || 0;
+                    const latB = b.geoCoordinates?.coordinates?.[1] || b.location?.lat || 0;
+                    const lngB = b.geoCoordinates?.coordinates?.[0] || b.location?.lng || 0;
+
+                    const distA = getDistance(userCoords.lat, userCoords.lng, latA, lngA);
+                    const distB = getDistance(userCoords.lat, userCoords.lng, latB, lngB);
+                    return distA - distB;
+                });
+            }
+        }
+
+        // 2. Cascading Hierarchy Logic (Normal Mode)
         const targetPincode = extractedPincode || userLocation?.pincode;
         if (targetPincode) {
-            const byPincode = searchPool.filter(s => 
-                s.location?.zipCode === targetPincode || 
+            const byPincode = searchPool.filter(s =>
+                s.location?.zipCode === targetPincode ||
                 s.coveragePincodes?.includes(targetPincode)
             );
             if (byPincode.length > 0) {
@@ -67,9 +124,8 @@ const ShopFinder = () => {
             }
         }
 
-        // Priority 2: User's City
         if (userLocation?.city && userLocation.city !== 'All of India') {
-            const byCity = searchPool.filter(s => 
+            const byCity = searchPool.filter(s =>
                 s.location?.city?.toLowerCase() === userLocation.city.toLowerCase()
             );
             if (byCity.length > 0) {
@@ -78,9 +134,8 @@ const ShopFinder = () => {
             }
         }
 
-        // Priority 3: User's State
         if (userLocation?.state) {
-            const byState = searchPool.filter(s => 
+            const byState = searchPool.filter(s =>
                 s.location?.state?.toLowerCase() === userLocation.state.toLowerCase()
             );
             if (byState.length > 0) {
@@ -89,12 +144,11 @@ const ShopFinder = () => {
             }
         }
 
-        // Priority 4: All India
         setLocationContext('Showing shops from All over India');
         return searchPool;
-    }, [shops, searchQuery, userLocation, loading]);
+    }, [shops, searchQuery, userLocation, userCoords, isNearMeMode, searchRadius, loading]);
 
-    const isLocationSelected = selectedCity !== 'All of India' || selectedPincode !== '';
+    const isLocationSelected = selectedCity !== 'All of India' || selectedPincode !== '' || isNearMeMode;
 
     return (
         <div className="shop-finder-container">
@@ -119,26 +173,74 @@ const ShopFinder = () => {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
-                            <div className="search-action-area">
-                                <button 
-                                    className="near-me-btn"
-                                    onClick={async () => {
+                            <div className="search-action-area" style={{ display: 'flex', gap: '8px' }}>
+                                {isNearMeMode && (
+                                    <div className="custom-radius-dropdown">
+                                        <button 
+                                            type="button" 
+                                            className="radius-dropdown-toggle"
+                                            onClick={() => setIsRadiusDropdownOpen(!isRadiusDropdownOpen)}
+                                        >
+                                            <span>{searchRadius}km</span>
+                                            <ChevronDown size={14} className={isRadiusDropdownOpen ? 'rotate-180' : ''} />
+                                        </button>
+                                        
+                                        {isRadiusDropdownOpen && (
+                                            <div className="radius-dropdown-menu">
+                                                {[2, 5, 10, 20, 50].map(radius => (
+                                                    <div 
+                                                        key={radius} 
+                                                        className={`radius-dropdown-item ${searchRadius === radius ? 'active' : ''}`}
+                                                        onClick={() => {
+                                                            setSearchRadius(radius);
+                                                            setIsRadiusDropdownOpen(false);
+                                                        }}
+                                                    >
+                                                        {radius}km Range
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                <button
+                                    className={`near-me-btn ${isNearMeMode ? 'active' : ''}`}
+                                    onClick={() => {
                                         if (navigator.geolocation) {
-                                            navigator.geolocation.getCurrentPosition(async (position) => {
-                                                try {
+                                            navigator.geolocation.getCurrentPosition(
+                                                async (position) => {
                                                     const { latitude, longitude } = position.coords;
-                                                    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
-                                                    const data = await res.json();
-                                                    if (data.postcode) setSearchQuery(data.postcode);
-                                                } catch (err) { console.error(err); }
-                                            });
+                                                    setUserCoords({ lat: latitude, lng: longitude });
+                                                    setIsNearMeMode(true);
+
+                                                    // Auto-scroll to results
+                                                    const resultsSection = document.querySelector('.shop-finder-results-container');
+                                                    if (resultsSection) {
+                                                        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                    }
+
+                                                    // Also try to get pincode for context
+                                                    try {
+                                                        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+                                                        const data = await res.json();
+                                                        if (data.postcode && !searchQuery) setSearchQuery(data.postcode);
+                                                    } catch (err) { console.error(err); }
+                                                },
+                                                (error) => {
+                                                    if (error.code === error.PERMISSION_DENIED) {
+                                                        alert("Please turn on your live location to find shops near you!");
+                                                    }
+                                                }
+                                            );
+                                        } else {
+                                            alert("Geolocation is not supported by your browser.");
                                         }
                                     }}
                                     type="button"
-                                    title="Find shops near me"
+                                    title={`Find shops within ${searchRadius}km`}
                                 >
                                     <Navigation size={18} />
-                                    <span>Near Me</span>
+                                    <span>{isNearMeMode ? `${searchRadius}km Range` : 'Near Me'}</span>
                                 </button>
                             </div>
                         </form>
@@ -150,7 +252,7 @@ const ShopFinder = () => {
                 <div className="shop-finder-results-header" style={{ marginBottom: '32px' }}>
                     <div>
                         <h2 className="text-h2" style={{ marginBottom: '8px' }}>
-                            {!isLocationSelected ? 'Nearby Shops' : `Local Shops in ${selectedCity !== 'All of India' ? selectedCity : (selectedPincode || 'your area')}`}
+                            {isNearMeMode ? `Shops Within ${searchRadius}km` : (!isLocationSelected ? 'Nearby Shops' : `Local Shops in ${selectedCity !== 'All of India' ? selectedCity : (selectedPincode || 'your area')}`)}
                         </h2>
                         {locationContext && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
