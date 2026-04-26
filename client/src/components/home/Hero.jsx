@@ -3,7 +3,19 @@ import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import '../../styles/Hero.css';
 
-const Hero = ({ globalSearch, setGlobalSearch, handleSearch, mainCategories }) => {
+export const mainCategories = [
+    { name: 'Tutors', icon: '/images/categories/tutors.png', bg: '#f1f5f9' },
+    { name: 'Salon', icon: '/images/categories/salon.png', bg: '#fee2e2' },
+    { name: 'Carpenters', icon: '/images/categories/carpenters.png', bg: '#fef3c7' },
+    { name: 'Plumbers', icon: '/images/categories/plumbers.png', bg: '#dcfce7' },
+    { name: 'Electricians', icon: '/images/categories/electricians.png', bg: '#e0f2fe' },
+    { name: 'Cleaning', icon: '/images/categories/cleaning.png', bg: '#f3e8ff' },
+    { name: 'AC Repair', icon: '/images/categories/ac_repair.png', bg: '#dff6f9' },
+    { name: 'Painters', icon: '/images/categories/painters.png', bg: '#ffedd5' },
+    { name: 'Local Shops', icon: '/images/categories/shops.png', bg: '#ecfdf5', link: '/shops' },
+];
+
+const Hero = ({ globalSearch, setGlobalSearch, handleSearch }) => {
     return (
         <section className="hero-wrapper">
             <div className="container hero-container">
