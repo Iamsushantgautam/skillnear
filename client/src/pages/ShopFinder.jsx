@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Store, Search, ExternalLink } from 'lucide-react';
+import { MapPin, Store, Search, ExternalLink, Navigation } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import useAuthStore from '../store/useAuthStore';
@@ -13,6 +13,7 @@ const ShopFinder = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCity, setSelectedCity] = useState(userLocation?.city || 'All of India');
     const [selectedPincode, setSelectedPincode] = useState(userLocation?.pincode || '');
+    const [locationContext, setLocationContext] = useState('');
 
     useEffect(() => {
         if (userLocation) {
@@ -35,39 +36,65 @@ const ShopFinder = () => {
         fetchShops();
     }, []);
 
-    const userCity = selectedCity !== 'All of India' ? selectedCity : '';
-    const isLocationSelected = userCity !== '' || selectedPincode !== '';
-
-    const filteredShops = shops.filter(shop => {
-        // If no location selected, we might want to return everything or nothing based on preference
-        // Based on user feedback "why it still shows shops", we will treat "All of India" as a non-filter
-        // but only if we want to force hyperlocal. 
+    const filteredShops = React.useMemo(() => {
+        if (loading) return [];
         
-        const query = searchQuery.toLowerCase();
-        const matchesSearch =
-            shop.title?.toLowerCase().includes(query) ||
-            shop.category?.toLowerCase().includes(query) ||
-            shop.provider?.name?.toLowerCase().includes(query) ||
-            shop.location?.address?.toLowerCase().includes(query) ||
-            shop.location?.zipCode?.includes(query) ||
-            shop.location?.city?.toLowerCase().includes(query);
+        const query = searchQuery.toLowerCase().trim();
+        const extractedPincode = query.match(/\b\d{6}\b/)?.[0];
+        const textQuery = query.replace(/\b\d{6}\b/, '').trim();
 
-        if (!isLocationSelected) return matchesSearch; // Still show if searching by name? 
-        // No, user wants to know why it shows shops when location isn't selected.
-        // Let's refine: If location is selected, enforce it. If not, maybe show a hint.
+        // 1. Initial filter by search query (text + pincode if typed)
+        const searchPool = shops.filter(shop => {
+            if (!query) return true;
+            return (
+                shop.title?.toLowerCase().includes(textQuery) ||
+                shop.category?.toLowerCase().includes(textQuery) ||
+                (extractedPincode && (shop.location?.zipCode === extractedPincode || shop.coveragePincodes?.includes(extractedPincode)))
+            );
+        });
 
-        const cityTerm = userCity.toLowerCase();
-        const matchesCity = userCity === '' ||
-            (shop.location?.city?.toLowerCase().includes(cityTerm)) ||
-            (shop.location?.address?.toLowerCase().includes(cityTerm));
+        // 2. Cascading Hierarchy Logic
+        // Priority 1: User's typed or detected Pincode
+        const targetPincode = extractedPincode || userLocation?.pincode;
+        if (targetPincode) {
+            const byPincode = searchPool.filter(s => 
+                s.location?.zipCode === targetPincode || 
+                s.coveragePincodes?.includes(targetPincode)
+            );
+            if (byPincode.length > 0) {
+                setLocationContext(`Showing results for Pincode ${targetPincode}`);
+                return byPincode;
+            }
+        }
 
-        const matchesPincode = selectedPincode === '' ||
-            (shop.location?.zipCode === selectedPincode) ||
-            (shop.location?.pincode === selectedPincode) ||
-            (shop.coveragePincodes?.includes(selectedPincode));
+        // Priority 2: User's City
+        if (userLocation?.city && userLocation.city !== 'All of India') {
+            const byCity = searchPool.filter(s => 
+                s.location?.city?.toLowerCase() === userLocation.city.toLowerCase()
+            );
+            if (byCity.length > 0) {
+                setLocationContext(`Showing results in ${userLocation.city}`);
+                return byCity;
+            }
+        }
 
-        return matchesSearch && (selectedPincode ? (matchesPincode || matchesCity) : matchesCity);
-    });
+        // Priority 3: User's State
+        if (userLocation?.state) {
+            const byState = searchPool.filter(s => 
+                s.location?.state?.toLowerCase() === userLocation.state.toLowerCase()
+            );
+            if (byState.length > 0) {
+                setLocationContext(`Showing results from ${userLocation.state}`);
+                return byState;
+            }
+        }
+
+        // Priority 4: All India
+        setLocationContext('Showing shops from All over India');
+        return searchPool;
+    }, [shops, searchQuery, userLocation, loading]);
+
+    const isLocationSelected = selectedCity !== 'All of India' || selectedPincode !== '';
 
     return (
         <div className="shop-finder-container">
@@ -77,42 +104,76 @@ const ShopFinder = () => {
                         Shop Finder Near Me
                     </h1>
                     <p className="shop-finder-subtitle">
-                        Discover verified local shops, boutiques, and service centers in {selectedPincode ? `area ${selectedPincode}` : (userCity || 'your area')}
+                        Discover verified local shops, boutiques, and service centers {searchQuery ? `matching "${searchQuery}"` : (userLocation?.city ? `in ${userLocation.city}` : 'near you')}
                     </p>
 
-                    <div className="shop-finder-search">
-                        <div className="search-input-group">
-                            <Search size={20} color="var(--primary)" style={{ flexShrink: 0 }} />
+                    <div className="shop-finder-search-wrapper">
+                        <form className="global-unified-search" onSubmit={(e) => e.preventDefault()}>
+                            <div className="search-icon-wrapper">
+                                <Search size={22} color="var(--primary)" />
+                            </div>
                             <input
                                 type="text"
-                                placeholder="Search by shop name..."
+                                className="global-search-input"
+                                placeholder="Search by name, category or pincode (e.g. 'Electronics' or '226001')..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
-                        </div>
-                        <div className="search-divider"></div>
-                        <div className="search-select-group">
-                            <select
-                                value={selectedCity}
-                                onChange={(e) => setSelectedCity(e.target.value)}
-                            >
-                                <option value="All of India">All Cities</option>
-                                {INDIAN_CITIES.map(city => (
-                                    <option key={city} value={city}>{city}</option>
-                                ))}
-                            </select>
-                        </div>
+                            <div className="search-action-area">
+                                <button 
+                                    className="near-me-btn"
+                                    onClick={async () => {
+                                        if (navigator.geolocation) {
+                                            navigator.geolocation.getCurrentPosition(async (position) => {
+                                                try {
+                                                    const { latitude, longitude } = position.coords;
+                                                    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+                                                    const data = await res.json();
+                                                    if (data.postcode) setSearchQuery(data.postcode);
+                                                } catch (err) { console.error(err); }
+                                            });
+                                        }
+                                    }}
+                                    type="button"
+                                    title="Find shops near me"
+                                >
+                                    <Navigation size={18} />
+                                    <span>Near Me</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
 
             <div className="container shop-finder-results-container" style={{ padding: '60px 20px' }}>
-                <div className="shop-finder-results-header">
-                    <h2 className="text-h2">
-                        {!isLocationSelected ? 'Nearby Shops' : `Local Shops in ${userCity || selectedPincode}`}
-                    </h2>
+                <div className="shop-finder-results-header" style={{ marginBottom: '32px' }}>
+                    <div>
+                        <h2 className="text-h2" style={{ marginBottom: '8px' }}>
+                            {!isLocationSelected ? 'Nearby Shops' : `Local Shops in ${selectedCity !== 'All of India' ? selectedCity : (selectedPincode || 'your area')}`}
+                        </h2>
+                        {locationContext && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span className={`location-context-badge ${locationContext.includes('All over India') ? 'india-pulse' : ''}`} style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 14px',
+                                    backgroundColor: locationContext.includes('All over India') ? '#fff7ed' : '#f0f9ff',
+                                    color: locationContext.includes('All over India') ? '#ea580c' : '#0284c7',
+                                    borderRadius: '100px',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '700',
+                                    border: locationContext.includes('All over India') ? '1px solid #ffedd5' : '1px solid #e0f2fe'
+                                }}>
+                                    <MapPin size={14} />
+                                    {locationContext}
+                                </span>
+                            </div>
+                        )}
+                    </div>
                     {!loading && isLocationSelected && (
-                        <span style={{ color: 'var(--text-muted)', fontWeight: '500' }}>
+                        <span style={{ color: 'var(--text-muted)', fontWeight: '500', alignSelf: 'flex-end' }}>
                             {filteredShops.length} {filteredShops.length === 1 ? 'shop' : 'shops'} found
                         </span>
                     )}
@@ -151,7 +212,7 @@ const ShopFinder = () => {
                         <Store size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 16px', opacity: 0.5 }} />
                         <h3 className="text-h3" style={{ marginBottom: '8px' }}>No shops found</h3>
                         <p style={{ color: 'var(--text-muted)' }}>
-                            We couldn't find any shops matching your criteria in {userCity || 'this area'}.
+                            We couldn't find any shops matching your criteria {searchQuery ? `for "${searchQuery}"` : ''} in {userLocation?.city || 'this area'}.
                         </p>
                     </div>
                 ) : (

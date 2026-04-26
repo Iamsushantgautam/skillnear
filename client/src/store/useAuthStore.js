@@ -53,7 +53,11 @@ const useAuthStore = create(
             },
 
             logout: () => {
-                set({ user: null });
+                set({ user: null, error: null, loading: false });
+                // Explicitly clear the persisted storage to avoid stale data in PWAs
+                localStorage.removeItem('skillnear-auth-storage');
+                // Force a full page reload to purge all in-memory state (Axios headers, sockets, etc)
+                window.location.href = '/login';
             },
 
             setLocation: (locationData) => {
