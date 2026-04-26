@@ -4,7 +4,7 @@ import api from '../utils/api';
 import toast from 'react-hot-toast';
 import { Mail, ShieldCheck, Lock, ArrowLeft, Send, Sparkles, KeyRound, CheckCircle2, AlertCircle, RefreshCw, Smartphone } from 'lucide-react';
 
-import '../styles/ForgotPassword.css';
+import '../styles/AuthPages.css';
 
 const ForgotPassword = () => {
     const [step, setStep] = useState(1);
@@ -80,10 +80,11 @@ const ForgotPassword = () => {
     };
 
     return (
-        <div className="fp-split-layout">
-            <div className="fp-sidebar">
-                <div className="fp-sidebar-content">
-                    <div className="fp-sidebar-tag">
+        <div className="auth-split-layout">
+            {/* Sidebar Visual Content */}
+            <div className="auth-sidebar">
+                <div className="auth-sidebar-content">
+                    <div className="auth-sidebar-tag">
                         <ShieldCheck size={16} />
                         <span>Advanced Security Protocol</span>
                     </div>
@@ -94,26 +95,22 @@ const ForgotPassword = () => {
                     </p>
                 </div>
                 {/* Visual Accent */}
-                <KeyRound className="fp-sidebar-img" size={400} />
+                <KeyRound className="auth-sidebar-img" size={400} />
             </div>
 
             {/* Form Content Side */}
-            <div className="fp-form-side">
-                <div className="fp-form-box">
-                    <Link to="/login" className="fp-back-btn">
+            <div className="auth-form-side">
+                <div className="auth-form-box">
+                    <Link to="/login" className="auth-forgot-link" style={{ textAlign: 'left', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <ArrowLeft size={18} />
                         <span>Return to Sign In</span>
                     </Link>
 
-                    <div className="fp-card-header">
-                        <div className="fp-step-indicator">
-                            <div className={`indicator-dot ${step === 1 ? 'active' : 'inactive'}`}></div>
-                            <div className={`indicator-dot ${step === 2 ? 'active' : 'inactive'}`}></div>
-                        </div>
-                        <h2 className="fp-card-title">
+                    <div className="auth-card-header">
+                        <h2 className="auth-card-title">
                             {step === 1 ? 'Lost your way?' : 'Verify Identity'}
                         </h2>
-                        <p className="fp-card-subtitle">
+                        <p className="auth-card-subtitle">
                             {step === 1
                                 ? "Enter your registered email or username to receive a secure 6-digit access code."
                                 : <span>Security code dispatched to: <br /><strong>{maskEmail(displayEmail)}</strong></span>
@@ -122,7 +119,7 @@ const ForgotPassword = () => {
                     </div>
 
                     {error && (
-                        <div className="fp-error animate-fade-in">
+                        <div className="auth-error animate-fade-in">
                             <AlertCircle size={20} />
                             {error}
                         </div>
@@ -130,13 +127,13 @@ const ForgotPassword = () => {
 
                     {step === 1 ? (
                         <form onSubmit={handleSendOtp}>
-                            <div className="fp-input-field">
-                                <label className="fp-label">Identifier</label>
-                                <div className="fp-input-wrap">
-                                    <Mail className="fp-input-icon" size={22} />
+                            <div className="auth-input-field">
+                                <label className="auth-label">Identifier</label>
+                                <div className="auth-input-wrap">
+                                    <Mail className="auth-input-icon" size={22} />
                                     <input
                                         type="text"
-                                        className="fp-main-input"
+                                        className="auth-main-input"
                                         placeholder="Email or username"
                                         value={identifier}
                                         onChange={(e) => setIdentifier(e.target.value)}
@@ -146,7 +143,7 @@ const ForgotPassword = () => {
                                 </div>
                             </div>
 
-                            <button type="submit" className="fp-submit-btn" disabled={loading}>
+                            <button type="submit" className="auth-submit-btn" disabled={loading}>
                                 {loading ? <RefreshCw className="spin" size={22} /> : (
                                     <>
                                         <span>Send Access Code</span>
@@ -157,30 +154,31 @@ const ForgotPassword = () => {
                         </form>
                     ) : (
                         <form onSubmit={handleResetPassword}>
-                            <div className="fp-input-field">
-                                <label className="fp-label">Access Code</label>
-                                <div className="fp-input-wrap">
-                                    <Smartphone className="fp-input-icon" size={22} />
+                            <div className="auth-input-field">
+                                <label className="auth-label">Access Code</label>
+                                <div className="auth-input-wrap">
+                                    <Smartphone className="auth-input-icon" size={22} />
                                     <input
                                         type="text"
-                                        className="fp-main-input otp-input"
+                                        className="auth-main-input"
                                         placeholder="000000"
                                         maxLength="6"
                                         value={otp}
                                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                                         required
                                         autoFocus
+                                        style={{ letterSpacing: '0.8em', textAlign: 'center', paddingLeft: '24px', fontFamily: 'monospace', fontSize: '1.5rem' }}
                                     />
                                 </div>
                             </div>
 
-                            <div className="fp-input-field">
-                                <label className="fp-label">New Password</label>
-                                <div className="fp-input-wrap">
-                                    <Lock className="fp-input-icon" size={22} />
+                            <div className="auth-input-field">
+                                <label className="auth-label">New Password</label>
+                                <div className="auth-input-wrap">
+                                    <Lock className="auth-input-icon" size={22} />
                                     <input
                                         type="password"
-                                        className="fp-main-input"
+                                        className="auth-main-input"
                                         placeholder="New secure password"
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
@@ -189,13 +187,13 @@ const ForgotPassword = () => {
                                 </div>
                             </div>
 
-                            <div className="fp-input-field">
-                                <label className="fp-label">Confirm Password</label>
-                                <div className="fp-input-wrap">
-                                    <Lock className="fp-input-icon" size={22} />
+                            <div className="auth-input-field">
+                                <label className="auth-label">Confirm Password</label>
+                                <div className="auth-input-wrap">
+                                    <Lock className="auth-input-icon" size={22} />
                                     <input
                                         type="password"
-                                        className="fp-main-input"
+                                        className="auth-main-input"
                                         placeholder="Repeat new password"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
@@ -204,15 +202,15 @@ const ForgotPassword = () => {
                                 </div>
                             </div>
 
-                            <button type="submit" className="fp-submit-btn" disabled={loading}>
+                            <button type="submit" className="auth-submit-btn" disabled={loading}>
                                 {loading ? <RefreshCw className="spin" size={22} /> : 'Reset & Gain Access'}
                             </button>
 
-                            <div className="resend-section">
-                                <p className="resend-text">Didn't receive the code?</p>
+                            <div className="auth-footer" style={{ borderTop: 'none', paddingTop: 0 }}>
+                                <p className="resend-text" style={{ marginBottom: '12px' }}>Didn't receive the code?</p>
                                 <button
                                     type="button"
-                                    className="resend-action"
+                                    style={{ background: 'none', border: 'none', color: '#4f46e5', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', margin: '0 auto' }}
                                     onClick={() => handleSendOtp()}
                                     disabled={resendTimer > 0 || loading}
                                 >
