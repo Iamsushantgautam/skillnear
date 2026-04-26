@@ -7,22 +7,42 @@
 .shop-finder-header {
     background-color: var(--primary);
     background-image: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-    padding: 80px 20px;
+    padding: 60px 20px;
     color: #fff;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.shop-finder-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 40%);
+    pointer-events: none;
 }
 
 .shop-finder-title {
     color: #fff;
-    margin-bottom: 16px;
-    font-size: 2.5rem;
-    font-weight: 700;
+    margin-bottom: 12px;
+    font-size: 2.75rem;
+    font-weight: 850;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
 }
 
 .shop-finder-subtitle {
-    color: #e0e7ff;
+    color: rgba(255, 255, 255, 0.9);
     margin-bottom: 32px;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
 }
 
 .shop-finder-search-wrapper {
@@ -114,11 +134,52 @@
 .shop-finder-results-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
     margin-bottom: 32px;
 }
 
-/* Shop Card Styles (Converted from JS Styles object) */
+.results-info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.results-info-group .text-h2 {
+    margin-bottom: 0;
+    line-height: 1.2;
+}
+
+.location-context-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.location-context-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background-color: #f0f9ff;
+    color: #0284c7;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border: 1px solid #e0f2fe;
+}
+
+.results-count-chip {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: #f1f5f9;
+    padding: 6px 16px;
+    border-radius: 99px;
+}
+
+.shop-finder-results-container {
+    padding: 60px 20px;
+}
 .shop-card-item {
     padding: 0 !important;
     overflow: hidden;
@@ -163,59 +224,102 @@
 
 /* Responsive Queries */
 @media (max-width: 1024px) {
+    .shop-finder-header {
+        padding: 50px 20px;
+    }
     .shop-finder-title {
-        font-size: 2.1rem;
+        font-size: 2.2rem;
     }
     .shop-finder-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
     }
 }
 
 @media (max-width: 768px) {
     .shop-finder-header {
-        padding: 60px 20px;
+        padding: 40px 15px;
     }
     .shop-finder-title {
-        font-size: 1.75rem;
+        font-size: 1.85rem;
+        margin-bottom: 8px;
     }
     .shop-finder-subtitle {
-        font-size: 0.95rem;
+        font-size: 1rem;
         margin-bottom: 24px;
+        padding: 0 10px;
     }
-    .shop-finder-search {
-        padding: 8px;
-        border-radius: 16px;
+    
+    .global-unified-search {
         flex-direction: column;
-        gap: 0;
-        align-items: stretch;
-        max-width: 100%;
-    }
-    .search-input-group {
         padding: 12px;
-        border-bottom: 1px solid #f1f5f9;
+        border-radius: 24px;
+        gap: 8px;
     }
-    .search-divider {
+
+    .search-icon-wrapper {
         display: none;
     }
-    .search-select-group {
+
+    .global-search-input {
+        width: 100%;
+        padding: 12px 4px;
+        font-size: 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        border-radius: 0;
+        text-align: center;
+    }
+
+    .search-action-area {
+        width: 100%;
+        padding-left: 0;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .near-me-btn {
+        flex: 1;
+        justify-content: center;
         padding: 12px;
     }
-    .shop-finder-search select {
-        width: 100%;
-        font-size: 1rem;
+
+    .custom-radius-dropdown {
+        flex: 0 0 auto;
     }
+
     .shop-finder-grid {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 20px;
     }
+    
     .shop-finder-results-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 12px;
+        gap: 16px;
         margin-bottom: 24px;
     }
+
     .shop-finder-results-container {
-        padding: 40px 15px !important;
+        padding: 30px 15px !important;
+    }
+
+    .shop-card-image-wrapper {
+        height: 180px;
+    }
+}
+
+@media (max-width: 480px) {
+    .shop-finder-title {
+        font-size: 1.6rem;
+    }
+    .search-action-area {
+        flex-direction: column;
+    }
+    .near-me-btn, .custom-radius-dropdown, .radius-dropdown-toggle {
+        width: 100%;
+    }
+    .radius-dropdown-toggle {
+        justify-content: center;
     }
 }
 @keyframes india-pulse {

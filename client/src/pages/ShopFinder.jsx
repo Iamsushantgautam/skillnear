@@ -248,26 +248,15 @@ const ShopFinder = () => {
                 </div>
             </div>
 
-            <div className="container shop-finder-results-container" style={{ padding: '60px 20px' }}>
-                <div className="shop-finder-results-header" style={{ marginBottom: '32px' }}>
-                    <div>
-                        <h2 className="text-h2" style={{ marginBottom: '8px' }}>
+            <div className="container shop-finder-results-container">
+                <div className="shop-finder-results-header">
+                    <div className="results-info-group">
+                        <h2 className="text-h2">
                             {isNearMeMode ? `Shops Within ${searchRadius}km` : (!isLocationSelected ? 'Nearby Shops' : `Local Shops in ${selectedCity !== 'All of India' ? selectedCity : (selectedPincode || 'your area')}`)}
                         </h2>
                         {locationContext && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <span className={`location-context-badge ${locationContext.includes('All over India') ? 'india-pulse' : ''}`} style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    padding: '6px 14px',
-                                    backgroundColor: locationContext.includes('All over India') ? '#fff7ed' : '#f0f9ff',
-                                    color: locationContext.includes('All over India') ? '#ea580c' : '#0284c7',
-                                    borderRadius: '100px',
-                                    fontSize: '0.85rem',
-                                    fontWeight: '700',
-                                    border: locationContext.includes('All over India') ? '1px solid #ffedd5' : '1px solid #e0f2fe'
-                                }}>
+                            <div className="location-context-wrapper">
+                                <span className={`location-context-badge ${locationContext.includes('All over India') ? 'india-pulse' : ''}`}>
                                     <MapPin size={14} />
                                     {locationContext}
                                 </span>
@@ -275,9 +264,9 @@ const ShopFinder = () => {
                         )}
                     </div>
                     {!loading && isLocationSelected && (
-                        <span style={{ color: 'var(--text-muted)', fontWeight: '500', alignSelf: 'flex-end' }}>
+                        <div className="results-count-chip">
                             {filteredShops.length} {filteredShops.length === 1 ? 'shop' : 'shops'} found
-                        </span>
+                        </div>
                     )}
                 </div>
 
