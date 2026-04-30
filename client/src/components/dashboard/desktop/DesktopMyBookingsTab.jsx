@@ -165,6 +165,20 @@ const DesktopMyBookingsTab = ({
                                                     <p className="price-subtext">
                                                         {isCompleted ? 'Paid' : 'Escrow Secured'}
                                                     </p>
+                                                    {b.paymentMode && (
+                                                        <div style={{ 
+                                                            fontSize: '10px', 
+                                                            fontWeight: '800', 
+                                                            color: b.paymentMode === 'Online' ? '#003d9b' : '#059669',
+                                                            backgroundColor: b.paymentMode === 'Online' ? '#e0e7ff' : '#d1fae5',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '6px',
+                                                            marginTop: '4px',
+                                                            display: 'inline-block'
+                                                        }}>
+                                                            {b.paymentMode.toUpperCase()}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 

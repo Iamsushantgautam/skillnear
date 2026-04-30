@@ -141,6 +141,22 @@ const DesktopBookingRequestTab = ({
                                                 <div className="price-container">
                                                     <div className="total-price">₹{req.totalPrice}</div>
                                                     <div className="price-label">Order Value</div>
+                                                    {req.paymentMode && (
+                                                        <div style={{ 
+                                                            fontSize: '10px', 
+                                                            fontWeight: '800', 
+                                                            color: req.paymentMode === 'Online' ? '#003d9b' : '#059669',
+                                                            backgroundColor: req.paymentMode === 'Online' ? '#e0e7ff' : '#d1fae5',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '6px',
+                                                            marginTop: '6px',
+                                                            display: 'inline-block',
+                                                            textAlign: 'center',
+                                                            width: '100%'
+                                                        }}>
+                                                            {req.paymentMode.toUpperCase()}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 

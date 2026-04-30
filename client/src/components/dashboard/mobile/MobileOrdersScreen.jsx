@@ -62,6 +62,11 @@ export default function MobileOrdersScreen({ myBookings, bookingsLoading, setAct
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}><CalendarIcon size={16} /><span style={{ fontSize: 12, fontWeight: 500 }}>{new Date(b.createdAt).toLocaleDateString()} | {b.slot || 'TBA'}</span></div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#64748b' }}><MapPin size={16} /><span style={{ fontSize: 12, fontWeight: 500 }}>{typeof b.address === 'object' ? (`${b.address?.street || ''}, ${b.address?.city || ''}`.trim() || 'Location TBA') : (b.address || 'Location TBA')}</span></div>
+                                        {b.paymentMode && (
+                                            <div style={{ fontSize: 10, fontWeight: 800, color: b.paymentMode === 'Online' ? '#003d9b' : '#059669', backgroundColor: b.paymentMode === 'Online' ? '#e0e7ff' : '#d1fae5', padding: '2px 8px', borderRadius: 6, display: 'inline-block', width: 'fit-content' }}>
+                                                {b.paymentMode.toUpperCase()}
+                                            </div>
+                                        )}
                                     </div>
                                     <p style={{ fontSize: 24, fontWeight: 900, color: PC, margin: 0 }}>₹{b.price || b.totalPrice || '0'}</p>
                                 </div>

@@ -80,6 +80,11 @@ export default function MobileRequestsScreen({
                                         {new Date(req.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </span>
                                     <span className="booking-card-price">₹{req.totalPrice || req.price || 0}</span>
+                                    {req.paymentMode && (
+                                        <div style={{ fontSize: 9, fontWeight: 800, color: req.paymentMode === 'Online' ? '#003d9b' : '#059669', backgroundColor: req.paymentMode === 'Online' ? '#e0e7ff' : '#d1fae5', padding: '2px 6px', borderRadius: 6, position: 'absolute', right: 0, top: -20 }}>
+                                            {req.paymentMode.toUpperCase()}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {!isCancelled && !isCompleted && (

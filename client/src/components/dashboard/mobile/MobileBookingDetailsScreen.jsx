@@ -51,8 +51,8 @@ export default function MobileBookingDetailsScreen({ booking, userLocation, onBa
                         </div>
                         <div className="payment-info-row">
                             <div className="payment-method-badge">
-                                <div className="payment-dot"></div>
-                                <span className="payment-method-text">{booking.paymentMethod || 'Wallet'}</span>
+                                <div className="payment-dot" style={{ backgroundColor: booking.paymentMode === 'Online' ? '#003d9b' : '#059669' }}></div>
+                                <span className="payment-method-text">{booking.paymentMode || booking.paymentMethod || 'Wallet'}</span>
                             </div>
                             {distance && (
                                 <div className="distance-badge">
