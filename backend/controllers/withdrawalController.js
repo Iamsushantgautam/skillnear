@@ -14,8 +14,13 @@ export const createWithdrawalRequest = async (req, res) => {
 
         const providerId = req.user._id;
 
-        // 1. Calculate total earnings (sum of paid bookings)
-        const bookings = await Booking.find({ provider: providerId, paymentStatus: 'paid', status: 'completed' });
+        // 1. Calculate total earnings (sum of paid online bookings)
+        const bookings = await Booking.find({ 
+            provider: providerId, 
+            paymentStatus: 'paid',
+            paymentMode: { $ne: 'Cash' },
+            paymentMethod: { $ne: 'cash_on_delivery' }
+        });
         const totalEarnings = bookings.reduce((acc, b) => acc + (b.totalPrice || 0), 0);
 
         // 2. Calculate already withdrawn/pending amounts

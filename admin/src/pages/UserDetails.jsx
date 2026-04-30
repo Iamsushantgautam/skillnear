@@ -420,10 +420,41 @@ const UserDetails = () => {
                                                     <td><strong>{b.service?.title || 'Service Deleted'}</strong></td>
                                                     <td>{user.role === 'provider' ? b.user?.name : b.provider?.name}</td>
                                                     <td>{new Date(b.date).toLocaleDateString()}</td>
-                                                    <td>₹{b.totalPrice}</td>
                                                     <td>
-                                                        <span className={`badge ${b.status === 'completed' ? 'badge-success' : b.status === 'pending' ? 'badge-warning' : b.status === 'cancelled' ? 'badge-danger' : 'badge-primary'}`} style={{ fontSize: '0.7rem' }}>
-                                                            {b.status}
+                                                        <div style={{ fontWeight: '700' }}>₹{b.totalPrice}</div>
+                                                        {b.paymentMode && (
+                                                            <div style={{ 
+                                                                fontSize: '9px', fontWeight: '800', 
+                                                                color: b.paymentMode === 'Online' ? '#003d9b' : '#059669',
+                                                                backgroundColor: b.paymentMode === 'Online' ? '#e0e7ff' : '#d1fae5',
+                                                                padding: '1px 6px', borderRadius: '4px', display: 'inline-block'
+                                                            }}>
+                                                                {b.paymentMode.toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        <span style={{
+                                                            padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '700',
+                                                            backgroundColor:
+                                                                b.status === 'pending' ? '#fef3c7' :
+                                                                b.status === 'confirmed' ? '#e0e7ff' :
+                                                                b.status === 'in_progress' ? '#e0e7ff' :
+                                                                b.status === 'delivered' ? '#d1fae5' :
+                                                                b.status === 'completed' ? '#d1fae5' :
+                                                                b.status === 'cancelled' ? '#fee2e2' :
+                                                                b.status === 'revision_requested' ? '#fef3c7' : '#f1f5f9',
+                                                            color:
+                                                                b.status === 'pending' ? '#92400e' :
+                                                                b.status === 'confirmed' ? '#003d9b' :
+                                                                b.status === 'in_progress' ? '#003d9b' :
+                                                                b.status === 'delivered' ? '#059669' :
+                                                                b.status === 'completed' ? '#059669' :
+                                                                b.status === 'cancelled' ? '#991b1b' :
+                                                                b.status === 'revision_requested' ? '#92400e' : '#475569',
+                                                            textTransform: 'uppercase'
+                                                        }}>
+                                                            {b.status?.replace('_', ' ')}
                                                         </span>
                                                     </td>
                                                 </tr>

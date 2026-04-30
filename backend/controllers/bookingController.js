@@ -250,9 +250,10 @@ export const getProviderStats = async (req, res) => {
         const totalOrders = bookings.length;
         const pendingOrders = bookings.filter(b => b.status === 'pending').length;
 
-        // 3. withdrawableEarnings (Sum of completed and paid bookings that were NOT cash)
+        // 3. withdrawableEarnings (Sum of paid bookings that were NOT cash)
+        // Note: Online payments are withdrawable once marked as 'paid' by admin/system
         const totalEarnings = bookings
-            .filter(b => b.status === 'completed' && b.paymentStatus === 'paid' && b.paymentMode !== 'Cash' && b.paymentMethod !== 'cash_on_delivery')
+            .filter(b => b.paymentStatus === 'paid' && b.paymentMode !== 'Cash' && b.paymentMethod !== 'cash_on_delivery')
             .reduce((acc, b) => acc + (b.totalPrice || 0), 0);
 
         // 3a. Lifetime Earnings (Total money earned, including Cash)

@@ -22,7 +22,8 @@ const Bookings = () => {
         date: '',
         timeSlot: '',
         totalPrice: '',
-        status: ''
+        status: '',
+        paymentMode: ''
     });
 
     const fetchBookings = async () => {
@@ -61,7 +62,8 @@ const Bookings = () => {
             date: booking.date ? new Date(booking.date).toISOString().split('T')[0] : '',
             timeSlot: booking.timeSlot || '',
             totalPrice: booking.totalPrice || '',
-            status: booking.status || ''
+            status: booking.status || '',
+            paymentMode: booking.paymentMode || ''
         });
         setIsEditModalOpen(true);
     };
@@ -140,8 +142,8 @@ const Bookings = () => {
             <div className="card" style={{ padding: '16px 20px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                     {/* Tabs */}
-                    <div style={{ display: 'flex', gap: '8px', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '10px' }}>
-                        {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map(tab => (
+                    <div style={{ display: 'flex', gap: '8px', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '10px', overflowX: 'auto' }} className="no-scrollbar">
+                        {['all', 'pending', 'confirmed', 'in_progress', 'delivered', 'completed', 'cancelled'].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -231,7 +233,23 @@ const Bookings = () => {
                                     </td>
                                     <td style={{ padding: '16px 20px' }}>
                                         <div style={{ fontWeight: '800', fontSize: '1rem', color: 'var(--primary)' }}>₹{b.totalPrice}</div>
-                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{b.paymentMethod}</div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                                            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{b.paymentMethod || 'Wallet'}</div>
+                                            {b.paymentMode && (
+                                                <div style={{ 
+                                                    fontSize: '9px', 
+                                                    fontWeight: '800', 
+                                                    color: b.paymentMode === 'Online' ? '#003d9b' : '#059669',
+                                                    backgroundColor: b.paymentMode === 'Online' ? '#e0e7ff' : '#d1fae5',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '4px',
+                                                    display: 'inline-block',
+                                                    width: 'fit-content'
+                                                }}>
+                                                    {b.paymentMode.toUpperCase()}
+                                                </div>
+                                            )}
+                                        </div>
                                     </td>
                                     <td style={{ padding: '16px 20px' }}>
                                         <span style={{
@@ -241,17 +259,23 @@ const Bookings = () => {
                                             fontWeight: '700',
                                             backgroundColor:
                                                 b.status === 'pending' ? '#fef3c7' :
-                                                    b.status === 'confirmed' ? '#dbeafe' :
-                                                        b.status === 'completed' ? '#d1fae5' :
-                                                            b.status === 'cancelled' ? '#fee2e2' : '#f1f5f9',
+                                                b.status === 'confirmed' ? '#e0e7ff' :
+                                                b.status === 'in_progress' ? '#e0e7ff' :
+                                                b.status === 'delivered' ? '#d1fae5' :
+                                                b.status === 'completed' ? '#d1fae5' :
+                                                b.status === 'cancelled' ? '#fee2e2' :
+                                                b.status === 'revision_requested' ? '#fef3c7' : '#f1f5f9',
                                             color:
                                                 b.status === 'pending' ? '#92400e' :
-                                                    b.status === 'confirmed' ? '#1e40af' :
-                                                        b.status === 'completed' ? '#065f46' :
-                                                            b.status === 'cancelled' ? '#991b1b' : '#475569',
+                                                b.status === 'confirmed' ? '#003d9b' :
+                                                b.status === 'in_progress' ? '#003d9b' :
+                                                b.status === 'delivered' ? '#059669' :
+                                                b.status === 'completed' ? '#059669' :
+                                                b.status === 'cancelled' ? '#991b1b' :
+                                                b.status === 'revision_requested' ? '#92400e' : '#475569',
                                             textTransform: 'uppercase'
                                         }}>
-                                            {b.status}
+                                            {b.status?.replace('_', ' ')}
                                         </span>
                                     </td>
                                     <td style={{ padding: '16px 20px' }}>
@@ -346,11 +370,27 @@ const Bookings = () => {
                                     >
                                         <option value="pending">Pending</option>
                                         <option value="confirmed">Confirmed</option>
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="delivered">Delivered</option>
                                         <option value="completed">Completed</option>
                                         <option value="cancelled">Cancelled</option>
-                                        <option value="delivered">Delivered</option>
+                                        <option value="revision_requested">Revision Requested</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: '24px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#1e293b' }}>Payment Mode</label>
+                                <select 
+                                    className="input-field" 
+                                    style={{ appearance: 'auto' }}
+                                    value={editForm.paymentMode} 
+                                    onChange={(e) => setEditForm({ ...editForm, paymentMode: e.target.value })} 
+                                >
+                                    <option value="">Not Selected</option>
+                                    <option value="Online">Online</option>
+                                    <option value="Cash">Cash</option>
+                                </select>
                             </div>
 
                             <div style={{ display: 'flex', gap: '12px' }}>

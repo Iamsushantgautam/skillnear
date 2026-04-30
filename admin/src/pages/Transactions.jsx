@@ -83,6 +83,30 @@ const Transactions = () => {
         }
     };
 
+    const handleDeleteWithdrawal = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this withdrawal request?')) return;
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.delete(`/api/admin/withdrawals/${id}`, config);
+            setWithdrawals(withdrawals.filter(w => w._id !== id));
+            alert('Withdrawal request deleted');
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to delete withdrawal');
+        }
+    };
+
+    const handleApprovePayment = async (id) => {
+        if (!window.confirm('Approve this payment and mark as successful?')) return;
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await api.put(`/api/bookings/${id}`, { paymentStatus: 'paid' }, config);
+            setTransactions(transactions.map(t => t._id === id ? { ...t, paymentStatus: 'paid' } : t));
+            alert('Payment approved successfully');
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to approve payment');
+        }
+    };
+
     const handleEditClick = (tx) => {
         setEditingTx(tx);
         setEditForm({
@@ -236,6 +260,16 @@ const Transactions = () => {
                                             <Wallet size={14} />
                                             {tx.paymentMethod?.replace(/_/g, ' ')}
                                         </div>
+                                        {tx.paymentMode && (
+                                            <div style={{ 
+                                                fontSize: '9px', fontWeight: '800', 
+                                                color: tx.paymentMode === 'Online' ? '#003d9b' : '#059669',
+                                                backgroundColor: tx.paymentMode === 'Online' ? '#e0e7ff' : '#d1fae5',
+                                                padding: '1px 6px', borderRadius: '4px', display: 'inline-block', marginTop: '4px'
+                                            }}>
+                                                {tx.paymentMode.toUpperCase()}
+                                            </div>
+                                        )}
                                     </td>
                                     <td style={{ padding: '16px 20px' }}>
                                         <span style={{
@@ -247,7 +281,26 @@ const Transactions = () => {
                                         </span>
                                     </td>
                                     <td style={{ padding: '16px 20px' }}>
-                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            {tx.paymentStatus === 'pending' && (
+                                                <button 
+                                                    onClick={() => handleApprovePayment(tx._id)} 
+                                                    style={{ 
+                                                        padding: '6px', 
+                                                        backgroundColor: '#d1fae5', 
+                                                        border: 'none', 
+                                                        borderRadius: '6px', 
+                                                        cursor: 'pointer', 
+                                                        color: '#059669',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                    title="Approve Payment"
+                                                >
+                                                    <ShieldCheck size={14} />
+                                                </button>
+                                            )}
                                             <button onClick={() => handleEditClick(tx)} style={{ padding: '6px', backgroundColor: '#f1f5f9', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
                                                 <Edit size={14} />
                                             </button>
@@ -299,12 +352,31 @@ const Transactions = () => {
                                             </span>
                                         </td>
                                         <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                                            {w.status === 'pending' && (
-                                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                                    <button onClick={() => handleUpdateWithdrawalStatus(w._id, 'successful')} style={{ padding: '6px 12px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '700' }}>Approve</button>
-                                                    <button onClick={() => handleUpdateWithdrawalStatus(w._id, 'rejected')} style={{ padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '700' }}>Reject</button>
-                                                </div>
-                                            )}
+                                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                {w.status === 'pending' && (
+                                                    <>
+                                                        <button onClick={() => handleUpdateWithdrawalStatus(w._id, 'successful')} style={{ padding: '6px 12px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '700' }}>Approve</button>
+                                                        <button onClick={() => handleUpdateWithdrawalStatus(w._id, 'rejected')} style={{ padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '700' }}>Reject</button>
+                                                    </>
+                                                )}
+                                                <button 
+                                                    onClick={() => handleDeleteWithdrawal(w._id)} 
+                                                    style={{ 
+                                                        padding: '6px', 
+                                                        backgroundColor: '#fff1f2', 
+                                                        border: 'none', 
+                                                        borderRadius: '6px', 
+                                                        cursor: 'pointer', 
+                                                        color: '#e11d48',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                    title="Delete Request"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

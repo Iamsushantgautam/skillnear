@@ -73,9 +73,12 @@ const Dashboard = () => {
     const statusStyle = (status) => {
         const map = {
             pending: { backgroundColor: '#fef3c7', color: '#92400e' },
-            confirmed: { backgroundColor: '#dbeafe', color: '#1e40af' },
+            confirmed: { backgroundColor: '#e0e7ff', color: '#003d9b' },
+            in_progress: { backgroundColor: '#e0e7ff', color: '#003d9b' },
+            delivered: { backgroundColor: '#d1fae5', color: '#059669' },
             completed: { backgroundColor: '#d1fae5', color: '#065f46' },
             cancelled: { backgroundColor: '#fee2e2', color: '#991b1b' },
+            revision_requested: { backgroundColor: '#fef3c7', color: '#92400e' },
         };
         return map[status] || { backgroundColor: '#f3f4f6', color: '#374151' };
     };
