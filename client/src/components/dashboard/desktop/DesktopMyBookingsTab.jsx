@@ -17,6 +17,7 @@ const DesktopMyBookingsTab = ({
     setBookingFilter,
     updateBookingStatus,
     handleCompleteClick,
+    handleAcceptClick,
     setBookingForRevision,
     setRevisionNote,
     setSelectedBookingDetails,
@@ -191,6 +192,17 @@ const DesktopMyBookingsTab = ({
                                                             onClick={() => { setBookingForRevision(b); setRevisionNote(''); }} 
                                                             className="action-btn-outline"
                                                         >Request Revision</button>
+                                                    </>
+                                                ) : b.status === 'confirmed' ? (
+                                                    <>
+                                                        <button 
+                                                            onClick={() => handleAcceptClick(b._id)} 
+                                                            className="action-btn-primary"
+                                                        >Confirm & Select Payment</button>
+                                                        <button 
+                                                            onClick={() => setSelectedBookingDetails(b)} 
+                                                            className="action-btn-outline"
+                                                        >View Details</button>
                                                     </>
                                                 ) : isCompleted ? (
                                                     <>

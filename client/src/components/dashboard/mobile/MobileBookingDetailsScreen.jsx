@@ -4,7 +4,7 @@ import { PC, PL, Shell, calculateDistance } from './MobileDashboardShared';
 import '../../../styles/mobile-dashboard-styles/MobileBookingScreens.css';
 import '../../../styles/mobile-dashboard-styles/MobileBookingDetails.css';
 
-export default function MobileBookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, updateBookingStatus, onDeliverClick, navigate, onShowRevisions }) {
+export default function MobileBookingDetailsScreen({ booking, userLocation, onBack, onMessage, role, updateBookingStatus, onDeliverClick, onAcceptClick, onCompleteClick, navigate, onShowRevisions }) {
     if (!booking) return null;
 
     const otherUser = role === 'provider' ? booking.user : booking.provider;
@@ -123,6 +123,19 @@ export default function MobileBookingDetailsScreen({ booking, userLocation, onBa
                     <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
                         <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(booking._id, 'confirmed'); }} className="booking-btn booking-btn-primary" style={{ height: 56 }}>Accept Order</button>
                         <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(booking._id, 'cancelled'); }} className="booking-btn booking-btn-danger" style={{ height: 56 }}>Decline</button>
+                    </div>
+                )}
+
+                {role === 'customer' && booking.status === 'confirmed' && (
+                    <div style={{ marginTop: 12 }}>
+                        <button onClick={(e) => { e.stopPropagation(); onAcceptClick(booking); }} className="booking-btn booking-btn-primary" style={{ height: 56 }}>Confirm & Select Payment</button>
+                    </div>
+                )}
+
+                {role === 'customer' && booking.status === 'delivered' && (
+                    <div style={{ marginTop: 12, display: 'flex', gap: 12 }}>
+                        <button onClick={(e) => { e.stopPropagation(); onCompleteClick(booking); }} className="booking-btn booking-btn-success" style={{ height: 56 }}>Accept & Complete</button>
+                        <button onClick={(e) => { e.stopPropagation(); onShowRevisions(booking); }} className="booking-btn booking-btn-muted" style={{ height: 56 }}>Review History</button>
                     </div>
                 )}
 

@@ -67,11 +67,16 @@ export default function MobileOrdersScreen({ myBookings, bookingsLoading, setAct
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                                     <button onClick={(e) => { e.stopPropagation(); onSelectBooking(b); }} style={{ width: '100%', height: 44, padding: '12px 0', border: '1px solid rgba(115, 118, 133, 0.2)', borderRadius: 16, color: '#434654', background: '#f8f9fc', fontWeight: 800, fontSize: 12 }}>View Details</button>
-                                    <div style={{ display: 'grid', gridTemplateColumns: (b.status === 'delivered' || b.status === 'completed') ? '1fr 1fr' : '1fr', gap: 12 }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: (b.status === 'delivered' || b.status === 'completed' || b.status === 'confirmed') ? '1fr 1fr' : '1fr', gap: 12 }}>
                                         {b.status === 'delivered' ? (
                                             <>
                                                 <button onClick={(e) => { e.stopPropagation(); onRequestRevision(b); }} style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 800, fontSize: 12 }}>Request Revision</button>
-                                                <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(b._id, 'completed'); }} style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}>Accept & Complete</button>
+                                                <button onClick={(e) => { e.stopPropagation(); onCompleteClick(b); }} style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}>Accept & Complete</button>
+                                            </>
+                                        ) : b.status === 'confirmed' ? (
+                                            <>
+                                                <button onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: b._id, otherUser: b.provider }); }} style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 800, fontSize: 12 }}>Message</button>
+                                                <button onClick={(e) => { e.stopPropagation(); onAcceptClick(b); }} style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}>Confirm & Pay</button>
                                             </>
                                         ) : b.status === 'completed' ? (
                                             <>

@@ -190,6 +190,7 @@ const DashboardDesktop = ({
 }) => {
     const [bookingForPayment, setBookingForPayment] = useState(null);
     const [bookingForCompletion, setBookingForCompletion] = useState(null);
+    const [bookingForAcceptance, setBookingForAcceptance] = useState(null);
     const [activeService, setActiveService] = useState(null);
     const [bookingFilter, setBookingFilter] = useState('all');
     const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
@@ -322,6 +323,15 @@ const DashboardDesktop = ({
     const confirmDelivery = (paymentMode) => {
         updateBookingStatus(bookingForPayment, 'delivered', '', paymentMode);
         setBookingForPayment(null);
+    };
+
+    const handleAcceptClick = (bookingId) => {
+        setBookingForAcceptance(bookingId);
+    };
+
+    const confirmAcceptance = (paymentMode) => {
+        updateBookingStatus(bookingForAcceptance, 'in_progress', '', paymentMode);
+        setBookingForAcceptance(null);
     };
 
     const handleCompleteClick = (bookingId) => {
@@ -462,6 +472,7 @@ const DashboardDesktop = ({
                     setBookingFilter={setBookingFilter}
                     updateBookingStatus={updateBookingStatus}
                     handleCompleteClick={handleCompleteClick}
+                    handleAcceptClick={handleAcceptClick}
                     setBookingForRevision={setBookingForRevision}
                     setRevisionNote={setRevisionNote}
                     setSelectedBookingDetails={setSelectedBookingDetails}
@@ -681,6 +692,15 @@ const DashboardDesktop = ({
             {activeTab === 'help' && (
                 <DesktopHelpTab />
             )}
+
+            {/* Payment Mode Selection Modal (For Customer Accepting Confirmation) */}
+            <DesktopPaymentModal
+                isOpen={!!bookingForAcceptance}
+                onClose={() => setBookingForAcceptance(null)}
+                onSelect={confirmAcceptance}
+                title="Confirm & Pay?"
+                description="Select your preferred payment method to finalize the acceptance and start the service."
+            />
 
             {/* Payment Mode Selection Modal (For Provider Delivering) */}
             <DesktopPaymentModal

@@ -57,6 +57,8 @@ export default function DashboardMobile(props) {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [bookingForPayment, setBookingForPayment] = useState(null);
+    const [bookingForAcceptance, setBookingForAcceptance] = useState(null);
+    const [bookingForCompletion, setBookingForCompletion] = useState(null);
     const [bookingForRevision, setBookingForRevision] = useState(null);
     const [revisionNote, setRevisionNote] = useState('');
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -77,8 +79,18 @@ export default function DashboardMobile(props) {
 
     // ── Booking Handlers ──
     const handleDeliverClick = (booking) => setBookingForPayment(booking);
+    const handleAcceptClick = (booking) => setBookingForAcceptance(booking);
     const handleShowRevisions = (booking) => { setBookingWithRevisions(booking); setShowRevisions(true); };
     const handleRequestRevision = (booking) => { setBookingForRevision(booking); setRevisionNote(''); };
+
+    const confirmAcceptance = async (paymentMode) => {
+        if (!bookingForAcceptance) return;
+        try {
+            await updateBookingStatus(bookingForAcceptance._id, 'in_progress', '', paymentMode);
+            setBookingForAcceptance(null);
+            setSelectedBooking(null);
+        } catch (err) { console.error(err); }
+    };
 
     const submitRevision = async () => {
         if (!bookingForRevision || !revisionNote.trim() || isSubmittingRevision) return;
@@ -101,6 +113,15 @@ export default function DashboardMobile(props) {
         try {
             await updateBookingStatus(bookingForPayment._id, 'delivered', '', paymentMode);
             setBookingForPayment(null);
+            setSelectedBooking(null);
+        } catch (err) { console.error(err); }
+    };
+
+    const confirmCompletion = async (paymentMode) => {
+        if (!bookingForCompletion) return;
+        try {
+            await updateBookingStatus(bookingForCompletion._id, 'completed', '', paymentMode);
+            setBookingForCompletion(null);
             setSelectedBooking(null);
         } catch (err) { console.error(err); }
     };
@@ -172,6 +193,8 @@ export default function DashboardMobile(props) {
                     role={role}
                     updateBookingStatus={updateBookingStatus}
                     onDeliverClick={handleDeliverClick}
+                    onAcceptClick={handleAcceptClick}
+                    onCompleteClick={(b) => setBookingForCompletion(b)}
                     navigate={navigate}
                     onShowRevisions={handleShowRevisions}
                 />
@@ -223,6 +246,7 @@ export default function DashboardMobile(props) {
                         updateBookingStatus={updateBookingStatus} setActiveTab={setActiveTab}
                         navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking}
                         onShowRevisions={handleShowRevisions} onRequestRevision={handleRequestRevision}
+                        onAcceptClick={handleAcceptClick} onCompleteClick={(b) => setBookingForCompletion(b)}
                     />
                 );
 
@@ -315,6 +339,20 @@ export default function DashboardMobile(props) {
                 note={revisionNote}
                 setNote={setRevisionNote}
                 submitting={isSubmittingRevision}
+            />
+            <MobilePaymentModal
+                isOpen={!!bookingForAcceptance}
+                onClose={() => setBookingForAcceptance(null)}
+                onSelect={confirmAcceptance}
+                title="Confirm & Pay?"
+                description="Select your preferred payment method to finalize the acceptance and start the service."
+            />
+            <MobilePaymentModal
+                isOpen={!!bookingForCompletion}
+                onClose={() => setBookingForCompletion(null)}
+                onSelect={confirmCompletion}
+                title="Finalize Order?"
+                description="Select how you paid for this service to mark it as complete and release funds."
             />
             <MobilePaymentModal
                 isOpen={!!bookingForPayment}
