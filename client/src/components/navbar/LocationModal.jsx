@@ -12,28 +12,37 @@ const LocationModal = ({
     setLocation,
     updateUserInfo
 }) => {
-    const indianStates = State.getStatesOfCountry('IN');
+    const indianStates = React.useMemo(() => State.getStatesOfCountry('IN'), []);
     const [selectedStateCode, setSelectedStateCode] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
-    const [selectedPincode, setSelectedPincode] = useState(userLocation?.pincode || '');
+    const [selectedPincode, setSelectedPincode] = useState('');
     const [isDetecting, setIsDetecting] = useState(false);
     const [pincodeError, setPincodeError] = useState('');
     const [isValidating, setIsValidating] = useState(false);
+    const hasSynced = React.useRef(false);
     const lastValidated = React.useRef('');
 
+    // Initialize local state when modal opens
     useEffect(() => {
-        if (userLocation) {
-            setSelectedPincode(userLocation.pincode || '');
-            setSelectedCity(userLocation.city || '');
-            
-            if (userLocation.state) {
-                const stateMatch = indianStates.find(s => s.name.toLowerCase() === userLocation.state.toLowerCase());
-                if (stateMatch) {
-                    setSelectedStateCode(stateMatch.isoCode);
+        if (show && !hasSynced.current) {
+            if (userLocation) {
+                setSelectedPincode(userLocation.pincode || '');
+                setSelectedCity(userLocation.city || '');
+                
+                if (userLocation.state) {
+                    const stateMatch = indianStates.find(s => s.name.toLowerCase() === userLocation.state.toLowerCase());
+                    if (stateMatch) {
+                        setSelectedStateCode(stateMatch.isoCode);
+                    }
                 }
             }
+            hasSynced.current = true;
         }
-    }, [userLocation, indianStates]);
+        
+        if (!show) {
+            hasSynced.current = false;
+        }
+    }, [show, userLocation, indianStates]);
 
     // SMART PINCODE VALIDATION - Optimized
     useEffect(() => {
@@ -81,10 +90,11 @@ const LocationModal = ({
         return () => clearTimeout(timer);
     }, [selectedPincode, selectedStateCode, selectedCity, indianStates]);
 
-    if (!show) return null;
+    const citiesOfState = React.useMemo(() => 
+        selectedStateCode ? City.getCitiesOfState('IN', selectedStateCode) : []
+    , [selectedStateCode]);
 
-    const citiesOfState = selectedStateCode ?
-        City.getCitiesOfState('IN', selectedStateCode) : [];
+    if (!show) return null;
 
     const handleSaveLocation = async () => {
         const stateObj = indianStates.find(s => s.isoCode === selectedStateCode);
