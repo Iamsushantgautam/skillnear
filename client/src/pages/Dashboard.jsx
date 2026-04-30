@@ -163,7 +163,7 @@ const Dashboard = () => {
     }, [user?.token, user?.role]);
 
     const fetchMyGigs = useCallback(async (silent = false) => {
-        if (!user?.token) return;
+        if (!user?.token || user.role !== 'provider') return;
         if (!silent) setGigsLoading(true);
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -177,7 +177,7 @@ const Dashboard = () => {
     }, [user?.token]);
 
     const fetchStats = useCallback(async (silent = false) => {
-        if (!user?.token) return;
+        if (!user?.token || user.role !== 'provider') return;
         try {
             if (!silent) setIsStatsLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
