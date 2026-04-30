@@ -6,7 +6,7 @@ import '../../../styles/mobile-dashboard-styles/MobileBookingScreens.css';
 export default function MobileRequestsScreen({
     bookingRequests, bookingsLoading, updateBookingStatus,
     setActiveTab, navigate, onSelectRoom, onSelectBooking,
-    onDeliverClick, onShowRevisions
+    onDeliverClick, onShowRevisions, onAcceptClick
 }) {
     const [bookingFilter, setBookingFilter] = useState('all');
 
@@ -92,7 +92,7 @@ export default function MobileRequestsScreen({
                                         <div className="booking-card-primary-actions">
                                             {req.status === 'pending' && (
                                                 <>
-                                                    <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(req._id, 'confirmed'); }}
+                                                    <button onClick={(e) => { e.stopPropagation(); onAcceptClick(req); }}
                                                         className="booking-btn booking-btn-primary">
                                                         Accept Request
                                                     </button>

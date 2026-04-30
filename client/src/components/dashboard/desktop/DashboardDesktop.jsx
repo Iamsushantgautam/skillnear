@@ -330,7 +330,10 @@ const DashboardDesktop = ({
     };
 
     const confirmAcceptance = (paymentMode) => {
-        updateBookingStatus(bookingForAcceptance, 'in_progress', '', paymentMode);
+        if (!bookingForAcceptance) return;
+        const booking = bookingRequests.find(r => r._id === bookingForAcceptance) || myBookings.find(b => b._id === bookingForAcceptance);
+        const targetStatus = (role === 'provider' && booking?.status === 'pending') ? 'confirmed' : 'in_progress';
+        updateBookingStatus(bookingForAcceptance, targetStatus, '', paymentMode);
         setBookingForAcceptance(null);
     };
 
@@ -584,6 +587,7 @@ const DashboardDesktop = ({
                     setBookingFilter={setBookingFilter}
                     updateBookingStatus={updateBookingStatus}
                     handleDeliverClick={handleDeliverClick}
+                    handleAcceptClick={handleAcceptClick}
                     setDashActiveRoom={setDashActiveRoom}
                     setActiveTab={setActiveTab}
                     setBookingWithRevisions={setBookingWithRevisions}

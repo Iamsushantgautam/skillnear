@@ -210,12 +210,8 @@ const DesktopMyBookingsTab = ({
                                                 ) : b.status === 'confirmed' ? (
                                                     <>
                                                         <button 
-                                                            onClick={() => handleAcceptClick(b._id)} 
-                                                            className="action-btn-primary"
-                                                        >Confirm & Select Payment</button>
-                                                        <button 
                                                             onClick={() => setSelectedBookingDetails(b)} 
-                                                            className="action-btn-outline"
+                                                            className="action-btn-primary"
                                                         >View Details</button>
                                                     </>
                                                 ) : isCompleted ? (

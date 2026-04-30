@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Loader, Calendar as CalendarIcon, MapPin, MessageSquare, History } from 'lucide-react';
 import { PC, PL, Shell, Badge } from './MobileDashboardShared';
 
-export default function MobileOrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onSelectRoom, onSelectBooking, updateBookingStatus, onShowRevisions, onRequestRevision }) {
+export default function MobileOrdersScreen({ myBookings, bookingsLoading, setActiveTab, navigate, onSelectRoom, onSelectBooking, updateBookingStatus, onShowRevisions, onRequestRevision, onAcceptClick, onCompleteClick }) {
     const [bookingFilter, setBookingFilter] = useState('all');
 
     const filteredBookings = (myBookings || []).filter(b => {
@@ -80,8 +80,7 @@ export default function MobileOrdersScreen({ myBookings, bookingsLoading, setAct
                                             </>
                                         ) : b.status === 'confirmed' ? (
                                             <>
-                                                <button onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: b._id, otherUser: b.provider }); }} style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 800, fontSize: 12 }}>Message</button>
-                                                <button onClick={(e) => { e.stopPropagation(); onAcceptClick(b); }} style={{ padding: '12px 0', height: 44, borderRadius: 16, background: '#0052cc', color: 'white', border: 'none', fontWeight: 800, fontSize: 12 }}>Confirm & Pay</button>
+                                                <button onClick={(e) => { e.stopPropagation(); onSelectRoom({ roomId: b._id, otherUser: b.provider }); }} style={{ width: '100%', padding: '12px 0', height: 44, borderRadius: 16, background: '#e1e2ec', color: '#191b23', border: 'none', fontWeight: 800, fontSize: 12 }}>Message</button>
                                             </>
                                         ) : b.status === 'completed' ? (
                                             <>

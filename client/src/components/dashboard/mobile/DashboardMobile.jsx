@@ -85,8 +85,12 @@ export default function DashboardMobile(props) {
 
     const confirmAcceptance = async (paymentMode) => {
         if (!bookingForAcceptance) return;
+        // If provider accepts pending -> confirmed
+        // If customer confirms confirmed -> in_progress
+        const targetStatus = (role === 'provider' && bookingForAcceptance.status === 'pending') ? 'confirmed' : 'in_progress';
+        
         try {
-            await updateBookingStatus(bookingForAcceptance._id, 'in_progress', '', paymentMode);
+            await updateBookingStatus(bookingForAcceptance._id, targetStatus, '', paymentMode);
             setBookingForAcceptance(null);
             setSelectedBooking(null);
         } catch (err) { console.error(err); }
@@ -236,6 +240,7 @@ export default function DashboardMobile(props) {
                         updateBookingStatus={updateBookingStatus} setActiveTab={setActiveTab}
                         navigate={navigate} onSelectRoom={setSelectedRoom} onSelectBooking={setSelectedBooking}
                         onDeliverClick={handleDeliverClick} onShowRevisions={handleShowRevisions}
+                        onAcceptClick={handleAcceptClick}
                     />
                 );
 

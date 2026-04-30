@@ -23,6 +23,7 @@ const DesktopBookingRequestTab = ({
     setBookingFilter,
     updateBookingStatus,
     handleDeliverClick,
+    handleAcceptClick,
     setDashActiveRoom,
     setActiveTab,
     setBookingWithRevisions,
@@ -237,7 +238,7 @@ const DesktopBookingRequestTab = ({
                                             <div className="actions-row">
                                                 {req.status === 'pending' && (
                                                     <>
-                                                        <button onClick={() => updateBookingStatus(req._id, 'confirmed')} className="btn-accept">
+                                                        <button onClick={() => handleAcceptClick(req._id)} className="btn-accept">
                                                             Accept Request
                                                         </button>
                                                         <button onClick={() => updateBookingStatus(req._id, 'cancelled')} className="btn-decline">

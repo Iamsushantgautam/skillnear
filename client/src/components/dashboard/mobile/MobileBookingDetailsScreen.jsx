@@ -121,16 +121,12 @@ export default function MobileBookingDetailsScreen({ booking, userLocation, onBa
 
                 {role === 'provider' && booking.status === 'pending' && (
                     <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                        <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(booking._id, 'confirmed'); }} className="booking-btn booking-btn-primary" style={{ height: 56 }}>Accept Order</button>
+                        <button onClick={(e) => { e.stopPropagation(); onAcceptClick(booking); }} className="booking-btn booking-btn-primary" style={{ height: 56 }}>Accept Order</button>
                         <button onClick={(e) => { e.stopPropagation(); updateBookingStatus(booking._id, 'cancelled'); }} className="booking-btn booking-btn-danger" style={{ height: 56 }}>Decline</button>
                     </div>
                 )}
 
-                {role === 'customer' && booking.status === 'confirmed' && (
-                    <div style={{ marginTop: 12 }}>
-                        <button onClick={(e) => { e.stopPropagation(); onAcceptClick(booking); }} className="booking-btn booking-btn-primary" style={{ height: 56 }}>Confirm & Select Payment</button>
-                    </div>
-                )}
+
 
                 {role === 'customer' && booking.status === 'delivered' && (
                     <div style={{ marginTop: 12, display: 'flex', gap: 12 }}>
