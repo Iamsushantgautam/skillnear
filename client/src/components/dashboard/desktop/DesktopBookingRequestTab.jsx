@@ -84,7 +84,7 @@ const DesktopBookingRequestTab = ({
                         .filter(b => bookingFilter === 'all' || b.status === bookingFilter)
                         .map(req => {
                             const statusConfig = {
-                                pending: { color: '#f59e0b', bg: '#fef3c7', text: 'New Request' },
+                                pending: { color: '#f59e0b', bg: '#fef3c7', text: 'Pending' },
                                 confirmed: { color: '#003d9b', bg: '#e0e7ff', text: 'Confirmed' },
                                 in_progress: { color: '#003d9b', bg: '#e0e7ff', text: 'In Progress' },
                                 delivered: { color: '#059669', bg: '#d1fae5', text: 'Delivered' },
@@ -104,16 +104,26 @@ const DesktopBookingRequestTab = ({
                                                 alt={req.service?.title}
                                                 className="service-image"
                                             />
-                                            <div className="status-badge" style={{ backgroundColor: config.bg, color: config.color }}>
-                                                {config.text}
-                                            </div>
                                         </div>
 
                                         {/* Details Section */}
                                         <div className="request-details">
                                             <div className="request-header">
                                                 <div>
-                                                    <h3 className="service-title">{req.service?.title}</h3>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                                        <h3 className="service-title" style={{ marginBottom: 0 }}>{req.service?.title}</h3>
+                                                        <div className="status-badge-new" style={{ 
+                                                            backgroundColor: config.bg, 
+                                                            color: config.color,
+                                                            padding: '4px 12px',
+                                                            borderRadius: '100px',
+                                                            fontSize: '11px',
+                                                            fontWeight: '800',
+                                                            textTransform: 'uppercase'
+                                                        }}>
+                                                            {config.text}
+                                                        </div>
+                                                    </div>
                                                     <div className="meta-info">
                                                         <div className="meta-item">
                                                             <div className="user-avatar-mini">

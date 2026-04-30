@@ -121,12 +121,30 @@ const DesktopMyBookingsTab = ({
                                         <div className="booking-content">
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                                 <div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                                                         <span 
-                                                            className="status-badge"
-                                                            style={{ background: statusBg, color: statusColor }}
+                                                            className="order-status-tag"
+                                                            style={{ 
+                                                                background: statusBg, 
+                                                                color: statusColor,
+                                                                fontSize: '10px',
+                                                                fontWeight: '800',
+                                                                padding: '4px 10px',
+                                                                borderRadius: '100px',
+                                                                textTransform: 'uppercase',
+                                                                letterSpacing: '0.05em'
+                                                            }}
                                                         >
-                                                            {(b.status || '').replace('_', ' ')}
+                                                            {(() => {
+                                                                const s = b.status || 'pending';
+                                                                if (s === 'pending') return 'Pending';
+                                                                if (s === 'confirmed') return 'Confirmed';
+                                                                if (s === 'delivered') return 'Delivered';
+                                                                if (['in_progress', 'revision_requested'].includes(s)) return 'In Progress';
+                                                                if (s === 'completed') return 'Completed';
+                                                                if (['cancelled', 'rejected'].includes(s)) return 'Cancelled';
+                                                                return s.replace('_', ' ');
+                                                            })()}
                                                         </span>
                                                         <span className="booking-id">ID: #{(b._id || '').slice(-6).toUpperCase()}</span>
                                                     </div>
