@@ -13,7 +13,8 @@ import {
     deleteMedia,
     createNewUser,
     getWithdrawals,
-    updateWithdrawalStatus
+    updateWithdrawalStatus,
+    deleteWithdrawal
 } from '../controllers/adminController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -25,6 +26,7 @@ router.delete('/media', protect, admin, deleteMedia);
 router.post('/users', protect, admin, createNewUser);
 router.get('/withdrawals', protect, admin, getWithdrawals);
 router.put('/withdrawals/:id', protect, admin, updateWithdrawalStatus);
+router.delete('/withdrawals/:id', protect, admin, deleteWithdrawal);
 
 // User management details - Put this at the top
 router.get('/users/:userId/full-details', protect, admin, getUserFullDetails);

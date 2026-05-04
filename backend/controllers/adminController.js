@@ -323,6 +323,23 @@ export const updateWithdrawalStatus = async (req, res) => {
     }
 };
 
+// @desc    Delete a withdrawal request
+// @route   DELETE /api/admin/withdrawals/:id
+// @access  Private/Admin
+export const deleteWithdrawal = async (req, res) => {
+    try {
+        const withdrawal = await Withdrawal.findById(req.params.id);
+        if (!withdrawal) {
+            return res.status(404).json({ message: 'Withdrawal request not found' });
+        }
+        await withdrawal.deleteOne();
+        res.json({ message: 'Withdrawal request deleted successfully' });
+    } catch (error) {
+        console.error('deleteWithdrawal error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Get user full details including gigs, reviews, and bookings
 // @route   GET /api/admin/users/:userId/full-details
 // @access  Private/Admin
@@ -353,11 +370,15 @@ export const getUserFullDetails = async (req, res) => {
         .populate('service', 'title')
         .sort({ createdAt: -1 });
 
+        // Fetch withdrawals for this user
+        const withdrawals = await Withdrawal.find({ user: user._id }).sort({ createdAt: -1 });
+
         res.json({
             user,
             gigs,
             bookings,
-            reviews
+            reviews,
+            withdrawals
         });
     } catch (error) {
         console.error('getUserFullDetails error:', error);

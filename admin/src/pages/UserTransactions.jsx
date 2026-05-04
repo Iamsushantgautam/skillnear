@@ -4,7 +4,7 @@ import api from '../utils/api';
 import { 
     ArrowLeft, CreditCard, DollarSign, Calendar, Clock, 
     ArrowUpRight, ArrowDownLeft, Filter, Search, Wallet,
-    CheckCircle, XCircle, AlertCircle, ExternalLink, RefreshCcw
+    CheckCircle, XCircle, AlertCircle, ExternalLink, RefreshCcw, Trash2
 } from 'lucide-react';
 
 const UserTransactions = () => {
@@ -35,17 +35,37 @@ const UserTransactions = () => {
     if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><div className="spinner"></div></div>;
     if (error) return <div style={{ padding: '40px', color: 'red' }}>Error: {error}</div>;
 
-    const { user, bookings } = data;
+    const { user, bookings, withdrawals = [] } = data;
+
+    // Merge transactions for a combined view
+    const combinedTransactions = [
+        ...bookings.map(b => ({ ...b, txType: 'booking' })),
+        ...withdrawals.map(w => ({ ...w, txType: 'withdrawal' }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     // Filter logic
-    const filteredBookings = bookings.filter(b => {
-        const matchesSearch = b._id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                             b.service?.title?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesFilter = filter === 'all' || b.paymentStatus === filter;
+    const filteredTransactions = combinedTransactions.filter(t => {
+        const title = t.txType === 'booking' ? t.service?.title : 'Withdrawal Request';
+        const matchesSearch = t._id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                             title?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const status = t.txType === 'booking' ? t.paymentStatus : t.status;
+        const matchesFilter = filter === 'all' || status === filter;
         return matchesSearch && matchesFilter;
     });
 
+    const handleDeleteWithdrawal = async (wid) => {
+        if (!window.confirm('Are you sure you want to delete this withdrawal request?')) return;
+        try {
+            await api.delete(`/api/admin/withdrawals/${wid}`);
+            fetchDetails(); // Refresh data
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to delete withdrawal');
+        }
+    };
+
     const totalPaid = bookings.filter(b => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.totalPrice, 0);
+    const totalWithdrawn = withdrawals.filter(w => w.status === 'successful').reduce((sum, w) => sum + w.amount, 0);
     const totalPending = bookings.filter(b => b.paymentStatus === 'pending').reduce((sum, b) => sum + b.totalPrice, 0);
 
     return (
@@ -66,11 +86,15 @@ const UserTransactions = () => {
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
                     <div style={{ padding: '12px 20px', backgroundColor: '#ecfdf5', borderRadius: '12px', border: '1px solid #10b981', textAlign: 'right' }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#059669', textTransform: 'uppercase', display: 'block' }}>Total Paid</span>
+                        <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#059669', textTransform: 'uppercase', display: 'block' }}>Total Earnings</span>
                         <span style={{ fontSize: '1.2rem', fontWeight: '800', color: '#065f46' }}>₹{totalPaid.toLocaleString()}</span>
                     </div>
+                    <div style={{ padding: '12px 20px', backgroundColor: '#eff6ff', borderRadius: '12px', border: '1px solid #3b82f6', textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#1d4ed8', textTransform: 'uppercase', display: 'block' }}>Withdrawn</span>
+                        <span style={{ fontSize: '1.2rem', fontWeight: '800', color: '#1e40af' }}>₹{totalWithdrawn.toLocaleString()}</span>
+                    </div>
                     <div style={{ padding: '12px 20px', backgroundColor: '#fff7ed', borderRadius: '12px', border: '1px solid #f97316', textAlign: 'right' }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#c2410c', textTransform: 'uppercase', display: 'block' }}>Total Pending</span>
+                        <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#c2410c', textTransform: 'uppercase', display: 'block' }}>Pending</span>
                         <span style={{ fontSize: '1.2rem', fontWeight: '800', color: '#9a3412' }}>₹{totalPending.toLocaleString()}</span>
                     </div>
                 </div>
@@ -130,66 +154,90 @@ const UserTransactions = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredBookings.length === 0 ? (
+                        {filteredTransactions.length === 0 ? (
                             <tr><td colSpan="7" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No transactions found matching your criteria.</td></tr>
-                        ) : filteredBookings.map(b => {
-                            const isIncoming = b.provider?._id === id;
+                        ) : filteredTransactions.map(t => {
+                            const isWithdrawal = t.txType === 'withdrawal';
+                            const isIncoming = !isWithdrawal && t.provider?._id === id;
+                            
                             return (
-                                <tr key={b._id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }}>
+                                <tr key={t._id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }}>
                                     <td style={{ padding: '16px 24px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                {isIncoming ? <ArrowDownLeft size={20} color="#10b981" /> : <ArrowUpRight size={20} color="#6366f1" />}
+                                                {isWithdrawal ? <DollarSign size={20} color="#f59e0b" /> : isIncoming ? <ArrowDownLeft size={20} color="#10b981" /> : <ArrowUpRight size={20} color="#6366f1" />}
                                             </div>
                                             <div>
-                                                <div style={{ fontWeight: '700', fontSize: '0.9rem', color: '#1e293b' }}>{b.service?.title || 'Unknown Service'}</div>
-                                                <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontFamily: 'monospace' }}>#{b._id.toUpperCase()}</div>
+                                                <div style={{ fontWeight: '700', fontSize: '0.9rem', color: '#1e293b' }}>
+                                                    {isWithdrawal ? 'Withdrawal Request' : (t.service?.title || 'Unknown Service')}
+                                                </div>
+                                                <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontFamily: 'monospace' }}>#{t._id.toUpperCase()}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td style={{ padding: '16px 24px' }}>
                                         <span style={{ 
                                             padding: '4px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '700', textTransform: 'uppercase',
-                                            backgroundColor: isIncoming ? '#dcfce7' : '#e0e7ff',
-                                            color: isIncoming ? '#166534' : '#3730a3'
+                                            backgroundColor: isWithdrawal ? '#fef3c7' : isIncoming ? '#dcfce7' : '#e0e7ff',
+                                            color: isWithdrawal ? '#92400e' : isIncoming ? '#166534' : '#3730a3'
                                         }}>
-                                            {isIncoming ? 'Earning' : 'Payment'}
+                                            {isWithdrawal ? 'Withdrawal' : isIncoming ? 'Earning' : 'Payment'}
                                         </span>
                                     </td>
                                     <td style={{ padding: '16px 24px' }}>
                                         <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            <Calendar size={14} color="#94a3b8" /> {new Date(b.createdAt).toLocaleDateString()}
+                                            <Calendar size={14} color="#94a3b8" /> {new Date(t.createdAt).toLocaleDateString()}
                                         </div>
-                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>{new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>{new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                                     </td>
                                     <td style={{ padding: '16px 24px' }}>
-                                        <div style={{ fontWeight: '800', color: isIncoming ? '#059669' : '#1e293b', fontSize: '1rem' }}>
-                                            {isIncoming ? '+' : '-'} ₹{b.totalPrice.toLocaleString()}
+                                        <div style={{ fontWeight: '800', color: isIncoming ? '#059669' : isWithdrawal ? '#f59e0b' : '#1e293b', fontSize: '1rem' }}>
+                                            {isIncoming ? '+' : isWithdrawal ? 'OUT' : '-'} ₹{(t.totalPrice || t.amount).toLocaleString()}
                                         </div>
                                     </td>
                                     <td style={{ padding: '16px 24px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#64748b', textTransform: 'capitalize' }}>
-                                            <Wallet size={14} /> {b.paymentMethod?.replace(/_/g, ' ') || 'cash'}
+                                            {isWithdrawal ? <CreditCard size={14} /> : <Wallet size={14} />} 
+                                            {isWithdrawal ? t.method : (t.paymentMethod?.replace(/_/g, ' ') || 'cash')}
                                         </div>
                                     </td>
                                     <td style={{ padding: '16px 24px' }}>
-                                        <span style={{ 
-                                            display: 'inline-flex', alignItems: 'center', gap: '6px',
-                                            padding: '6px 12px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase',
-                                            backgroundColor: b.paymentStatus === 'paid' ? '#d1fae5' : b.paymentStatus === 'failed' ? '#fee2e2' : '#fef3c7',
-                                            color: b.paymentStatus === 'paid' ? '#065f46' : b.paymentStatus === 'failed' ? '#991b1b' : '#92400e'
-                                        }}>
-                                            {b.paymentStatus === 'paid' ? <CheckCircle size={12} /> : b.paymentStatus === 'failed' ? <XCircle size={12} /> : <AlertCircle size={12} />}
-                                            {b.paymentStatus || 'pending'}
-                                        </span>
+                                        {(() => {
+                                            const status = isWithdrawal ? t.status : t.paymentStatus;
+                                            const isPaid = status === 'paid' || status === 'successful';
+                                            const isFailed = status === 'failed' || status === 'rejected';
+                                            return (
+                                                <span style={{ 
+                                                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                                                    padding: '6px 12px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase',
+                                                    backgroundColor: isPaid ? '#d1fae5' : isFailed ? '#fee2e2' : '#fef3c7',
+                                                    color: isPaid ? '#065f46' : isFailed ? '#991b1b' : '#92400e'
+                                                }}>
+                                                    {isPaid ? <CheckCircle size={12} /> : isFailed ? <XCircle size={12} /> : <AlertCircle size={12} />}
+                                                    {status || 'pending'}
+                                                </span>
+                                            );
+                                        })()}
                                     </td>
                                     <td style={{ padding: '16px 24px' }}>
-                                        <button 
-                                            onClick={() => window.open(`/transactions`, '_blank')}
-                                            style={{ padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', color: '#64748b' }}
-                                        >
-                                            <ExternalLink size={14} />
-                                        </button>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            {isWithdrawal ? (
+                                                <button 
+                                                    onClick={() => handleDeleteWithdrawal(t._id)}
+                                                    style={{ padding: '8px', borderRadius: '8px', border: '1px solid #fee2e2', background: 'white', cursor: 'pointer', color: '#ef4444' }}
+                                                    title="Delete Withdrawal"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => window.open(`/transactions`, '_blank')}
+                                                    style={{ padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', color: '#64748b' }}
+                                                >
+                                                    <ExternalLink size={14} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             );
