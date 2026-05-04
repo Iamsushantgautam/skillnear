@@ -31,41 +31,27 @@ const Home = () => {
                 let finalData = [];
                 let context = '';
 
-                // CASCADE 1: Pincode
+                // 1. Try Pincode Results first
                 if (pincode) {
                     const { data } = await api.get(`/api/services?pincode=${pincode}`);
-                    if (data.length > 0) {
+                    if (data && data.length > 0) {
                         finalData = data;
                         context = `your Pincode (${pincode})`;
                     }
                 }
 
-                // CASCADE 2: City (if pincode failed or not available)
+                // 2. Fallback to City Results (only if pincode failed or wasn't provided)
                 if (finalData.length === 0 && city && city !== 'All of India') {
                     const { data } = await api.get(`/api/services?location=${city}`);
-                    if (data.length > 0) {
+                    if (data && data.length > 0) {
                         finalData = data;
                         context = `your City (${city})`;
                     }
                 }
 
-                // CASCADE 3: State (if city failed)
-                if (finalData.length === 0 && state) {
-                    // Note: We need to make sure backend handles state search. 
-                    // For now we'll reuse the 'location' param if backend supports state there, 
-                    // or we might need a new 'state' param.
-                    const { data } = await api.get(`/api/services?location=${state}`);
-                    if (data.length > 0) {
-                        finalData = data;
-                        context = `your State (${state})`;
-                    }
-                }
-
-                // CASCADE 4: All of India
+                // If still empty, set context for the "Not Available" state
                 if (finalData.length === 0) {
-                    const { data } = await api.get(`/api/services`);
-                    finalData = data;
-                    context = `all of India`;
+                    context = 'your local area';
                 }
 
                 const grouped = finalData.reduce((acc, curr) => {

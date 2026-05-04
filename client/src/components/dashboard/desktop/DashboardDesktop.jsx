@@ -190,7 +190,6 @@ const DashboardDesktop = ({
 }) => {
     const [bookingForPayment, setBookingForPayment] = useState(null);
     const [bookingForCompletion, setBookingForCompletion] = useState(null);
-    const [bookingForAcceptance, setBookingForAcceptance] = useState(null);
     const [activeService, setActiveService] = useState(null);
     const [bookingFilter, setBookingFilter] = useState('all');
     const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
@@ -326,16 +325,12 @@ const DashboardDesktop = ({
     };
 
     const handleAcceptClick = (bookingId) => {
-        setBookingForAcceptance(bookingId);
+        const booking = bookingRequests.find(r => r._id === bookingId) || myBookings.find(b => b._id === bookingId);
+        const targetStatus = (role === 'provider' && booking?.status === 'pending') ? 'confirmed' : 'in_progress';
+        updateBookingStatus(bookingId, targetStatus, '', '');
     };
 
-    const confirmAcceptance = (paymentMode) => {
-        if (!bookingForAcceptance) return;
-        const booking = bookingRequests.find(r => r._id === bookingForAcceptance) || myBookings.find(b => b._id === bookingForAcceptance);
-        const targetStatus = (role === 'provider' && booking?.status === 'pending') ? 'confirmed' : 'in_progress';
-        updateBookingStatus(bookingForAcceptance, targetStatus, '', paymentMode);
-        setBookingForAcceptance(null);
-    };
+
 
     const handleCompleteClick = (bookingId) => {
         setBookingForCompletion(bookingId);
@@ -697,14 +692,7 @@ const DashboardDesktop = ({
                 <DesktopHelpTab />
             )}
 
-            {/* Payment Mode Selection Modal (For Customer Accepting Confirmation) */}
-            <DesktopPaymentModal
-                isOpen={!!bookingForAcceptance}
-                onClose={() => setBookingForAcceptance(null)}
-                onSelect={confirmAcceptance}
-                title="Confirm & Pay?"
-                description="Select your preferred payment method to finalize the acceptance and start the service."
-            />
+
 
             {/* Payment Mode Selection Modal (For Provider Delivering) */}
             <DesktopPaymentModal
@@ -718,8 +706,8 @@ const DashboardDesktop = ({
                 isOpen={!!bookingForCompletion}
                 onClose={() => setBookingForCompletion(null)}
                 onSelect={confirmCompletion}
-                title="Finalize Order?"
-                description="Select how you paid for this service to mark it as complete and release funds."
+                title="Service Completed?"
+                description="How did the customer pay for this service?"
             />
 
             {/* Withdrawal Modal */}

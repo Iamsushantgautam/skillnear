@@ -57,7 +57,6 @@ export default function DashboardMobile(props) {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [bookingForPayment, setBookingForPayment] = useState(null);
-    const [bookingForAcceptance, setBookingForAcceptance] = useState(null);
     const [bookingForCompletion, setBookingForCompletion] = useState(null);
     const [bookingForRevision, setBookingForRevision] = useState(null);
     const [revisionNote, setRevisionNote] = useState('');
@@ -79,22 +78,17 @@ export default function DashboardMobile(props) {
 
     // ── Booking Handlers ──
     const handleDeliverClick = (booking) => setBookingForPayment(booking);
-    const handleAcceptClick = (booking) => setBookingForAcceptance(booking);
-    const handleShowRevisions = (booking) => { setBookingWithRevisions(booking); setShowRevisions(true); };
-    const handleRequestRevision = (booking) => { setBookingForRevision(booking); setRevisionNote(''); };
-
-    const confirmAcceptance = async (paymentMode) => {
-        if (!bookingForAcceptance) return;
-        // If provider accepts pending -> confirmed
-        // If customer confirms confirmed -> in_progress
-        const targetStatus = (role === 'provider' && bookingForAcceptance.status === 'pending') ? 'confirmed' : 'in_progress';
-        
+    const handleAcceptClick = async (booking) => {
+        const targetStatus = (role === 'provider' && booking.status === 'pending') ? 'confirmed' : 'in_progress';
         try {
-            await updateBookingStatus(bookingForAcceptance._id, targetStatus, '', paymentMode);
-            setBookingForAcceptance(null);
+            await updateBookingStatus(booking._id, targetStatus, '', '');
             setSelectedBooking(null);
         } catch (err) { console.error(err); }
     };
+    const handleShowRevisions = (booking) => { setBookingWithRevisions(booking); setShowRevisions(true); };
+    const handleRequestRevision = (booking) => { setBookingForRevision(booking); setRevisionNote(''); };
+
+
 
     const submitRevision = async () => {
         if (!bookingForRevision || !revisionNote.trim() || isSubmittingRevision) return;
@@ -345,19 +339,13 @@ export default function DashboardMobile(props) {
                 setNote={setRevisionNote}
                 submitting={isSubmittingRevision}
             />
-            <MobilePaymentModal
-                isOpen={!!bookingForAcceptance}
-                onClose={() => setBookingForAcceptance(null)}
-                onSelect={confirmAcceptance}
-                title="Confirm & Pay?"
-                description="Select your preferred payment method to finalize the acceptance and start the service."
-            />
+
             <MobilePaymentModal
                 isOpen={!!bookingForCompletion}
                 onClose={() => setBookingForCompletion(null)}
                 onSelect={confirmCompletion}
-                title="Finalize Order?"
-                description="Select how you paid for this service to mark it as complete and release funds."
+                title="Service Completed?"
+                description="How did the customer pay for this service?"
             />
             <MobilePaymentModal
                 isOpen={!!bookingForPayment}

@@ -68,7 +68,7 @@ const HomeCategories = ({
             </div>
         );
     }
-    if (!userLocation?.city || userLocation?.city === 'All of India') {
+    if (!userLocation?.city) {
         return null;
     }
 
@@ -78,8 +78,8 @@ const HomeCategories = ({
             <div className="container no-services-container">
                 <div style={{ maxWidth: '500px', margin: '0 auto' }}>
                     <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🔍</div>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px' }}>No Services in {userLocation.city}</h2>
-                    <p style={{ color: '#64748b', marginBottom: '24px' }}>We haven't expanded to your specific area yet. Try searching in a nearby city!</p>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px' }}>Service Not Available</h2>
+                    <p style={{ color: '#64748b', marginBottom: '24px' }}>We haven't expanded to {userLocation.city === 'All of India' ? 'your area' : userLocation.city} yet. Try searching with your Pincode to find nearby experts!</p>
                     <button
                         onClick={() => document.querySelector('.navbar-location-selector')?.click()}
                         style={{ color: 'var(--primary)', fontWeight: '700', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
